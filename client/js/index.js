@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < retries; i++) {
                 try {
                     console.log(`Fetching books (attempt ${i + 1})...`);
-                    const response = await fetch('http://localhost:3000/api/books');
+                    const response = await fetch('https://free-programming-notes.onrender.com/api/books');
                     console.log('Fetch response status:', response.status);
                     if (!response.ok) {
                         const errorData = await response.json();
