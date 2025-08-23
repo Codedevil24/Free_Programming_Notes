@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < retries; i++) {
             try {
                 console.log(`Login attempt ${i + 1}:`, { username, password: password ? 'provided' : 'missing' });
-                const response = await fetch('http://localhost:3000/api/auth/login', {
+                const response = await fetch('https://free-programming-notes.onrender.com/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchBooks() {
         try {
-            const response = await fetch('http://localhost:3000/api/books', {
+            const response = await fetch('https://free-programming-notes.onrender.com/api/books', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             if (!response.ok) {
@@ -119,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.editBook = async (id, title, description, category) => {
         console.log('Edit book:', id);
-        // Create edit form dynamically
         const editForm = document.createElement('form');
         editForm.id = 'edit-book-form';
         editForm.innerHTML = `
@@ -140,13 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
         bookListSection.appendChild(editForm);
         bookForm.style.display = 'none';
 
-        // Cancel button functionality
         document.getElementById('cancel-edit').addEventListener('click', () => {
             editForm.remove();
             bookForm.style.display = 'block';
         });
 
-        // Form submission for update
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData();
@@ -159,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pdfFile) formData.append('pdf', pdfFile);
 
             try {
-                const response = await fetch(`http://localhost:3000/api/books/${id}`, {
+                const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
@@ -182,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.deleteBook = async (id) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/books/${id}`, {
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
@@ -199,10 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const formData = new FormData(bookForm);
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://localhost:3000/api/books', true);
+        xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
         xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
 
-        // Progress Bar Logic
         const progressContainer = document.querySelector('.progress-container');
         progressContainer.style.display = 'block';
         xhr.upload.onprogress = (event) => {
