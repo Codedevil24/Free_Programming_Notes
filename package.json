@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "axios": "^1.11.0",
+    "form-data": "^4.0.4",
+    "jwt-decode": "^4.0.0"
+  }
+}

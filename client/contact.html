@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="menu-icon" id="menu-icon">&#9776;</div>
+        <div class="close-icon" id="close-icon">&times;</div>
+        <ul id="navbar-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="category.html">Category</a></li>
+            <li class="admin-only" style="display: none;"><a href="admin.html">Admin</a></li>
+            <li><a href="privacy.html">Privacy and Policy</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+            <li class="admin-login" style="display: block;"><a href="admin.html">Admin Login</a></li>
+        </ul>
+    </nav>
+    <header>
+        <h1>Contact Us</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Contact Information</h2>
+            <p>This is a placeholder for the Contact Us page.</p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Free Programming Books. All rights reserved.</p>
+    </footer>
+    <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script>
+        // Fallback for jwt-decode if CDN fails
+        if (typeof jwt_decode === 'undefined') {
+            console.error('jwt-decode CDN failed to load, trying local fallback');
+            document.write('<script src="js/jwt-decode.js"><\/script>');
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navbarLinks = document.getElementById('navbar-links');
+            const adminLink = navbarLinks.querySelector('.admin-only');
+            const adminLoginLink = navbarLinks.querySelector('.admin-login');
+            const menuIcon = document.getElementById('menu-icon');
+            const closeIcon = document.getElementById('close-icon');
+
+            menuIcon.addEventListener('click', () => {
+                navbarLinks.classList.add('show');
+                menuIcon.style.display = 'none';
+                closeIcon.style.display = 'block';
+            });
+
+            closeIcon.addEventListener('click', () => {
+                navbarLinks.classList.remove('show');
+                menuIcon.style.display = 'block';
+                closeIcon.style.display = 'none';
+            });
+
+            if (typeof jwt_decode === 'undefined') {
+                console.error('jwt_decode is not defined. Ensure jwt-decode library is loaded.');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const decoded = jwt_decode(token);
+                    const now = Date.now() / 1000;
+                    if (decoded.exp < now) {
+                        localStorage.removeItem('token');
+                        adminLink.style.display = 'none';
+                        adminLoginLink.style.display = 'block';
+                    } else {
+                        adminLink.style.display = 'block';
+                        adminLoginLink.style.display = 'none';
+                    }
+                } catch (err) {
+                    console.error('Token validation error:', err);
+                    localStorage.removeItem('token');
+                    adminLink.style.display = 'none';
+                    adminLoginLink.style.display = 'block';
+                }
+            } else {
+                adminLink.style.display = 'none';
+                adminLoginLink.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
