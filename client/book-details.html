@@ -31,9 +31,12 @@
             <img id="book-image" alt="Book Image" style="max-width: 200px;">
             <p id="book-description"></p>
             <p><strong>Category:</strong> <span id="book-category"></span></p>
-            <iframe id="notes-preview" style="width: 100%; height: 500px; border: none;" sandbox="allow-same-origin allow-downloads"></iframe>
+            <iframe id="notes-preview" style="width: 100%; height: 500px; border: none;" sandbox="allow-same-origin"></iframe>
             <button id="download-button" style="margin-top: 10px;">Download PDF</button>
-            <div id="suggestions"></div>
+            <div id="suggestions">
+                <h4>Suggestions:</h4>
+                <div id="suggestion-list"></div>
+            </div>
             <a href="#" id="back-icon" style="display: block; margin-top: 20px;">&larr; Back</a>
         </section>
     </main>
@@ -47,7 +50,7 @@
             document.write('<script src="/js/jwt-decode.js"><\/script>');
         }
     </script>
-    <script src="/js/book-details.js"></script>  <!-- New JS for book details -->
+    <script src="/js/book-details.js"></script>
     <script src="/js/admin.js"></script>
 </body>
 </html>

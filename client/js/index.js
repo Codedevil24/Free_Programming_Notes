@@ -4,11 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const navbarLinks = document.getElementById('navbar-links');
         const adminLink = navbarLinks ? navbarLinks.querySelector('.admin-only') : null;
         const adminLoginLink = navbarLinks ? navbarLinks.querySelector('.admin-login') : null;
-        const logoutLink = navbarLinks ? document.getElementById('logout-link') : null; // Fixed ID match
+        const logoutLink = navbarLinks ? document.getElementById('logout-link') : null;
         const searchBar = document.getElementById('search-bar');
         const categoryList = document.getElementById('category-list');
-        const modal = document.getElementById('book-modal');
-        const closeModal = document.getElementById('close-modal');
         let allBooks = [];
         let currentCategory = 'All';
 
@@ -16,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof jwt_decode === 'undefined') {
             console.warn('jwt-decode CDN failed to load, attempting local fallback');
             const script = document.createElement('script');
-            script.src = '/js/jwt-decode.js'; // Ensure this file exists
+            script.src = '/js/jwt-decode.js';
             script.onload = () => console.log('Local jwt-decode loaded');
             script.onerror = () => console.error('Local jwt-decode failed to load');
             document.body.appendChild(script);
@@ -112,38 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <h3>${book.title}</h3>
                                 <p>${book.description}</p>
                                 <p><strong>Category:</strong> ${book.category}</p>
-                                <a href="${book.pdfUrl}" target="_blank">Download PDF</a>
+                                <a href="/book-details.html?id=${book._id}" class="view-details">View Details</a>
                             </div>
                         `).join('');
-                        document.querySelectorAll('.book').forEach(bookDiv => {
-                            bookDiv.addEventListener('click', () => {
-                                const bookId = bookDiv.dataset.id;
-                                const book = allBooks.find(b => b._id === bookId);
-                                document.getElementById('modal-title').textContent = book.title;
-                                document.getElementById('modal-description').textContent = book.description;
-                                document.getElementById('modal-category').textContent = book.category;
-                                document.getElementById('modal-image').src = book.imageUrl;
-                                document.getElementById('modal-download').href = book.pdfUrl;
-                                const notesPreview = document.getElementById('modal-notes-preview');
-                                if (notesPreview && book.pdfUrl) {
-                                    notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH';
-                                } else {
-                                    notesPreview.style.display = 'none';
-                                }
-                                const suggestionsDiv = document.getElementById('suggestions');
-                                if (suggestionsDiv) {
-                                    const otherBooks = allBooks.filter(b => b._id !== bookId);
-                                    const randomSuggestions = getRandomItems(otherBooks, 3);
-                                    suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
-                                        <h4>Suggestions:</h4>
-                                        ${randomSuggestions.map(suggestion => `
-                                            <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
-                                        `).join('')}
-                                    ` : '<p>No suggestions available.</p>';
-                                }
-                                modal.style.display = 'block';
-                            });
-                        });
                     }
                     return;
                 } catch (err) {
@@ -156,43 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Function to get random items from array
         function getRandomItems(array, count) {
             const shuffled = array.sort(() => 0.5 - Math.random());
             return shuffled.slice(0, Math.min(count, shuffled.length));
         }
-
-        // Function to show book in modal
-        window.showBook = (bookId) => {
-            const book = allBooks.find(b => b._id === bookId);
-            if (book && modal) {
-                document.getElementById('modal-title').textContent = book.title || 'No Title';
-                document.getElementById('modal-description').textContent = book.description || 'No Description';
-                document.getElementById('modal-category').textContent = book.category || 'No Category';
-                document.getElementById('modal-image').src = book.imageUrl || 'fallback-image.jpg';
-                document.getElementById('modal-download').href = book.pdfUrl || '#';
-                document.getElementById('modal-download').textContent = book.pdfUrl ? 'Download PDF' : 'No PDF Available';
-                const notesPreview = document.getElementById('modal-notes-preview');
-                if (notesPreview && book.pdfUrl) {
-                    notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH';
-                    notesPreview.style.display = 'block';
-                } else {
-                    notesPreview.style.display = 'none';
-                }
-                const suggestionsDiv = document.getElementById('suggestions');
-                if (suggestionsDiv) {
-                    const otherBooks = allBooks.filter(b => b._id !== bookId);
-                    const randomSuggestions = getRandomItems(otherBooks, 3);
-                    suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
-                        <h4>Suggestions:</h4>
-                        ${randomSuggestions.map(suggestion => `
-                            <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
-                        `).join('')}
-                    ` : '<p>No suggestions available.</p>';
-                }
-                modal.style.display = 'block';
-            }
-        };
 
         if (searchBar) {
             searchBar.addEventListener('input', () => {
@@ -208,12 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     categoryItem.classList.add('active');
                     fetchBooksWithRetry(searchBar ? searchBar.value : '', currentCategory);
                 });
-            });
-        }
-
-        if (closeModal && modal) {
-            closeModal.addEventListener('click', () => {
-                modal.style.display = 'none';
             });
         }
 
