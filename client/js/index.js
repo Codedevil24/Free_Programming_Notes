@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="book" data-id="${book._id}">
                         <h3>${book.title}</h3>
                         <p>${book.description}</p>
-                        <img src="${book.image || 'https://via.placeholder.com/100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='https://via.placeholder.com/100';">
+                        <img src="${book.image || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
                         <button onclick="showBookDetails('${book._id}')">View</button>
                     </div>
                 `).join('');
@@ -130,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (modalDescription) modalDescription.textContent = book.description || 'No description available';
             if (modalCategory) modalCategory.textContent = book.category || 'Uncategorized';
             if (modalImage) {
-                modalImage.src = book.image || 'https://via.placeholder.com/100';
-                modalImage.onerror = () => { modalImage.src = 'https://via.placeholder.com/100'; };
+                modalImage.src = book.image || 'https://placehold.co/100x100';
+                modalImage.onerror = () => { modalImage.onerror = null; modalImage.src = 'https://placehold.co/100x100'; };
             }
             if (modalNotesPreview) modalNotesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
             if (modalDownload) {
@@ -154,7 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error loading book details:', err);
             if (modalTitle) modalTitle.textContent = 'Error loading details';
             if (modalDescription) modalDescription.textContent = err.message;
-            if (modalImage) modalImage.src = 'https://via.placeholder.com/100';
+            if (modalImage) {
+                modalImage.src = 'https://placehold.co/100x100';
+                modalImage.onerror = null;
+            }
             if (modalNotesPreview) modalNotesPreview.src = '';
             if (modalDownload) {
                 modalDownload.href = '#';
@@ -191,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="book" data-id="${book._id}">
                             <h3>${book.title}</h3>
                             <p>${book.description}</p>
-                            <img src="${book.image || 'https://via.placeholder.com/100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='https://via.placeholder.com/100';">
+                            <img src="${book.image || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
                             <button onclick="showBookDetails('${book._id}')">View</button>
                         </div>
                     `).join('');
