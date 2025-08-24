@@ -349,10 +349,12 @@ button:hover {
 /* Footer Styles */
 footer {
   text-align: center;
-  padding: 20px;
+  padding: 20px 0;
   background-color: #333;
   color: white;
-  margin-top: 20px;
+  position: relative;
+  bottom: 0;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -371,5 +373,9 @@ footer {
 
   #search-bar {
       max-width: 100%;
+  }
+
+  #modal-notes-preview {
+      height: 200px; // Adjust for mobile
   }
 }

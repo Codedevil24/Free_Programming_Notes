@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (logoutLink) logoutLink.style.display = 'none';
         }
 
+        // Menu Toggle Functionality
         const menuIcon = document.getElementById('menu-icon');
         const closeIcon = document.getElementById('close-icon');
         if (menuIcon && closeIcon && navbarLinks) {
@@ -64,8 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 menuIcon.style.display = 'block';
                 closeIcon.style.display = 'none';
             });
+        } else {
+            console.warn('Menu toggle elements not found, skipping initialization.');
         }
 
+        // Logout Functionality
         if (logoutLink) {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -115,32 +119,29 @@ document.addEventListener('DOMContentLoaded', () => {
                             bookDiv.addEventListener('click', () => {
                                 const bookId = bookDiv.dataset.id;
                                 const book = allBooks.find(b => b._id === bookId);
-                                if (modal && book) {
-                                    document.getElementById('modal-title').textContent = book.title || 'No Title';
-                                    document.getElementById('modal-description').textContent = book.description || 'No Description';
-                                    document.getElementById('modal-category').textContent = book.category || 'No Category';
-                                    document.getElementById('modal-image').src = book.imageUrl || 'fallback-image.jpg';
-                                    document.getElementById('modal-download').href = book.pdfUrl || '#';
-                                    document.getElementById('modal-download').textContent = book.pdfUrl ? 'Download PDF' : 'No PDF Available';
-                                    const notesPreview = document.getElementById('modal-notes-preview');
-                                    if (notesPreview && book.pdfUrl) {
-                                        notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH'; // Better PDF view
-                                    } else {
-                                        notesPreview.style.display = 'none'; // Hide if no PDF
-                                    }
-                                    const suggestionsDiv = document.getElementById('suggestions');
-                                    if (suggestionsDiv) {
-                                        const otherBooks = allBooks.filter(b => b._id !== bookId);
-                                        const randomSuggestions = getRandomItems(otherBooks, 3);
-                                        suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
-                                            <h4>Suggestions:</h4>
-                                            ${randomSuggestions.map(suggestion => `
-                                                <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
-                                            `).join('')}
-                                        ` : '<p>No suggestions available.</p>';
-                                    }
-                                    modal.style.display = 'block';
+                                document.getElementById('modal-title').textContent = book.title;
+                                document.getElementById('modal-description').textContent = book.description;
+                                document.getElementById('modal-category').textContent = book.category;
+                                document.getElementById('modal-image').src = book.imageUrl;
+                                document.getElementById('modal-download').href = book.pdfUrl;
+                                const notesPreview = document.getElementById('modal-notes-preview');
+                                if (notesPreview && book.pdfUrl) {
+                                    notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH';
+                                } else {
+                                    notesPreview.style.display = 'none';
                                 }
+                                const suggestionsDiv = document.getElementById('suggestions');
+                                if (suggestionsDiv) {
+                                    const otherBooks = allBooks.filter(b => b._id !== bookId);
+                                    const randomSuggestions = getRandomItems(otherBooks, 3);
+                                    suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
+                                        <h4>Suggestions:</h4>
+                                        ${randomSuggestions.map(suggestion => `
+                                            <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
+                                        `).join('')}
+                                    ` : '<p>No suggestions available.</p>';
+                                }
+                                modal.style.display = 'block';
                             });
                         });
                     }
@@ -155,11 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        // Function to get random items from array
         function getRandomItems(array, count) {
             const shuffled = array.sort(() => 0.5 - Math.random());
             return shuffled.slice(0, Math.min(count, shuffled.length));
         }
 
+        // Function to show book in modal
         window.showBook = (bookId) => {
             const book = allBooks.find(b => b._id === bookId);
             if (book && modal) {

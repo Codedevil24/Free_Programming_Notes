@@ -8,15 +8,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLinks = document.getElementById('navbar-links');
     const menuIcon = document.getElementById('menu-icon');
     const closeIcon = document.getElementById('close-icon');
-    const logoutLink = document.getElementById('logout'); // Matches admin.html
+    const logoutLink = document.getElementById('logout');
 
+    // Null check for all elements
     if (!loginForm || !bookForm || !bookListSection || !bookList || !progressBar || !progressText || !navbarLinks || !menuIcon || !closeIcon || !logoutLink) {
-        console.warn('One or more DOM elements not found, check IDs:', {
+        console.error('One or more DOM elements not found:', {
             loginForm, bookForm, bookListSection, bookList, progressBar, progressText, navbarLinks, menuIcon, closeIcon, logoutLink
         });
         return;
     }
 
+    // Menu Icon Functionality
     menuIcon.addEventListener('click', () => {
         navbarLinks.classList.add('show');
         menuIcon.style.display = 'none';
@@ -29,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeIcon.style.display = 'none';
     });
 
+    // Logout Functionality
     logoutLink.addEventListener('click', (e) => {
         e.preventDefault();
         localStorage.removeItem('token');
@@ -138,7 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const books = await response.json();
             bookList.innerHTML = books.map(book => `
                 <div class="book" data-id="${book._id}">
-                    <img src="${book.imageUrl}" alt="${book.title}" onerror="this.src='fallback-image.jpg'">
                     <h3>${book.title}</h3>
                     <p>${book.description}</p>
                     <p><strong>Category:</strong> ${book.category}</p>
