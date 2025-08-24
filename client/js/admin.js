@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const uploadSection = document.getElementById('upload-section');
     const uploadType = document.getElementById('upload-type');
-    const notesForm = document.getElementById('notes-form');
+    const notesForm = document.getElementById('book-form'); // Updated to match HTML id
     const courseForm = document.getElementById('course-form');
     const bookListSection = document.getElementById('book-list-section');
     const bookList = document.getElementById('book-list');
@@ -18,24 +18,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const message = document.getElementById('message');
 
     // JWT Authentication
+    let jwt_decode = window.jwt_decode;
+    if (!jwt_decode && typeof window.jwt_decode === 'undefined') {
+        console.error('jwt-decode not available');
+        jwt_decode = null;
+    }
+
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && jwt_decode) {
         try {
             const decoded = jwt_decode(token);
             const now = Date.now() / 1000;
             if (decoded.exp < now) {
                 localStorage.removeItem('token');
-                document.querySelector('.admin-only').style.display = 'none';
-                document.querySelector('.admin-login').style.display = 'block';
-                document.querySelector('.logout').style.display = 'none';
+                updateAuthDisplay(false);
                 uploadSection.style.display = 'none';
                 bookListSection.style.display = 'none';
                 courseListSection.style.display = 'none';
-                message.textContent = 'Session expired. Please log in again.';
+                if (message) message.textContent = 'Session expired. Please log in again.';
             } else {
-                document.querySelector('.admin-only').style.display = 'block';
-                document.querySelector('.admin-login').style.display = 'none';
-                document.querySelector('.logout').style.display = 'block';
+                updateAuthDisplay(true);
                 uploadSection.style.display = 'block';
                 fetchBooks();
                 fetchCourses();
@@ -43,119 +45,135 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('Token validation error:', err);
             localStorage.removeItem('token');
-            document.querySelector('.admin-only').style.display = 'none';
-            document.querySelector('.admin-login').style.display = 'block';
-            document.querySelector('.logout').style.display = 'none';
+            updateAuthDisplay(false);
             uploadSection.style.display = 'none';
             bookListSection.style.display = 'none';
             courseListSection.style.display = 'none';
-            message.textContent = 'Invalid session. Please log in again.';
+            if (message) message.textContent = 'Invalid session. Please log in again.';
         }
     } else {
-        document.querySelector('.admin-only').style.display = 'none';
-        document.querySelector('.admin-login').style.display = 'block';
-        document.querySelector('.logout').style.display = 'none';
+        updateAuthDisplay(false);
         uploadSection.style.display = 'none';
         bookListSection.style.display = 'none';
         courseListSection.style.display = 'none';
     }
 
-    // Menu Toggle Functionality
-    menuIcon.addEventListener('click', () => {
-        navbarLinks.classList.add('show');
-        menuIcon.style.display = 'none';
-        closeIcon.style.display = 'block';
-    });
+    function updateAuthDisplay(isAuthenticated) {
+        const adminOnly = document.querySelector('.admin-only');
+        const adminLogin = document.querySelector('.admin-login');
+        const logout = document.querySelector('.logout');
+        if (adminOnly && adminLogin && logout) {
+            adminOnly.style.display = isAuthenticated ? 'block' : 'none';
+            adminLogin.style.display = isAuthenticated ? 'none' : 'block';
+            logout.style.display = isAuthenticated ? 'block' : 'none';
+        }
+    }
 
-    closeIcon.addEventListener('click', () => {
-        navbarLinks.classList.remove('show');
-        menuIcon.style.display = 'block';
-        closeIcon.style.display = 'none';
-    });
+    // Menu Toggle Functionality
+    if (menuIcon && closeIcon && navbarLinks) {
+        menuIcon.addEventListener('click', () => {
+            navbarLinks.classList.add('show');
+            menuIcon.style.display = 'none';
+            closeIcon.style.display = 'block';
+        });
+
+        closeIcon.addEventListener('click', () => {
+            navbarLinks.classList.remove('show');
+            menuIcon.style.display = 'block';
+            closeIcon.style.display = 'none';
+        });
+    }
 
     // Logout Functionality
-    logoutLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        localStorage.removeItem('token');
-        document.querySelector('.admin-only').style.display = 'none';
-        document.querySelector('.admin-login').style.display = 'block';
-        logoutLink.style.display = 'none';
-        uploadSection.style.display = 'none';
-        bookListSection.style.display = 'none';
-        courseListSection.style.display = 'none';
-        message.textContent = 'Logged out successfully.';
-        setTimeout(() => (message.textContent = ''), 3000);
-        window.location.href = '/index.html';
-    });
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            updateAuthDisplay(false);
+            uploadSection.style.display = 'none';
+            bookListSection.style.display = 'none';
+            courseListSection.style.display = 'none';
+            if (message) message.textContent = 'Logged out successfully.';
+            setTimeout(() => { if (message) message.textContent = ''; }, 3000);
+            window.location.href = '/index.html';
+        });
+    }
 
     // Login Functionality
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-        try {
-            const response = await fetch('https://free-programming-notes.onrender.com/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await response.json();
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                document.querySelector('.admin-only').style.display = 'block';
-                document.querySelector('.admin-login').style.display = 'none';
-                document.querySelector('.logout').style.display = 'block';
-                uploadSection.style.display = 'block';
-                loginForm.style.display = 'none';
-                message.textContent = 'Login successful!';
-                setTimeout(() => (message.textContent = ''), 3000);
-                fetchBooks();
-                fetchCourses();
-            } else {
-                message.textContent = data.message || 'Login failed.';
-                setTimeout(() => (message.textContent = ''), 3000);
+            try {
+                const response = await fetch('https://free-programming-notes-1.onrender.com/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    updateAuthDisplay(true);
+                    uploadSection.style.display = 'block';
+                    loginForm.style.display = 'none';
+                    if (message) message.textContent = 'Login successful!';
+                    setTimeout(() => { if (message) message.textContent = ''; }, 3000);
+                    fetchBooks();
+                    fetchCourses();
+                } else {
+                    if (message) message.textContent = data.message || 'Login failed.';
+                    setTimeout(() => { if (message) message.textContent = ''; }, 3000);
+                }
+            } catch (err) {
+                console.error('Login error:', err);
+                if (message) message.textContent = 'Error during login. Try again.';
+                setTimeout(() => { if (message) message.textContent = ''; }, 3000);
             }
-        } catch (err) {
-            console.error('Login error:', err);
-            message.textContent = 'Error during login. Try again.';
-            setTimeout(() => (message.textContent = ''), 3000);
-        }
-    });
+        });
+    }
 
     // Toggle between notes and courses
-    uploadType.addEventListener('change', (e) => {
-        if (e.target.value === 'notes') {
-            notesForm.style.display = 'block';
-            courseForm.style.display = 'none';
-            bookListSection.style.display = 'block';
-            courseListSection.style.display = 'none';
-            fetchBooks();
-        } else {
-            notesForm.style.display = 'none';
-            courseForm.style.display = 'block';
-            bookListSection.style.display = 'none';
-            courseListSection.style.display = 'block';
-            fetchCourses();
-        }
-    });
+    if (uploadType) {
+        uploadType.addEventListener('change', (e) => {
+            if (e.target.value === 'notes') {
+                if (notesForm) notesForm.style.display = 'block';
+                if (courseForm) courseForm.style.display = 'none';
+                if (bookListSection) bookListSection.style.display = 'block';
+                if (courseListSection) courseListSection.style.display = 'none';
+                fetchBooks();
+            } else {
+                if (notesForm) notesForm.style.display = 'none';
+                if (courseForm) courseForm.style.display = 'block';
+                if (bookListSection) bookListSection.style.display = 'none';
+                if (courseListSection) courseListSection.style.display = 'block';
+                fetchCourses();
+            }
+        });
+    }
 
     // Add module field for courses
-    addModuleBtn.addEventListener('click', () => {
-        const modulesContainer = document.getElementById('modules-container');
-        const newModule = document.createElement('div');
-        newModule.className = 'module';
-        newModule.innerHTML = `
-            <input type="text" name="module-title" placeholder="Module Title" required>
-            <textarea name="module-description" placeholder="Module Description" required></textarea>
-        `;
-        modulesContainer.appendChild(newModule);
-    });
+    if (addModuleBtn) {
+        addModuleBtn.addEventListener('click', () => {
+            const modulesContainer = document.getElementById('modules-container');
+            if (modulesContainer) {
+                const newModule = document.createElement('div');
+                newModule.className = 'module';
+                newModule.innerHTML = `
+                    <input type="text" name="module-title" placeholder="Module Title" required>
+                    <textarea name="module-description" placeholder="Module Description" required></textarea>
+                `;
+                modulesContainer.appendChild(newModule);
+            }
+        });
+    }
 
     // Fetch and Display Books
     async function fetchBooks() {
+        if (!bookListSection || !bookList) return;
         try {
-            const response = await fetch('https://free-programming-notes.onrender.com/api/books', {
+            const response = await fetch('https://free-programming-notes-1.onrender.com/api/books', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             if (!response.ok) throw new Error('Failed to fetch books');
@@ -175,42 +193,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Notes Upload
-    notesForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(notesForm);
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
-        xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+    if (notesForm) {
+        notesForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(notesForm);
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://free-programming-notes-1.onrender.com/api/books', true);
+            xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
 
-        const progressContainer = document.querySelector('.progress-container');
-        progressContainer.style.display = 'block';
-        xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const percentComplete = Math.round((event.loaded / event.total) * 100);
-                progressBar.style.width = `${percentComplete}%`;
-                progressText.textContent = `${percentComplete}%`;
-            }
-        };
+            const progressContainer = document.querySelector('.progress-container');
+            if (progressContainer) progressContainer.style.display = 'block';
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    if (progressBar) progressBar.style.width = `${percentComplete}%`;
+                    if (progressText) progressText.textContent = `${percentComplete}%`;
+                }
+            };
 
-        xhr.onload = () => {
-            progressContainer.style.display = 'none';
-            if (xhr.status === 201) {
-                fetchBooks();
-                alert('Book added successfully!');
-                notesForm.reset();
-            } else {
-                const data = JSON.parse(xhr.responseText);
-                alert(data.message || 'Failed to add book');
-            }
-        };
+            xhr.onload = () => {
+                if (progressContainer) progressContainer.style.display = 'none';
+                if (xhr.status === 201) {
+                    fetchBooks();
+                    alert('Book added successfully!');
+                    notesForm.reset();
+                } else {
+                    const data = JSON.parse(xhr.responseText);
+                    alert(data.message || 'Failed to add book');
+                }
+            };
 
-        xhr.onerror = () => {
-            progressContainer.style.display = 'none';
-            alert('Error adding book');
-        };
+            xhr.onerror = () => {
+                if (progressContainer) progressContainer.style.display = 'none';
+                alert('Error adding book');
+            };
 
-        xhr.send(formData);
-    });
+            xhr.send(formData);
+        });
+    }
 
     // Edit Book
     window.editBook = async (id, title, description, category) => {
@@ -232,12 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="submit">Update Book</button>
             <button type="button" id="cancel-edit">Cancel</button>
         `;
-        bookListSection.appendChild(editForm);
-        notesForm.style.display = 'none';
+        if (bookListSection) bookListSection.appendChild(editForm);
+        if (notesForm) notesForm.style.display = 'none';
 
         document.getElementById('cancel-edit').addEventListener('click', () => {
-            editForm.remove();
-            notesForm.style.display = 'block';
+            if (editForm) editForm.remove();
+            if (notesForm) notesForm.style.display = 'block';
         });
 
         editForm.addEventListener('submit', async (e) => {
@@ -252,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pdf) formData.append('pdf', pdf);
 
             try {
-                const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
+                const response = await fetch(`https://free-programming-notes-1.onrender.com/api/books/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
@@ -260,8 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!response.ok) throw new Error('Failed to update book');
                 const data = await response.json();
                 alert('Book updated successfully!');
-                editForm.remove();
-                notesForm.style.display = 'block';
+                if (editForm) editForm.remove();
+                if (notesForm) notesForm.style.display = 'block';
                 fetchBooks();
             } catch (err) {
                 console.error('Error updating book:', err);
@@ -273,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete Book
     window.deleteBook = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
+            const response = await fetch(`https://free-programming-notes-1.onrender.com/api/books/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
@@ -288,8 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch and Display Courses
     async function fetchCourses() {
+        if (!courseListSection || !courseList) return;
         try {
-            const response = await fetch('https://free-programming-notes.onrender.com/api/courses', {
+            const response = await fetch('https://free-programming-notes-1.onrender.com/api/courses', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             if (!response.ok) throw new Error('Failed to fetch courses');
@@ -309,51 +330,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Course Upload
-    courseForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(courseForm);
-        const modules = [];
-        document.querySelectorAll('.module').forEach(module => {
-            modules.push({
-                title: module.querySelector('[name="module-title"]').value,
-                description: module.querySelector('[name="module-description"]').value
+    if (courseForm) {
+        courseForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(courseForm);
+            const modules = [];
+            document.querySelectorAll('.module').forEach(module => {
+                modules.push({
+                    title: module.querySelector('[name="module-title"]').value,
+                    description: module.querySelector('[name="module-description"]').value
+                });
             });
+            formData.append('modules', JSON.stringify(modules));
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'https://free-programming-notes-1.onrender.com/api/courses', true);
+            xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+
+            const progressContainer = document.querySelector('.progress-container');
+            if (progressContainer) progressContainer.style.display = 'block';
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    if (progressBar) progressBar.style.width = `${percentComplete}%`;
+                    if (progressText) progressText.textContent = `${percentComplete}%`;
+                }
+            };
+
+            xhr.onload = () => {
+                if (progressContainer) progressContainer.style.display = 'none';
+                if (xhr.status === 201) {
+                    fetchCourses();
+                    alert('Course added successfully!');
+                    courseForm.reset();
+                } else {
+                    const data = JSON.parse(xhr.responseText);
+                    alert(data.message || 'Failed to add course');
+                }
+            };
+
+            xhr.onerror = () => {
+                if (progressContainer) progressContainer.style.display = 'none';
+                alert('Error adding course');
+            };
+
+            xhr.send(formData);
         });
-        formData.append('modules', JSON.stringify(modules));
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://free-programming-notes.onrender.com/api/courses', true);
-        xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
-
-        const progressContainer = document.querySelector('.progress-container');
-        progressContainer.style.display = 'block';
-        xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-                const percentComplete = Math.round((event.loaded / event.total) * 100);
-                progressBar.style.width = `${percentComplete}%`;
-                progressText.textContent = `${percentComplete}%`;
-            }
-        };
-
-        xhr.onload = () => {
-            progressContainer.style.display = 'none';
-            if (xhr.status === 201) {
-                fetchCourses();
-                alert('Course added successfully!');
-                courseForm.reset();
-            } else {
-                const data = JSON.parse(xhr.responseText);
-                alert(data.message || 'Failed to add course');
-            }
-        };
-
-        xhr.onerror = () => {
-            progressContainer.style.display = 'none';
-            alert('Error adding course');
-        };
-
-        xhr.send(formData);
-    });
+    }
 
     // Edit Course
     window.editCourse = async (id, title, description) => {
@@ -368,12 +391,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="submit">Update Course</button>
             <button type="button" id="cancel-edit">Cancel</button>
         `;
-        courseListSection.appendChild(editForm);
-        courseForm.style.display = 'none';
+        if (courseListSection) courseListSection.appendChild(editForm);
+        if (courseForm) courseForm.style.display = 'none';
 
         document.getElementById('cancel-edit').addEventListener('click', () => {
-            editForm.remove();
-            courseForm.style.display = 'block';
+            if (editForm) editForm.remove();
+            if (courseForm) courseForm.style.display = 'block';
         });
 
         editForm.addEventListener('submit', async (e) => {
@@ -387,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (video) formData.append('video', video);
 
             try {
-                const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
+                const response = await fetch(`https://free-programming-notes-1.onrender.com/api/courses/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
@@ -395,8 +418,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!response.ok) throw new Error('Failed to update course');
                 const data = await response.json();
                 alert('Course updated successfully!');
-                editForm.remove();
-                courseForm.style.display = 'block';
+                if (editForm) editForm.remove();
+                if (courseForm) courseForm.style.display = 'block';
                 fetchCourses();
             } catch (err) {
                 console.error('Error updating course:', err);
@@ -408,7 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete Course
     window.deleteCourse = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
+            const response = await fetch(`https://free-programming-notes-1.onrender.com/api/courses/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });

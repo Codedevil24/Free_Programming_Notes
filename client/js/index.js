@@ -17,69 +17,80 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutLink = document.getElementById('logout-link');
 
     // JWT Authentication
+    let jwt_decode = window.jwt_decode; // Use global variable after loading
+    if (!jwt_decode && typeof window.jwt_decode === 'undefined') {
+        console.error('jwt-decode not available');
+        jwt_decode = null; // Fallback to null if not loaded
+    }
+
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && jwt_decode) {
         try {
             const decoded = jwt_decode(token);
             const now = Date.now() / 1000;
             if (decoded.exp < now) {
                 localStorage.removeItem('token');
-                document.querySelector('.admin-only').style.display = 'none';
-                document.querySelector('.admin-login').style.display = 'block';
-                document.querySelector('.logout').style.display = 'none';
+                updateAuthDisplay(false);
             } else {
-                document.querySelector('.admin-only').style.display = 'block';
-                document.querySelector('.admin-login').style.display = 'none';
-                document.querySelector('.logout').style.display = 'block';
+                updateAuthDisplay(true);
             }
         } catch (err) {
             console.error('Token validation error:', err);
             localStorage.removeItem('token');
-            document.querySelector('.admin-only').style.display = 'none';
-            document.querySelector('.admin-login').style.display = 'block';
-            document.querySelector('.logout').style.display = 'none';
+            updateAuthDisplay(false);
         }
     } else {
-        document.querySelector('.admin-only').style.display = 'none';
-        document.querySelector('.admin-login').style.display = 'block';
-        document.querySelector('.logout').style.display = 'none';
+        updateAuthDisplay(false);
+    }
+
+    function updateAuthDisplay(isAuthenticated) {
+        const adminOnly = document.querySelector('.admin-only');
+        const adminLogin = document.querySelector('.admin-login');
+        const logout = document.querySelector('.logout');
+        if (adminOnly && adminLogin && logout) {
+            adminOnly.style.display = isAuthenticated ? 'block' : 'none';
+            adminLogin.style.display = isAuthenticated ? 'none' : 'block';
+            logout.style.display = isAuthenticated ? 'block' : 'none';
+        }
     }
 
     // Menu Toggle Functionality
-    menuIcon.addEventListener('click', () => {
-        navbarLinks.classList.add('show');
-        menuIcon.style.display = 'none';
-        closeIcon.style.display = 'block';
-    });
+    if (menuIcon && closeIcon && navbarLinks) {
+        menuIcon.addEventListener('click', () => {
+            navbarLinks.classList.add('show');
+            menuIcon.style.display = 'none';
+            closeIcon.style.display = 'block';
+        });
 
-    closeIcon.addEventListener('click', () => {
-        navbarLinks.classList.remove('show');
-        menuIcon.style.display = 'block';
-        closeIcon.style.display = 'none';
-    });
+        closeIcon.addEventListener('click', () => {
+            navbarLinks.classList.remove('show');
+            menuIcon.style.display = 'block';
+            closeIcon.style.display = 'none';
+        });
+    }
 
     // Logout Functionality
-    logoutLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        localStorage.removeItem('token');
-        document.querySelector('.admin-only').style.display = 'none';
-        document.querySelector('.admin-login').style.display = 'block';
-        logoutLink.style.display = 'none';
-        alert('Logged out successfully!');
-        window.location.href = '/index.html';
-    });
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            updateAuthDisplay(false);
+            alert('Logged out successfully!');
+            window.location.href = '/index.html';
+        });
+    }
 
     // Fetch and Display Books
     async function fetchBooks(category = 'All') {
         try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books?category=${category}`);
+            const response = await fetch('https://free-programming-notes-1.onrender.com/api/books?category=' + category);
             if (!response.ok) throw new Error('Failed to fetch books');
             const books = await response.json();
             bookList.innerHTML = books.map(book => `
                 <div class="book" data-id="${book._id}">
                     <h3>${book.title}</h3>
                     <p>${book.description}</p>
-                    <img src="${book.image}" alt="${book.title}" style="max-width: 100px;">
+                    <img src="${book.image || '/images/fallback.jpg'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='/images/fallback.jpg';">
                     <button onclick="showBookDetails('${book._id}')">View</button>
                 </div>
             `).join('');
@@ -92,19 +103,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show Book Details in Modal
     window.showBookDetails = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`);
+            const response = await fetch(`https://free-programming-notes-1.onrender.com/api/books/${id}`);
             if (!response.ok) throw new Error('Failed to fetch book details');
             const book = await response.json();
             modalTitle.textContent = book.title;
-            modalDescription.textContent = book.description;
-            modalCategory.textContent = book.category;
-            modalImage.src = book.image || 'fallback-image.jpg';
+            modalDescription.textContent = book.description || 'No description available';
+            modalCategory.textContent = book.category || 'Uncategorized';
+            modalImage.src = book.image || '/images/fallback.jpg';
+            modalImage.onerror = () => { modalImage.src = '/images/fallback.jpg'; };
             modalNotesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
             modalDownload.href = book.pdf || '#';
             modalDownload.textContent = book.pdf ? 'Download PDF' : 'No PDF Available';
 
             // Fetch and display suggestions
-            const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books');
+            const allBooksResponse = await fetch('https://free-programming-notes-1.onrender.com/api/books');
             if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
             const allBooks = await allBooksResponse.json();
             const otherBooks = allBooks.filter(b => b._id !== id);
@@ -117,13 +129,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error('Error loading book details:', err);
             modalTitle.textContent = 'Error loading details';
+            modalDescription.textContent = err.message;
+            modalImage.src = '/images/fallback.jpg';
+            modalNotesPreview.src = '';
+            modalDownload.href = '#';
+            modalDownload.textContent = 'No PDF Available';
+            bookModal.style.display = 'block';
         }
     };
 
     // Close Modal
-    closeModal.addEventListener('click', () => {
-        bookModal.style.display = 'none';
-    });
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            bookModal.style.display = 'none';
+        });
+    }
 
     window.addEventListener('click', (e) => {
         if (e.target === bookModal) {
@@ -132,33 +152,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Search Functionality
-    searchBar.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        fetchBooks().then(books => {
-            const filteredBooks = books.filter(book =>
-                book.title.toLowerCase().includes(query) ||
-                book.description.toLowerCase().includes(query)
-            );
-            bookList.innerHTML = filteredBooks.map(book => `
-                <div class="book" data-id="${book._id}">
-                    <h3>${book.title}</h3>
-                    <p>${book.description}</p>
-                    <img src="${book.image}" alt="${book.title}" style="max-width: 100px;">
-                    <button onclick="showBookDetails('${book._id}')">View</button>
-                </div>
-            `).join('');
+    if (searchBar) {
+        searchBar.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            fetchBooks().then(books => {
+                const filteredBooks = books.filter(book =>
+                    book.title.toLowerCase().includes(query) ||
+                    book.description.toLowerCase().includes(query)
+                );
+                bookList.innerHTML = filteredBooks.map(book => `
+                    <div class="book" data-id="${book._id}">
+                        <h3>${book.title}</h3>
+                        <p>${book.description}</p>
+                        <img src="${book.image || '/images/fallback.jpg'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='/images/fallback.jpg';">
+                        <button onclick="showBookDetails('${book._id}')">View</button>
+                    </div>
+                `).join('');
+            });
         });
-    });
+    }
 
     // Category Filter
-    categoryList.addEventListener('click', (e) => {
-        if (e.target.tagName === 'LI') {
-            const category = e.target.getAttribute('data-category');
-            fetchBooks(category);
-            categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
-            e.target.classList.add('active');
-        }
-    });
+    if (categoryList) {
+        categoryList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'LI') {
+                const category = e.target.getAttribute('data-category');
+                fetchBooks(category);
+                categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+                e.target.classList.add('active');
+            }
+        });
+    }
 
     // Initial Fetch
     fetchBooks();
