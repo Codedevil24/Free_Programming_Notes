@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutLink = document.getElementById('logout-link');
 
     // JWT Authentication
-    let jwt_decode = window.jwt_decode; // Use global variable after loading
+    let jwt_decode = window.jwt_decode;
     if (!jwt_decode && typeof window.jwt_decode === 'undefined') {
         console.error('jwt-decode not available');
-        jwt_decode = null; // Fallback to null if not loaded
+        jwt_decode = null;
     }
 
     const token = localStorage.getItem('token');
@@ -83,9 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch and Display Books
     async function fetchBooks(category = 'All') {
         try {
-            const response = await fetch('https://free-programming-notes-1.onrender.com/api/books?category=' + category);
-            if (!response.ok) throw new Error('Failed to fetch books');
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books?category=${category}`);
+            if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
             const books = await response.json();
+            console.log('Books fetched:', books); // Debug log
             bookList.innerHTML = books.map(book => `
                 <div class="book" data-id="${book._id}">
                     <h3>${book.title}</h3>
@@ -103,50 +104,57 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show Book Details in Modal
     window.showBookDetails = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes-1.onrender.com/api/books/${id}`);
-            if (!response.ok) throw new Error('Failed to fetch book details');
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch book details: ' + response.statusText);
             const book = await response.json();
-            modalTitle.textContent = book.title;
-            modalDescription.textContent = book.description || 'No description available';
-            modalCategory.textContent = book.category || 'Uncategorized';
-            modalImage.src = book.image || '/images/fallback.jpg';
-            modalImage.onerror = () => { modalImage.src = '/images/fallback.jpg'; };
-            modalNotesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
-            modalDownload.href = book.pdf || '#';
-            modalDownload.textContent = book.pdf ? 'Download PDF' : 'No PDF Available';
+            console.log('Book details fetched:', book); // Debug log
+            if (modalTitle) modalTitle.textContent = book.title || 'Untitled';
+            if (modalDescription) modalDescription.textContent = book.description || 'No description available';
+            if (modalCategory) modalCategory.textContent = book.category || 'Uncategorized';
+            if (modalImage) {
+                modalImage.src = book.image || '/images/fallback.jpg';
+                modalImage.onerror = () => { modalImage.src = '/images/fallback.jpg'; };
+            }
+            if (modalNotesPreview) modalNotesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
+            if (modalDownload) {
+                modalDownload.href = book.pdf || '#';
+                modalDownload.textContent = book.pdf ? 'Download PDF' : 'No PDF Available';
+            }
 
             // Fetch and display suggestions
-            const allBooksResponse = await fetch('https://free-programming-notes-1.onrender.com/api/books');
+            const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books');
             if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
             const allBooks = await allBooksResponse.json();
             const otherBooks = allBooks.filter(b => b._id !== id);
             const randomSuggestions = getRandomItems(otherBooks, 5).slice(0, 5);
-            suggestions.innerHTML = randomSuggestions.map(suggestion => `
+            if (suggestions) suggestions.innerHTML = randomSuggestions.map(suggestion => `
                 <p><a href="#" onclick="showBookDetails('${suggestion._id}')">${suggestion.title}</a></p>
             `).join('');
 
-            bookModal.style.display = 'block';
+            if (bookModal) bookModal.style.display = 'block';
         } catch (err) {
             console.error('Error loading book details:', err);
-            modalTitle.textContent = 'Error loading details';
-            modalDescription.textContent = err.message;
-            modalImage.src = '/images/fallback.jpg';
-            modalNotesPreview.src = '';
-            modalDownload.href = '#';
-            modalDownload.textContent = 'No PDF Available';
-            bookModal.style.display = 'block';
+            if (modalTitle) modalTitle.textContent = 'Error loading details';
+            if (modalDescription) modalDescription.textContent = err.message;
+            if (modalImage) modalImage.src = '/images/fallback.jpg';
+            if (modalNotesPreview) modalNotesPreview.src = '';
+            if (modalDownload) {
+                modalDownload.href = '#';
+                modalDownload.textContent = 'No PDF Available';
+            }
+            if (bookModal) bookModal.style.display = 'block';
         }
     };
 
     // Close Modal
     if (closeModal) {
         closeModal.addEventListener('click', () => {
-            bookModal.style.display = 'none';
+            if (bookModal) bookModal.style.display = 'none';
         });
     }
 
     window.addEventListener('click', (e) => {
-        if (e.target === bookModal) {
+        if (bookModal && e.target === bookModal) {
             bookModal.style.display = 'none';
         }
     });

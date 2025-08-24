@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const uploadSection = document.getElementById('upload-section');
     const uploadType = document.getElementById('upload-type');
-    const notesForm = document.getElementById('book-form'); // Updated to match HTML id
+    const notesForm = document.getElementById('book-form');
     const courseForm = document.getElementById('course-form');
     const bookListSection = document.getElementById('book-list-section');
     const bookList = document.getElementById('book-list');
@@ -32,13 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (decoded.exp < now) {
                 localStorage.removeItem('token');
                 updateAuthDisplay(false);
-                uploadSection.style.display = 'none';
-                bookListSection.style.display = 'none';
-                courseListSection.style.display = 'none';
+                if (uploadSection) uploadSection.style.display = 'none';
+                if (bookListSection) bookListSection.style.display = 'none';
+                if (courseListSection) courseListSection.style.display = 'none';
                 if (message) message.textContent = 'Session expired. Please log in again.';
             } else {
                 updateAuthDisplay(true);
-                uploadSection.style.display = 'block';
+                if (uploadSection) uploadSection.style.display = 'block';
                 fetchBooks();
                 fetchCourses();
             }
@@ -46,16 +46,16 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Token validation error:', err);
             localStorage.removeItem('token');
             updateAuthDisplay(false);
-            uploadSection.style.display = 'none';
-            bookListSection.style.display = 'none';
-            courseListSection.style.display = 'none';
+            if (uploadSection) uploadSection.style.display = 'none';
+            if (bookListSection) bookListSection.style.display = 'none';
+            if (courseListSection) courseListSection.style.display = 'none';
             if (message) message.textContent = 'Invalid session. Please log in again.';
         }
     } else {
         updateAuthDisplay(false);
-        uploadSection.style.display = 'none';
-        bookListSection.style.display = 'none';
-        courseListSection.style.display = 'none';
+        if (uploadSection) uploadSection.style.display = 'none';
+        if (bookListSection) bookListSection.style.display = 'none';
+        if (courseListSection) courseListSection.style.display = 'none';
     }
 
     function updateAuthDisplay(isAuthenticated) {
@@ -90,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             localStorage.removeItem('token');
             updateAuthDisplay(false);
-            uploadSection.style.display = 'none';
-            bookListSection.style.display = 'none';
-            courseListSection.style.display = 'none';
+            if (uploadSection) uploadSection.style.display = 'none';
+            if (bookListSection) bookListSection.style.display = 'none';
+            if (courseListSection) courseListSection.style.display = 'none';
             if (message) message.textContent = 'Logged out successfully.';
             setTimeout(() => { if (message) message.textContent = ''; }, 3000);
             window.location.href = '/index.html';
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('https://free-programming-notes-1.onrender.com/api/auth/login', {
+                const response = await fetch('https://free-programming-notes.onrender.com/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     localStorage.setItem('token', data.token);
                     updateAuthDisplay(true);
-                    uploadSection.style.display = 'block';
-                    loginForm.style.display = 'none';
+                    if (uploadSection) uploadSection.style.display = 'block';
+                    if (loginForm) loginForm.style.display = 'none';
                     if (message) message.textContent = 'Login successful!';
                     setTimeout(() => { if (message) message.textContent = ''; }, 3000);
                     fetchBooks();
@@ -173,11 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchBooks() {
         if (!bookListSection || !bookList) return;
         try {
-            const response = await fetch('https://free-programming-notes-1.onrender.com/api/books', {
+            const response = await fetch('https://free-programming-notes.onrender.com/api/books', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (!response.ok) throw new Error('Failed to fetch books');
+            if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
             const books = await response.json();
+            console.log('Books fetched:', books); // Debug log
             bookList.innerHTML = books.map(book => `
                 <div class="book" data-id="${book._id}">
                     <h3>${book.title}</h3>
@@ -198,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const formData = new FormData(notesForm);
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://free-programming-notes-1.onrender.com/api/books', true);
+            xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
             xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
 
             const progressContainer = document.querySelector('.progress-container');
@@ -272,12 +273,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pdf) formData.append('pdf', pdf);
 
             try {
-                const response = await fetch(`https://free-programming-notes-1.onrender.com/api/books/${id}`, {
+                const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
                 });
-                if (!response.ok) throw new Error('Failed to update book');
+                if (!response.ok) throw new Error('Failed to update book: ' + response.statusText);
                 const data = await response.json();
                 alert('Book updated successfully!');
                 if (editForm) editForm.remove();
@@ -293,11 +294,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete Book
     window.deleteBook = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes-1.onrender.com/api/books/${id}`, {
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (!response.ok) throw new Error('Failed to delete book');
+            if (!response.ok) throw new Error('Failed to delete book: ' + response.statusText);
             fetchBooks();
             alert('Book deleted successfully!');
         } catch (err) {
@@ -310,10 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchCourses() {
         if (!courseListSection || !courseList) return;
         try {
-            const response = await fetch('https://free-programming-notes-1.onrender.com/api/courses', {
+            const response = await fetch('https://free-programming-notes.onrender.com/api/courses', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (!response.ok) throw new Error('Failed to fetch courses');
+            if (!response.ok) throw new Error('Failed to fetch courses: ' + response.statusText);
             const courses = await response.json();
             courseList.innerHTML = courses.map(course => `
                 <div class="course" data-id="${course._id}">
@@ -344,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('modules', JSON.stringify(modules));
 
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://free-programming-notes-1.onrender.com/api/courses', true);
+            xhr.open('POST', 'https://free-programming-notes.onrender.com/api/courses', true);
             xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
 
             const progressContainer = document.querySelector('.progress-container');
@@ -410,12 +411,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (video) formData.append('video', video);
 
             try {
-                const response = await fetch(`https://free-programming-notes-1.onrender.com/api/courses/${id}`, {
+                const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
                 });
-                if (!response.ok) throw new Error('Failed to update course');
+                if (!response.ok) throw new Error('Failed to update course: ' + response.statusText);
                 const data = await response.json();
                 alert('Course updated successfully!');
                 if (editForm) editForm.remove();
@@ -431,11 +432,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delete Course
     window.deleteCourse = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes-1.onrender.com/api/courses/${id}`, {
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
-            if (!response.ok) throw new Error('Failed to delete course');
+            if (!response.ok) throw new Error('Failed to delete course: ' + response.statusText);
             fetchCourses();
             alert('Course deleted successfully!');
         } catch (err) {
