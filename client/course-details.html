@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Devil</title>
+    <title>Code Devil - Course Details</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <base href="/">
@@ -23,39 +23,24 @@
         </ul>
     </nav>
     <header>
-        <h1>Code Devil</h1>
+        <h1>Code Devil - Course Details</h1>
     </header>
     <main>
-        <section id="category-section">
-            <h2>Categories</h2>
-            <ul id="category-list">
-                <li data-category="All">All</li>
-                <li data-category="Programming">Programming</li>
-                <li data-category="Algorithms">Algorithms</li>
-                <li data-category="Data Science">Data Science</li>
-                <li data-category="Web Development">Web Development</li>
-            </ul>
-        </section>
-        <section id="books">
-            <h2>Available Books</h2>
-            <input type="text" id="search-bar" placeholder="Search books by title or description">
-            <div id="book-list"></div>
-        </section>
-        <section id="courses-section">
-            <h2>Courses</h2>
-            <a href="/courses.html" class="courses-link">View Courses</a>
+        <section id="course-details">
+            <h3 id="course-title">Loading...</h3>
+            <img id="course-thumbnail" alt="Course Thumbnail" style="max-width: 200px;">
+            <p id="course-description"></p>
+            <div id="modules">
+                <h3>Modules</h3>
+                <div id="module-list"></div>
+            </div>
+            <div id="suggestions">
+                <h4>Suggestions</h4>
+                <div id="suggestion-list"></div>
+            </div>
+            <a href="#" id="back-icon" style="display: block; margin-top: 20px;">&larr; Back</a>
         </section>
     </main>
-    <div class="modal" id="book-modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal" id="close-modal">&times;</span>
-            <h3 id="modal-title"></h3>
-            <p id="modal-description"></p>
-            <p><strong>Category:</strong> <span id="modal-category"></span></p>
-            <img id="modal-image" alt="Book Image" style="max-width: 200px;">
-            <a id="modal-download" href="#" target="_blank">Download PDF</a>
-        </div>
-    </div>
     <footer>
         <p>&copy; 2025 Code Devil. All rights reserved.</p>
     </footer>
@@ -66,7 +51,6 @@
             document.write('<script src="/js/jwt-decode.js"><\/script>');
         }
     </script>
-    <script src="/js/index.js"></script>
-    <script src="/js/admin.js"></script>
+    <script src="/js/course-details.js"></script>
 </body>
 </html>

@@ -452,3 +452,58 @@ footer {
       font-size: 14px;
   }
 }
+/* Existing CSS remains the same, with additions for courses */
+
+#courses-section {
+  margin-top: 40px;
+}
+
+.courses-link {
+  display: block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  text-align: center;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.courses-link:hover {
+  background-color: #0056b3;
+}
+
+.course {
+  background: white;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.course:hover {
+  transform: scale(1.05);
+}
+
+.module {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+#add-module {
+  margin-top: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  padding: 10px;
+}
+
+#add-module:hover {
+  background-color: #218838;
+}

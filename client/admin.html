@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Code Devil - Admin Panel</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <base href="/">
@@ -23,7 +23,7 @@
         </ul>
     </nav>
     <header>
-        <h1>Admin Panel</h1>
+        <h1>Code Devil - Admin Panel</h1>
     </header>
     <main>
         <section class="admin-form">
@@ -33,29 +33,60 @@
                 <input type="password" id="password" placeholder="Password" required>
                 <button type="submit">Login</button>
             </form>
-            <form id="book-form" enctype="multipart/form-data" style="display: none;">
-                <h2>Add New Book</h2>
-                <input type="text" id="title" name="title" placeholder="Book Title" required>
-                <textarea id="description" name="description" placeholder="Book Description" required></textarea>
-                <select id="category" name="category" required>
-                    <option value="" disabled selected>Select Category</option>
-                    <option value="Programming">Programming</option>
-                    <option value="Algorithms">Algorithms</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Web Development">Web Development</option>
+            <div id="upload-section" style="display: none;">
+                <select id="upload-type">
+                    <option value="notes">Upload Notes</option>
+                    <option value="courses">Upload Courses</option>
                 </select>
-                <input type="file" id="image" name="image" accept="image/*" required>
-                <input type="file" id="pdf" name="pdf" accept=".pdf" required>
-                <div class="progress-container" style="display: none;">
-                    <div class="progress-bar" id="progress-bar"></div>
-                    <div class="progress-text" id="progress-text">0%</div>
-                </div>
-                <button type="submit">Add Book</button>
-            </form>
+                <form id="book-form" enctype="multipart/form-data" style="display: none;">
+                    <h2>Add New Book</h2>
+                    <input type="text" id="title" name="title" placeholder="Book Title" required>
+                    <textarea id="description" name="description" placeholder="Book Description" required></textarea>
+                    <select id="category" name="category" required>
+                        <option value="" disabled selected>Select Category</option>
+                        <option value="Programming">Programming</option>
+                        <option value="Algorithms">Algorithms</option>
+                        <option value="Data Science">Data Science</option>
+                        <option value="Web Development">Web Development</option>
+                    </select>
+                    <input type="file" id="image" name="image" accept="image/*" required>
+                    <input type="file" id="pdf" name="pdf" accept=".pdf" required>
+                    <div class="progress-container" style="display: none;">
+                        <div class="progress-bar" id="progress-bar"></div>
+                        <div class="progress-text" id="progress-text">0%</div>
+                    </div>
+                    <button type="submit">Add Book</button>
+                </form>
+                <form id="course-form" enctype="multipart/form-data" style="display: none;">
+                    <h2>Add New Course</h2>
+                    <input type="text" id="course-title" name="title" placeholder="Course Title" required>
+                    <textarea id="course-description" name="description" placeholder="Course Description" required></textarea>
+                    <input type="file" id="thumbnail" name="thumbnail" accept="image/*" required>
+                    <input type="file" id="video" name="video" accept="video/*" required>
+                    <div id="modules-container">
+                        <h3>Modules</h3>
+                        <div class="module">
+                            <input type="text" name="module-title" placeholder="Module Title" required>
+                            <textarea name="module-description" placeholder="Module Description" required></textarea>
+                        </div>
+                    </div>
+                    <button type="button" id="add-module">Add Module</button>
+                    <div class="progress-container" style="display: none;">
+                        <div class="progress-bar" id="progress-bar"></div>
+                        <div class="progress-text" id="progress-text">0%</div>
+                    </div>
+                    <button type="submit">Add Course</button>
+                </form>
+            </div>
             <section id="book-list-section" style="display: none;">
                 <h2>Manage Books</h2>
                 <input type="text" id="search-bar" placeholder="Search books by title or description">
                 <div id="book-list"></div>
+            </section>
+            <section id="course-list-section" style="display: none;">
+                <h2>Manage Courses</h2>
+                <input type="text" id="course-search-bar" placeholder="Search courses by title or description">
+                <div id="course-list"></div>
             </section>
             <p id="message"></p>
         </section>
@@ -67,16 +98,13 @@
             <p id="modal-description"></p>
             <p><strong>Category:</strong> <span id="modal-category"></span></p>
             <img id="modal-image" alt="Book Image" style="max-width: 200px;">
-            <iframe id="modal-notes-preview" style="width: 100%; height: 300px; border: none;" sandbox="allow-same-origin"></iframe>
             <a id="modal-download" href="#" target="_blank">Download PDF</a>
-            <div id="suggestions"></div>
         </div>
     </div>
     <footer>
-        <p>&copy; 2025 Free Programming Books. All rights reserved.</p>
+        <p>&copy; 2025 Code Devil. All rights reserved.</p>
     </footer>
     <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/lib/index.js"></script> <!-- Backup CDN -->
     <script>
         if (typeof jwt_decode === 'undefined') {
             console.error('jwt-decode CDN failed to load, trying local fallback');

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const bookRoutes = require('./routes/books');
+const courseRoutes = require('./routes/courses');
 require('dotenv').config();
 
 const app = express();
@@ -46,6 +47,7 @@ connectWithRetry().catch(err => console.error('Failed to connect to MongoDB:', e
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
+app.use('/api/courses', courseRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;
