@@ -23,6 +23,5 @@
     "mongoose": "^8.18.0",
     "multer": "^2.0.2",
     "node-telegram-bot-api": "^0.63.0"
-     "node": ">=18.0.0"
   }
 }
