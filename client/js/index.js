@@ -83,28 +83,46 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch and Display Books
     async function fetchBooks(category = 'All') {
         try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books?category=${category}`);
+            const headers = {};
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`; // Add token if required
+            }
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books?category=${category}`, { headers });
             if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
             const books = await response.json();
-            console.log('Books fetched:', books); // Debug log
-            bookList.innerHTML = books.map(book => `
-                <div class="book" data-id="${book._id}">
-                    <h3>${book.title}</h3>
-                    <p>${book.description}</p>
-                    <img src="${book.image || 'https://via.placeholder.com/100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='https://via.placeholder.com/100';">
-                    <button onclick="showBookDetails('${book._id}')">View</button>
-                </div>
-            `).join('');
+            console.log('Books fetched from API:', books); // Debug log
+            if (bookList) {
+                bookList.innerHTML = books.map(book => `
+                    <div class="book" data-id="${book._id}">
+                        <h3>${book.title}</h3>
+                        <p>${book.description}</p>
+                        <img src="${book.image || 'https://via.placeholder.com/100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='https://via.placeholder.com/100';">
+                        <button onclick="showBookDetails('${book._id}')">View</button>
+                    </div>
+                `).join('');
+            } else {
+                console.error('bookList element not found');
+            }
         } catch (err) {
             console.error('Error fetching books:', err);
-            bookList.innerHTML = '<p>Error loading books: ' + err.message + '</p>';
+            if (bookList) {
+                bookList.innerHTML = '<p>Error loading books: ' + err.message + '</p>';
+            } else {
+                console.error('bookList element not found to display error');
+            }
         }
     }
 
     // Show Book Details in Modal
     window.showBookDetails = async (id) => {
         try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`);
+            const headers = {};
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`; // Add token if required
+            }
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, { headers });
             if (!response.ok) throw new Error('Failed to fetch book details: ' + response.statusText);
             const book = await response.json();
             console.log('Book details fetched:', book); // Debug log
@@ -122,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Fetch and display suggestions
-            const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books');
+            const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books', { headers });
             if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
             const allBooks = await allBooksResponse.json();
             const otherBooks = allBooks.filter(b => b._id !== id);
@@ -168,14 +186,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     book.title.toLowerCase().includes(query) ||
                     book.description.toLowerCase().includes(query)
                 );
-                bookList.innerHTML = filteredBooks.map(book => `
-                    <div class="book" data-id="${book._id}">
-                        <h3>${book.title}</h3>
-                        <p>${book.description}</p>
-                        <img src="${book.image || 'https://via.placeholder.com/100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='https://via.placeholder.com/100';">
-                        <button onclick="showBookDetails('${book._id}')">View</button>
-                    </div>
-                `).join('');
+                if (bookList) {
+                    bookList.innerHTML = filteredBooks.map(book => `
+                        <div class="book" data-id="${book._id}">
+                            <h3>${book.title}</h3>
+                            <p>${book.description}</p>
+                            <img src="${book.image || 'https://via.placeholder.com/100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.src='https://via.placeholder.com/100';">
+                            <button onclick="showBookDetails('${book._id}')">View</button>
+                        </div>
+                    `).join('');
+                } else {
+                    console.error('bookList element not found for search');
+                }
             });
         });
     }
