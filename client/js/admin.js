@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLinks = document.getElementById('navbar-links');
     const menuIcon = document.getElementById('menu-icon');
     const closeIcon = document.getElementById('close-icon');
-    const logoutLink = document.getElementById('logout'); // Updated to match admin.html ID
+    const logoutLink = document.getElementById('logout');
 
     // Null check for all elements
     if (!loginForm || !bookForm || !bookListSection || !bookList || !progressBar || !progressText || !navbarLinks || !menuIcon || !closeIcon || !logoutLink) {
@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const books = await response.json();
             bookList.innerHTML = books.map(book => `
                 <div class="book" data-id="${book._id}">
+                    <img src="${book.imageUrl}" alt="${book.title}" onerror="this.src='fallback-image.jpg'">
                     <h3>${book.title}</h3>
                     <p>${book.description}</p>
                     <p><strong>Category:</strong> ${book.category}</p>

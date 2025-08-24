@@ -8,6 +8,7 @@
 body {
   background-color: #f4f4f4;
   color: #333;
+  line-height: 1.6;
 }
 
 .navbar {
@@ -20,6 +21,8 @@ body {
   list-style: none;
   display: flex;
   justify-content: center;
+  margin: 0;
+  padding: 0;
 }
 
 .navbar ul li {
@@ -30,6 +33,8 @@ body {
   color: white;
   text-decoration: none;
   font-size: 18px;
+  display: block;
+  padding: 10px;
 }
 
 .navbar ul li a:hover {
@@ -60,35 +65,36 @@ body {
 /* Responsive Design for Mobile and Tablet */
 @media (max-width: 768px) {
   .navbar ul {
-    display: none;
-    flex-direction: column;
-    position: absolute;
-    top: 50px;
-    left: 0;
-    background-color: #333;
-    width: 100%;
-    padding: 20px;
-    z-index: 1000;
+      display: none;
+      flex-direction: column;
+      position: absolute;
+      top: 50px;
+      left: 0;
+      background-color: #333;
+      width: 100%;
+      padding: 20px 0;
+      z-index: 1000;
   }
 
   .navbar ul.show {
-    display: flex;
+      display: flex;
   }
 
   .navbar ul li {
-    margin: 10px 0;
+      margin: 10px 0;
+      text-align: center;
   }
 
   .menu-icon {
-    display: block;
+      display: block;
   }
 
   .close-icon {
-    display: none;
+      display: none;
   }
 
   .close-icon.show {
-    display: block;
+      display: block;
   }
 }
 
@@ -158,6 +164,11 @@ button:hover {
   border-radius: 5px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.book:hover {
+  transform: scale(1.05);
 }
 
 .book img {
@@ -176,6 +187,8 @@ button:hover {
 .book a {
   color: #007bff;
   text-decoration: none;
+  display: block;
+  margin-top: 10px;
 }
 
 .book a:hover {
@@ -187,6 +200,10 @@ button:hover {
   margin-top: 10px;
   padding: 5px 10px;
   background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
 .delete-book {
@@ -229,6 +246,7 @@ button:hover {
   width: 100%;
   max-width: 400px;
   margin-bottom: 20px;
+  padding: 10px;
 }
 
 /* Progress Bar Styles */
@@ -273,10 +291,12 @@ button:hover {
 .modal-content {
   background-color: #1a1a1a;
   color: white;
-  margin: 10% auto;
+  margin: 5% auto;
   padding: 20px;
   border-radius: 5px;
-  max-width: 500px;
+  max-width: 90%;
+  width: 500px;
+  position: relative;
   text-align: center;
 }
 
@@ -284,6 +304,11 @@ button:hover {
   float: right;
   font-size: 24px;
   cursor: pointer;
+  color: #aaa;
+}
+
+.close-modal:hover {
+  color: #fff;
 }
 
 #modal-download {
@@ -300,10 +325,51 @@ button:hover {
   background-color: #0056b3;
 }
 
+#suggestions {
+  margin-top: 20px;
+}
+
+#suggestions h4 {
+  margin-bottom: 10px;
+}
+
+#suggestions p {
+  margin: 5px 0;
+}
+
+#suggestions a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+#suggestions a:hover {
+  text-decoration: underline;
+}
+
 /* Footer Styles */
 footer {
   text-align: center;
   padding: 20px;
   background-color: #333;
   color: white;
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  #book-list {
+      grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+      margin: 10% auto;
+      width: 90%;
+  }
+
+  .book {
+      max-width: 100%;
+  }
+
+  #search-bar {
+      max-width: 100%;
+  }
 }

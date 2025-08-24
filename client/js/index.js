@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (typeof jwt_decode === 'undefined') {
             console.error('jwt_decode is not defined.');
-            bookList.innerHTML = '<p>Error: Authentication library failed to load.</p>';
+            if (bookList) bookList.innerHTML = '<p>Error: Authentication library failed to load.</p>';
             return;
         }
 
@@ -63,6 +63,20 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Logout Functionality
+        if (logoutLink) {
+            logoutLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                if (adminLink) adminLink.style.display = 'none';
+                if (adminLoginLink) adminLoginLink.style.display = 'block';
+                if (logoutLink) logoutLink.style.display = 'none';
+                alert('Logged out successfully!');
+                // Refresh page to reset state
+                window.location.reload();
+            });
+        }
+
         async function fetchBooksWithRetry(searchQuery = '', category = 'All', retries = 3) {
             for (let i = 0; i < retries; i++) {
                 try {
@@ -86,31 +100,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (category !== 'All') {
                         filteredBooks = filteredBooks.filter(book => book.category === category);
                     }
-                    bookList.innerHTML = filteredBooks.map(book => `
-                        <div class="book" data-id="${book._id}">
-                            <img src="${book.imageUrl}" alt="${book.title}" onerror="this.src='fallback-image.jpg'">
-                            <h3>${book.title}</h3>
-                            <p>${book.description}</p>
-                            <p><strong>Category:</strong> ${book.category}</p>
-                            <a href="${book.pdfUrl}" target="_blank">Download PDF</a>
-                        </div>
-                    `).join('');
-                    document.querySelectorAll('.book').forEach(bookDiv => {
-                        bookDiv.addEventListener('click', () => {
-                            const bookId = bookDiv.dataset.id;
-                            const book = allBooks.find(b => b._id === bookId);
-                            document.getElementById('modal-title').textContent = book.title;
-                            document.getElementById('modal-description').textContent = book.description;
-                            document.getElementById('modal-category').textContent = book.category;
-                            document.getElementById('modal-image').src = book.imageUrl;
-                            document.getElementById('modal-download').href = book.pdfUrl;
-                            modal.style.display = 'block';
+                    if (bookList) {
+                        bookList.innerHTML = filteredBooks.map(book => `
+                            <div class="book" data-id="${book._id}">
+                                <img src="${book.imageUrl}" alt="${book.title}" onerror="this.src='fallback-image.jpg'">
+                                <h3>${book.title}</h3>
+                                <p>${book.description}</p>
+                                <p><strong>Category:</strong> ${book.category}</p>
+                                <a href="${book.pdfUrl}" target="_blank">Download PDF</a>
+                            </div>
+                        `).join('');
+                        document.querySelectorAll('.book').forEach(bookDiv => {
+                            bookDiv.addEventListener('click', () => {
+                                const bookId = bookDiv.dataset.id;
+                                const book = allBooks.find(b => b._id === bookId);
+                                document.getElementById('modal-title').textContent = book.title;
+                                document.getElementById('modal-description').textContent = book.description;
+                                document.getElementById('modal-category').textContent = book.category;
+                                document.getElementById('modal-image').src = book.imageUrl;
+                                document.getElementById('modal-download').href = book.pdfUrl;
+                                // Add PDF preview (iframe)
+                                const notesPreview = document.getElementById('modal-notes-preview');
+                                if (notesPreview && book.pdfUrl) {
+                                    notesPreview.src = book.pdfUrl + '#toolbar=0'; // Disable toolbar for cleaner view
+                                }
+                                // Add random suggestions
+                                const suggestionsDiv = document.getElementById('suggestions');
+                                if (suggestionsDiv) {
+                                    const otherBooks = allBooks.filter(b => b._id !== bookId);
+                                    const randomSuggestions = getRandomItems(otherBooks, 3);
+                                    suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
+                                        <h4>Suggestions:</h4>
+                                        ${randomSuggestions.map(suggestion => `
+                                            <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
+                                        `).join('')}
+                                    ` : '<p>No suggestions available.</p>';
+                                }
+                                if (modal) modal.style.display = 'block';
+                            });
                         });
-                    });
+                    }
                     return;
                 } catch (err) {
                     console.error(`Fetch attempt ${i + 1} failed:`, err);
-                    if (i === retries - 1) {
+                    if (i === retries - 1 && bookList) {
                         bookList.innerHTML = `<p>Error loading books: ${err.message}. Please try again later.</p>`;
                     }
                     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -118,22 +151,62 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        searchBar.addEventListener('input', () => {
-            fetchBooksWithRetry(searchBar.value, currentCategory);
-        });
+        // Function to get random items from array
+        function getRandomItems(array, count) {
+            const shuffled = array.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, Math.min(count, shuffled.length));
+        }
 
-        categoryList.querySelectorAll('li').forEach(categoryItem => {
-            categoryItem.addEventListener('click', () => {
-                currentCategory = categoryItem.dataset.category;
-                categoryList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
-                categoryItem.classList.add('active');
+        // Function to show book in modal
+        window.showBook = (bookId) => {
+            const book = allBooks.find(b => b._id === bookId);
+            if (book && modal) {
+                document.getElementById('modal-title').textContent = book.title;
+                document.getElementById('modal-description').textContent = book.description;
+                document.getElementById('modal-category').textContent = book.category;
+                document.getElementById('modal-image').src = book.imageUrl;
+                document.getElementById('modal-download').href = book.pdfUrl;
+                const notesPreview = document.getElementById('modal-notes-preview');
+                if (notesPreview && book.pdfUrl) {
+                    notesPreview.src = book.pdfUrl + '#toolbar=0';
+                }
+                const suggestionsDiv = document.getElementById('suggestions');
+                if (suggestionsDiv) {
+                    const otherBooks = allBooks.filter(b => b._id !== bookId);
+                    const randomSuggestions = getRandomItems(otherBooks, 3);
+                    suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
+                        <h4>Suggestions:</h4>
+                        ${randomSuggestions.map(suggestion => `
+                            <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
+                        `).join('')}
+                    ` : '<p>No suggestions available.</p>';
+                }
+                modal.style.display = 'block';
+            }
+        };
+
+        if (searchBar) {
+            searchBar.addEventListener('input', () => {
                 fetchBooksWithRetry(searchBar.value, currentCategory);
             });
-        });
+        }
 
-        closeModal.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
+        if (categoryList) {
+            categoryList.querySelectorAll('li').forEach(categoryItem => {
+                categoryItem.addEventListener('click', () => {
+                    currentCategory = categoryItem.dataset.category;
+                    categoryList.querySelectorAll('li').forEach(item => item.classList.remove('active'));
+                    categoryItem.classList.add('active');
+                    fetchBooksWithRetry(searchBar ? searchBar.value : '', currentCategory);
+                });
+            });
+        }
+
+        if (closeModal && modal) {
+            closeModal.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+        }
 
         fetchBooksWithRetry();
     }, 100);
