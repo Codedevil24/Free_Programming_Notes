@@ -2,9 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const bookList = document.getElementById('book-list');
         const navbarLinks = document.getElementById('navbar-links');
-        const adminLink = navbarLinks.querySelector('.admin-only');
-        const adminLoginLink = navbarLinks.querySelector('.admin-login');
-        const logoutLink = navbarLinks.querySelector('.logout'); // Added for logout toggle
+        const adminLink = navbarLinks ? navbarLinks.querySelector('.admin-only') : null;
+        const adminLoginLink = navbarLinks ? navbarLinks.querySelector('.admin-login') : null;
+        const logoutLink = navbarLinks ? navbarLinks.querySelector('.logout') : null;
         const searchBar = document.getElementById('search-bar');
         const categoryList = document.getElementById('category-list');
         const modal = document.getElementById('book-modal');
@@ -25,25 +25,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 const now = Date.now() / 1000;
                 if (decoded.exp < now) {
                     localStorage.removeItem('token');
-                    adminLink.style.display = 'none';
-                    adminLoginLink.style.display = 'block';
-                    logoutLink.style.display = 'none';
+                    if (adminLink) adminLink.style.display = 'none';
+                    if (adminLoginLink) adminLoginLink.style.display = 'block';
+                    if (logoutLink) logoutLink.style.display = 'none';
                 } else {
-                    adminLink.style.display = 'block';
-                    adminLoginLink.style.display = 'none';
-                    logoutLink.style.display = 'block';
+                    if (adminLink) adminLink.style.display = 'block';
+                    if (adminLoginLink) adminLoginLink.style.display = 'none';
+                    if (logoutLink) logoutLink.style.display = 'block';
                 }
             } catch (err) {
                 console.error('Token validation error:', err);
                 localStorage.removeItem('token');
-                adminLink.style.display = 'none';
-                adminLoginLink.style.display = 'block';
-                logoutLink.style.display = 'none';
+                if (adminLink) adminLink.style.display = 'none';
+                if (adminLoginLink) adminLoginLink.style.display = 'block';
+                if (logoutLink) logoutLink.style.display = 'none';
             }
         } else {
-            adminLink.style.display = 'none';
-            adminLoginLink.style.display = 'block';
-            logoutLink.style.display = 'none';
+            if (adminLink) adminLink.style.display = 'none';
+            if (adminLoginLink) adminLoginLink.style.display = 'block';
+            if (logoutLink) logoutLink.style.display = 'none';
+        }
+
+        // Menu Toggle Functionality
+        const menuIcon = document.getElementById('menu-icon');
+        const closeIcon = document.getElementById('close-icon');
+        if (menuIcon && closeIcon && navbarLinks) {
+            menuIcon.addEventListener('click', () => {
+                navbarLinks.classList.add('show');
+                menuIcon.style.display = 'none';
+                closeIcon.style.display = 'block';
+            });
+
+            closeIcon.addEventListener('click', () => {
+                navbarLinks.classList.remove('show');
+                menuIcon.style.display = 'block';
+                closeIcon.style.display = 'none';
+            });
         }
 
         async function fetchBooksWithRetry(searchQuery = '', category = 'All', retries = 3) {
