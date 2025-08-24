@@ -6,6 +6,7 @@
     <title>Admin Panel</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <base href="/">
 </head>
 <body>
     <nav class="navbar">
@@ -18,6 +19,7 @@
             <li><a href="privacy.html">Privacy and Policy</a></li>
             <li><a href="contact.html">Contact Us</a></li>
             <li class="admin-login" style="display: block;"><a href="admin.html">Admin Login</a></li>
+            <li class="logout" style="display: none;"><a href="#" id="logout">Logout</a></li>
         </ul>
     </nav>
     <header>
@@ -49,7 +51,6 @@
                     <div class="progress-text" id="progress-text">0%</div>
                 </div>
                 <button type="submit">Add Book</button>
-                <button type="button" id="logout">Logout</button>
             </form>
             <section id="book-list-section" style="display: none;">
                 <h2>Manage Books</h2>
@@ -73,11 +74,11 @@
         <p>&copy; 2025 Free Programming Books. All rights reserved.</p>
     </footer>
     <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/lib/index.js"></script> <!-- Backup CDN -->
     <script>
-        // Fallback for jwt-decode if CDN fails
         if (typeof jwt_decode === 'undefined') {
             console.error('jwt-decode CDN failed to load, trying local fallback');
-            document.write('<script src="js/jwt-decode.js"><\/script>');
+            document.write('<script src="/js/jwt-decode.js"><\/script>');
         }
     </script>
     <script src="js/admin.js"></script>

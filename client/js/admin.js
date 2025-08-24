@@ -8,7 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLinks = document.getElementById('navbar-links');
     const menuIcon = document.getElementById('menu-icon');
     const closeIcon = document.getElementById('close-icon');
-    const logoutLink = document.getElementById('logout-link');
+    const logoutLink = document.getElementById('logout'); // Updated to match admin.html ID
+
+    // Null check for all elements
+    if (!loginForm || !bookForm || !bookListSection || !bookList || !progressBar || !progressText || !navbarLinks || !menuIcon || !closeIcon || !logoutLink) {
+        console.error('One or more DOM elements not found:', {
+            loginForm, bookForm, bookListSection, bookList, progressBar, progressText, navbarLinks, menuIcon, closeIcon, logoutLink
+        });
+        return;
+    }
 
     // Menu Icon Functionality
     menuIcon.addEventListener('click', () => {
