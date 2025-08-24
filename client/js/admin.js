@@ -8,17 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLinks = document.getElementById('navbar-links');
     const menuIcon = document.getElementById('menu-icon');
     const closeIcon = document.getElementById('close-icon');
-    const logoutLink = document.getElementById('logout');
+    const logoutLink = document.getElementById('logout'); // Matches admin.html
 
-    // Null check for all elements
     if (!loginForm || !bookForm || !bookListSection || !bookList || !progressBar || !progressText || !navbarLinks || !menuIcon || !closeIcon || !logoutLink) {
-        console.error('One or more DOM elements not found:', {
+        console.warn('One or more DOM elements not found, check IDs:', {
             loginForm, bookForm, bookListSection, bookList, progressBar, progressText, navbarLinks, menuIcon, closeIcon, logoutLink
         });
         return;
     }
 
-    // Menu Icon Functionality
     menuIcon.addEventListener('click', () => {
         navbarLinks.classList.add('show');
         menuIcon.style.display = 'none';
@@ -31,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         closeIcon.style.display = 'none';
     });
 
-    // Logout Functionality
     logoutLink.addEventListener('click', (e) => {
         e.preventDefault();
         localStorage.removeItem('token');

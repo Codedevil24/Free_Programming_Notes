@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const navbarLinks = document.getElementById('navbar-links');
         const adminLink = navbarLinks ? navbarLinks.querySelector('.admin-only') : null;
         const adminLoginLink = navbarLinks ? navbarLinks.querySelector('.admin-login') : null;
-        const logoutLink = navbarLinks ? navbarLinks.querySelector('.logout') : null;
+        const logoutLink = navbarLinks ? document.getElementById('logout-link') : null; // Fixed ID match
         const searchBar = document.getElementById('search-bar');
         const categoryList = document.getElementById('category-list');
         const modal = document.getElementById('book-modal');
@@ -12,10 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let allBooks = [];
         let currentCategory = 'All';
 
+        // JWT Decode Fallback Improvement
         if (typeof jwt_decode === 'undefined') {
-            console.error('jwt_decode is not defined.');
-            if (bookList) bookList.innerHTML = '<p>Error: Authentication library failed to load.</p>';
-            return;
+            console.warn('jwt-decode CDN failed to load, attempting local fallback');
+            const script = document.createElement('script');
+            script.src = '/js/jwt-decode.js'; // Ensure this file exists
+            script.onload = () => console.log('Local jwt-decode loaded');
+            script.onerror = () => console.error('Local jwt-decode failed to load');
+            document.body.appendChild(script);
         }
 
         const token = localStorage.getItem('token');
@@ -46,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (logoutLink) logoutLink.style.display = 'none';
         }
 
-        // Menu Toggle Functionality
         const menuIcon = document.getElementById('menu-icon');
         const closeIcon = document.getElementById('close-icon');
         if (menuIcon && closeIcon && navbarLinks) {
@@ -63,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Logout Functionality
         if (logoutLink) {
             logoutLink.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -72,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (adminLoginLink) adminLoginLink.style.display = 'block';
                 if (logoutLink) logoutLink.style.display = 'none';
                 alert('Logged out successfully!');
-                // Refresh page to reset state
                 window.location.reload();
             });
         }
@@ -114,29 +115,32 @@ document.addEventListener('DOMContentLoaded', () => {
                             bookDiv.addEventListener('click', () => {
                                 const bookId = bookDiv.dataset.id;
                                 const book = allBooks.find(b => b._id === bookId);
-                                document.getElementById('modal-title').textContent = book.title;
-                                document.getElementById('modal-description').textContent = book.description;
-                                document.getElementById('modal-category').textContent = book.category;
-                                document.getElementById('modal-image').src = book.imageUrl;
-                                document.getElementById('modal-download').href = book.pdfUrl;
-                                // Add PDF preview (iframe)
-                                const notesPreview = document.getElementById('modal-notes-preview');
-                                if (notesPreview && book.pdfUrl) {
-                                    notesPreview.src = book.pdfUrl + '#toolbar=0'; // Disable toolbar for cleaner view
+                                if (modal && book) {
+                                    document.getElementById('modal-title').textContent = book.title || 'No Title';
+                                    document.getElementById('modal-description').textContent = book.description || 'No Description';
+                                    document.getElementById('modal-category').textContent = book.category || 'No Category';
+                                    document.getElementById('modal-image').src = book.imageUrl || 'fallback-image.jpg';
+                                    document.getElementById('modal-download').href = book.pdfUrl || '#';
+                                    document.getElementById('modal-download').textContent = book.pdfUrl ? 'Download PDF' : 'No PDF Available';
+                                    const notesPreview = document.getElementById('modal-notes-preview');
+                                    if (notesPreview && book.pdfUrl) {
+                                        notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH'; // Better PDF view
+                                    } else {
+                                        notesPreview.style.display = 'none'; // Hide if no PDF
+                                    }
+                                    const suggestionsDiv = document.getElementById('suggestions');
+                                    if (suggestionsDiv) {
+                                        const otherBooks = allBooks.filter(b => b._id !== bookId);
+                                        const randomSuggestions = getRandomItems(otherBooks, 3);
+                                        suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
+                                            <h4>Suggestions:</h4>
+                                            ${randomSuggestions.map(suggestion => `
+                                                <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
+                                            `).join('')}
+                                        ` : '<p>No suggestions available.</p>';
+                                    }
+                                    modal.style.display = 'block';
                                 }
-                                // Add random suggestions
-                                const suggestionsDiv = document.getElementById('suggestions');
-                                if (suggestionsDiv) {
-                                    const otherBooks = allBooks.filter(b => b._id !== bookId);
-                                    const randomSuggestions = getRandomItems(otherBooks, 3);
-                                    suggestionsDiv.innerHTML = randomSuggestions.length > 0 ? `
-                                        <h4>Suggestions:</h4>
-                                        ${randomSuggestions.map(suggestion => `
-                                            <p><a href="#" onclick="showBook('${suggestion._id}')">${suggestion.title}</a></p>
-                                        `).join('')}
-                                    ` : '<p>No suggestions available.</p>';
-                                }
-                                if (modal) modal.style.display = 'block';
                             });
                         });
                     }
@@ -151,24 +155,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Function to get random items from array
         function getRandomItems(array, count) {
             const shuffled = array.sort(() => 0.5 - Math.random());
             return shuffled.slice(0, Math.min(count, shuffled.length));
         }
 
-        // Function to show book in modal
         window.showBook = (bookId) => {
             const book = allBooks.find(b => b._id === bookId);
             if (book && modal) {
-                document.getElementById('modal-title').textContent = book.title;
-                document.getElementById('modal-description').textContent = book.description;
-                document.getElementById('modal-category').textContent = book.category;
-                document.getElementById('modal-image').src = book.imageUrl;
-                document.getElementById('modal-download').href = book.pdfUrl;
+                document.getElementById('modal-title').textContent = book.title || 'No Title';
+                document.getElementById('modal-description').textContent = book.description || 'No Description';
+                document.getElementById('modal-category').textContent = book.category || 'No Category';
+                document.getElementById('modal-image').src = book.imageUrl || 'fallback-image.jpg';
+                document.getElementById('modal-download').href = book.pdfUrl || '#';
+                document.getElementById('modal-download').textContent = book.pdfUrl ? 'Download PDF' : 'No PDF Available';
                 const notesPreview = document.getElementById('modal-notes-preview');
                 if (notesPreview && book.pdfUrl) {
-                    notesPreview.src = book.pdfUrl + '#toolbar=0';
+                    notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH';
+                    notesPreview.style.display = 'block';
+                } else {
+                    notesPreview.style.display = 'none';
                 }
                 const suggestionsDiv = document.getElementById('suggestions');
                 if (suggestionsDiv) {
