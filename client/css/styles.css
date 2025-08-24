@@ -376,6 +376,6 @@ footer {
   }
 
   #modal-notes-preview {
-      height: 200px; // Adjust for mobile
+      height: 200px; /* Adjust for mobile */
   }
 }
