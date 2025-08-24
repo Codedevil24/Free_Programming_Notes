@@ -379,3 +379,76 @@ footer {
       height: 200px; /* Adjust for mobile */
   }
 }
+/* Existing CSS remains the same, with additions for responsiveness and new elements */
+
+#modal-notes-preview {
+  margin-top: 10px;
+}
+
+#suggestions {
+  margin-top: 20px;
+  border-top: 1px solid #ccc;
+  padding-top: 10px;
+}
+
+#suggestions a {
+  display: block;
+  color: #007bff;
+  text-decoration: none;
+  margin: 5px 0;
+}
+
+#suggestions a:hover {
+  text-decoration: underline;
+}
+
+#book-details {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+#back-icon {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 24px;
+  color: #007bff;
+  text-decoration: none;
+}
+
+#back-icon:hover {
+  color: #0056b3;
+}
+
+#download-button {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+#download-button:hover {
+  background-color: #218838;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  #book-details {
+      max-width: 100%;
+      padding: 10px;
+  }
+
+  #modal-notes-preview {
+      height: 200px;
+  }
+
+  #suggestions p {
+      font-size: 14px;
+  }
+}
