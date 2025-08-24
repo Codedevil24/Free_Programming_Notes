@@ -113,6 +113,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <a href="/book-details.html?id=${book._id}" class="view-details">View Details</a>
                             </div>
                         `).join('');
+                        // Explicitly ensure links work
+                        document.querySelectorAll('.view-details').forEach(link => {
+                            link.addEventListener('click', (e) => {
+                                e.preventDefault(); // Prevent default if needed, then manually redirect
+                                window.location.href = link.href;
+                            });
+                        });
                     }
                     return;
                 } catch (err) {
