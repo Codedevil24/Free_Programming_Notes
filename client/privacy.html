@@ -4,20 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy and Policy</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <base href="/">
 </head>
 <body>
     <nav class="navbar">
         <div class="menu-icon" id="menu-icon">&#9776;</div>
         <div class="close-icon" id="close-icon">&times;</div>
         <ul id="navbar-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="category.html">Category</a></li>
-            <li class="admin-only" style="display: none;"><a href="admin.html">Admin</a></li>
-            <li><a href="privacy.html">Privacy and Policy</a></li>
-            <li><a href="contact.html">Contact Us</a></li>
-            <li class="admin-login" style="display: block;"><a href="admin.html">Admin Login</a></li>
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/category.html">Category</a></li>
+            <li class="admin-only" style="display: none;"><a href="/admin.html">Admin</a></li>
+            <li><a href="/privacy.html">Privacy and Policy</a></li>
+            <li><a href="/contact.html">Contact Us</a></li>
+            <li class="admin-login" style="display: block;"><a href="/admin.html">Admin Login</a></li>
+            <li class="logout" style="display: none;"><a href="#" id="logout-link">Logout</a></li>
         </ul>
     </nav>
     <header>
@@ -34,12 +36,11 @@
     </footer>
     <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
     <script>
-        // Fallback for jwt-decode if CDN fails
         if (typeof jwt_decode === 'undefined') {
             console.error('jwt-decode CDN failed to load, trying local fallback');
-            document.write('<script src="js/jwt-decode.js"><\/script>');
+            document.write('<script src="/js/jwt-decode.js"><\/script>');
         }
     </script>
-    <script src="js/admin.js"></script>
+    <script src="/js/admin.js"></script>
 </body>
 </html>

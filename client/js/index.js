@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const navbarLinks = document.getElementById('navbar-links');
         const adminLink = navbarLinks.querySelector('.admin-only');
         const adminLoginLink = navbarLinks.querySelector('.admin-login');
+        const logoutLink = navbarLinks.querySelector('.logout'); // Added for logout toggle
         const searchBar = document.getElementById('search-bar');
         const categoryList = document.getElementById('category-list');
         const modal = document.getElementById('book-modal');
@@ -26,26 +27,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.removeItem('token');
                     adminLink.style.display = 'none';
                     adminLoginLink.style.display = 'block';
+                    logoutLink.style.display = 'none';
                 } else {
                     adminLink.style.display = 'block';
                     adminLoginLink.style.display = 'none';
+                    logoutLink.style.display = 'block';
                 }
             } catch (err) {
                 console.error('Token validation error:', err);
                 localStorage.removeItem('token');
                 adminLink.style.display = 'none';
                 adminLoginLink.style.display = 'block';
+                logoutLink.style.display = 'none';
             }
         } else {
             adminLink.style.display = 'none';
             adminLoginLink.style.display = 'block';
+            logoutLink.style.display = 'none';
         }
 
         async function fetchBooksWithRetry(searchQuery = '', category = 'All', retries = 3) {
             for (let i = 0; i < retries; i++) {
                 try {
                     console.log(`Fetching books (attempt ${i + 1})...`);
-                    const response = await fetch('http://localhost:3000/api/books');
+                    const response = await fetch('https://free-programming-notes.onrender.com/api/books');
                     console.log('Fetch response status:', response.status);
                     if (!response.ok) {
                         const errorData = await response.json();

@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navbarLinks = document.getElementById('navbar-links');
     const menuIcon = document.getElementById('menu-icon');
     const closeIcon = document.getElementById('close-icon');
+    const logoutLink = document.getElementById('logout-link');
 
     // Menu Icon Functionality
     menuIcon.addEventListener('click', () => {
@@ -22,6 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
         closeIcon.style.display = 'none';
     });
 
+    // Logout Functionality
+    logoutLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('token');
+        loginForm.style.display = 'block';
+        bookForm.style.display = 'none';
+        bookListSection.style.display = 'none';
+        document.querySelector('.admin-only').style.display = 'none';
+        document.querySelector('.admin-login').style.display = 'block';
+        document.querySelector('.logout').style.display = 'none';
+        alert('Logged out successfully!');
+    });
+
     const token = localStorage.getItem('token');
     if (token) {
         try {
@@ -31,10 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 loginForm.style.display = 'block';
                 bookForm.style.display = 'none';
                 bookListSection.style.display = 'none';
+                document.querySelector('.admin-only').style.display = 'none';
+                document.querySelector('.admin-login').style.display = 'block';
+                document.querySelector('.logout').style.display = 'none';
             } else {
                 loginForm.style.display = 'none';
                 bookForm.style.display = 'block';
                 bookListSection.style.display = 'block';
+                document.querySelector('.admin-only').style.display = 'block';
+                document.querySelector('.admin-login').style.display = 'none';
+                document.querySelector('.logout').style.display = 'block';
                 fetchBooks();
             }
         } catch (err) {
@@ -43,18 +63,24 @@ document.addEventListener('DOMContentLoaded', () => {
             loginForm.style.display = 'block';
             bookForm.style.display = 'none';
             bookListSection.style.display = 'none';
+            document.querySelector('.admin-only').style.display = 'none';
+            document.querySelector('.admin-login').style.display = 'block';
+            document.querySelector('.logout').style.display = 'none';
         }
     } else {
         loginForm.style.display = 'block';
         bookForm.style.display = 'none';
         bookListSection.style.display = 'none';
+        document.querySelector('.admin-only').style.display = 'none';
+        document.querySelector('.admin-login').style.display = 'block';
+        document.querySelector('.logout').style.display = 'none';
     }
 
     async function loginWithRetry(username, password, retries = 3) {
         for (let i = 0; i < retries; i++) {
             try {
                 console.log(`Login attempt ${i + 1}:`, { username, password: password ? 'provided' : 'missing' });
-                const response = await fetch('http://localhost:3000/api/auth/login', {
+                const response = await fetch('https://free-programming-notes.onrender.com/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
@@ -84,6 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
             loginForm.style.display = 'none';
             bookForm.style.display = 'block';
             bookListSection.style.display = 'block';
+            document.querySelector('.admin-only').style.display = 'block';
+            document.querySelector('.admin-login').style.display = 'none';
+            document.querySelector('.logout').style.display = 'block';
             fetchBooks();
             alert('Login successful!');
         } catch (err) {
@@ -94,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchBooks() {
         try {
-            const response = await fetch('http://localhost:3000/api/books', {
+            const response = await fetch('https://free-programming-notes.onrender.com/api/books', {
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
             if (!response.ok) {
@@ -119,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.editBook = async (id, title, description, category) => {
         console.log('Edit book:', id);
-        // Create edit form dynamically
         const editForm = document.createElement('form');
         editForm.id = 'edit-book-form';
         editForm.innerHTML = `
@@ -140,13 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
         bookListSection.appendChild(editForm);
         bookForm.style.display = 'none';
 
-        // Cancel button functionality
         document.getElementById('cancel-edit').addEventListener('click', () => {
             editForm.remove();
             bookForm.style.display = 'block';
         });
 
-        // Form submission for update
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData();
@@ -159,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pdfFile) formData.append('pdf', pdfFile);
 
             try {
-                const response = await fetch(`http://localhost:3000/api/books/${id}`, {
+                const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
                     method: 'PUT',
                     headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
@@ -182,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.deleteBook = async (id) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/books/${id}`, {
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             });
@@ -199,10 +225,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const formData = new FormData(bookForm);
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'http://localhost:3000/api/books', true);
+        xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
         xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
 
-        // Progress Bar Logic
         const progressContainer = document.querySelector('.progress-container');
         progressContainer.style.display = 'block';
         xhr.upload.onprogress = (event) => {

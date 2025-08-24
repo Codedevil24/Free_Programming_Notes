@@ -10,7 +10,7 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-    origin: ['http://127.0.0.1:8080', 'http://127.0.0.1:55630'],
+    origin: ['https://free-programming-notes-1.onrender.com'], // Updated to frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
