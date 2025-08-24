@@ -10,7 +10,11 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
+<<<<<<< HEAD
     origin: ['https://free-programming-notes-1.onrender.com'], // Updated to frontend URL
+=======
+    origin: ['https://free-programming-notes-1.onrender.com'], // Frontend URL add kiya
+>>>>>>> 2638e5f9f0ea0244d17e4bf21fcc1290c22e5c5b
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
