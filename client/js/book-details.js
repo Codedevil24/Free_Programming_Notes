@@ -81,36 +81,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchBookDetails() {
         try {
-            const response = await fetch('https://free-programming-notes.onrender.com/api/books');
-            if (!response.ok) throw new Error('Failed to fetch books');
-            const allBooks = await response.json();
-            const book = allBooks.find(b => b._id === bookId);
-
-            if (book) {
-                bookTitle.textContent = book.title;
-                bookImage.src = book.imageUrl || 'fallback-image.jpg';
-                bookDescription.textContent = book.description;
-                bookCategory.textContent = book.category;
-                notesPreview.src = book.pdfUrl + '#toolbar=0&view=FitH'; // No auto-download
-                downloadButton.onclick = () => {
-                    const a = document.createElement('a');
-                    a.href = book.pdfUrl;
-                    a.download = book.title + '.pdf';
-                    a.click();
-                };
-
-                // Random suggestions (4-5)
-                const otherBooks = allBooks.filter(b => b._id !== bookId);
-                const randomSuggestions = getRandomItems(otherBooks, 5).slice(0, 5);
-                suggestionList.innerHTML = randomSuggestions.map(suggestion => `
-                    <p><a href="/book-details.html?id=${suggestion._id}">${suggestion.title}</a></p>
-                `).join('');
-            } else {
-                bookTitle.textContent = 'Book not found';
+            const headers = {};
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
+            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${bookId}`, { headers });
+            if (!response.ok) throw new Error(`Failed to fetch book details: ${response.status} ${response.statusText}`);
+            const book = await response.json();
+            bookTitle.textContent = book.title || 'Untitled';
+            bookImage.src = book.image || 'https://placehold.co/100x100';
+            bookDescription.textContent = book.description || 'No description';
+            bookCategory.textContent = book.category || 'Uncategorized';
+            notesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
+            if (downloadButton) {
+                downloadButton.onclick = () => {
+                    if (book.pdf) {
+                        const a = document.createElement('a');
+                        a.href = book.pdf;
+                        a.download = `${book.title}.pdf`;
+                        a.click();
+                    }
+                };
+            }
+
+            // Fetch all books for suggestions
+            const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books', { headers });
+            if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
+            const allBooks = await allBooksResponse.json();
+            const otherBooks = allBooks.filter(b => b._id !== bookId);
+            const randomSuggestions = getRandomItems(otherBooks, 5).slice(0, 5);
+            suggestionList.innerHTML = randomSuggestions.map(suggestion => `
+                <p><a href="/book-details.html?id=${suggestion._id}">${suggestion.title}</a></p>
+            `).join('');
         } catch (err) {
             console.error('Error fetching book details:', err);
             bookTitle.textContent = 'Error loading book details';
+            bookImage.src = 'https://placehold.co/100x100';
+            bookDescription.textContent = err.message;
+            bookCategory.textContent = 'N/A';
+            notesPreview.src = '';
+            if (downloadButton) downloadButton.onclick = null;
+            suggestionList.innerHTML = '<p>No suggestions available</p>';
         }
     }
 

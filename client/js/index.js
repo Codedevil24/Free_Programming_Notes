@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Show Book Details in Modal
+    // Show Book Details by Redirecting to a New Page
     window.showBookDetails = async (id) => {
         try {
             const headers = {};
@@ -123,47 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers['Authorization'] = `Bearer ${token}`; // Add token if required
             }
             const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, { headers });
-            if (!response.ok) throw new Error('Failed to fetch book details: ' + response.statusText);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch book details: ${response.status} ${response.statusText}`);
+            }
             const book = await response.json();
             console.log('Book details fetched:', book); // Debug log
-            if (modalTitle) modalTitle.textContent = book.title || 'Untitled';
-            if (modalDescription) modalDescription.textContent = book.description || 'No description available';
-            if (modalCategory) modalCategory.textContent = book.category || 'Uncategorized';
-            if (modalImage) {
-                modalImage.src = book.image || 'https://placehold.co/100x100';
-                modalImage.onerror = () => { modalImage.onerror = null; modalImage.src = 'https://placehold.co/100x100'; };
-            }
-            if (modalNotesPreview) modalNotesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
-            if (modalDownload) {
-                modalDownload.href = book.pdf || '#';
-                modalDownload.textContent = book.pdf ? 'Download PDF' : 'No PDF Available';
-            }
-
-            // Fetch and display suggestions
-            const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books', { headers });
-            if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
-            const allBooks = await allBooksResponse.json();
-            const otherBooks = allBooks.filter(b => b._id !== id);
-            const randomSuggestions = getRandomItems(otherBooks, 5).slice(0, 5);
-            if (suggestions) suggestions.innerHTML = randomSuggestions.map(suggestion => `
-                <p><a href="#" onclick="showBookDetails('${suggestion._id}')">${suggestion.title}</a></p>
-            `).join('');
-
-            if (bookModal) bookModal.style.display = 'block';
+            // Redirect to book-details.html with ID
+            window.location.href = `/book-details.html?id=${id}`;
         } catch (err) {
             console.error('Error loading book details:', err);
-            if (modalTitle) modalTitle.textContent = 'Error loading details';
-            if (modalDescription) modalDescription.textContent = err.message;
-            if (modalImage) {
-                modalImage.src = 'https://placehold.co/100x100';
-                modalImage.onerror = null;
-            }
-            if (modalNotesPreview) modalNotesPreview.src = '';
-            if (modalDownload) {
-                modalDownload.href = '#';
-                modalDownload.textContent = 'No PDF Available';
-            }
-            if (bookModal) bookModal.style.display = 'block';
+            alert('Book not found. Please try again or contact support.'); // Notify user
+            // Stay on current page on error
         }
     };
 
