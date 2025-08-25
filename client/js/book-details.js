@@ -93,7 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
             bookImage.src = book.imageUrl || 'https://placehold.co/100x100';
             bookDescription.textContent = book.description || 'No description';
             bookCategory.textContent = book.category || 'Uncategorized';
+            // Update iframe with allow-scripts to handle Google Viewer scripts
             notesPreview.src = book.pdfUrl ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdfUrl)}&embedded=true` : '';
+            notesPreview.setAttribute('sandbox', 'allow-scripts allow-same-origin'); // Added allow-scripts
             if (downloadButton) {
                 downloadButton.onclick = () => {
                     if (book.pdfUrl) {

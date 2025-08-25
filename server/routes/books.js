@@ -39,11 +39,15 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// Get all books
+// Get all books with category filter
 router.get('/', async (req, res) => {
     try {
         console.log('Fetching books from MongoDB (test database)...');
-        const books = await Book.find({ $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] }).lean();
+        let query = { $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] };
+        if (req.query.category && req.query.category !== 'All') {
+            query.category = req.query.category;
+        }
+        const books = await Book.find(query).lean();
         console.log('Query result:', books);
         if (!books || books.length === 0) {
             console.log('No books found with isDeleted: false or missing isDeleted');

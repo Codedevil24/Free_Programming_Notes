@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const headers = {};
             const token = localStorage.getItem('token');
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`; // Add token if required
+                headers['Authorization'] = `Bearer ${token}`; // Fixed syntax
             }
             const response = await fetch(`https://free-programming-notes.onrender.com/api/books?category=${category}`, { headers });
             if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
@@ -97,13 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="book" data-id="${book._id}">
                         <h3>${book.title}</h3>
                         <p>${book.description}</p>
-                        <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                        <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
+                        <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
                         <button onclick="showBookDetails('${book._id}')">View</button>
                     </div>
                 `).join('');
             } else {
                 console.error('bookList element not found');
             }
+            return books; // Return books for search
         } catch (err) {
             console.error('Error fetching books:', err);
             if (bookList) {
@@ -111,10 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.error('bookList element not found to display error');
             }
+            return []; // Return empty array on error
         }
     }
 
-    // Show Book Details by Redirecting to a New Page
+    // Show Book Details
     window.showBookDetails = async (id) => {
         try {
             const headers = {};
@@ -128,12 +131,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const book = await response.json();
             console.log('Book details fetched:', book); // Debug log
-            // Redirect to book-details.html with ID
-            window.location.href = `/book-details.html?id=${id}`;
+            if (bookModal && modalTitle && modalDescription && modalCategory && modalImage && modalNotesPreview && modalDownload && suggestions) {
+                modalTitle.textContent = book.title || 'Untitled';
+                modalDescription.textContent = book.description || 'No description';
+                modalCategory.textContent = book.category || 'Uncategorized';
+                modalImage.src = book.imageUrl || 'https://placehold.co/100x100';
+                modalNotesPreview.src = book.pdfUrl ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdfUrl)}&embedded=true` : '';
+                modalDownload.href = book.pdfUrl || '#';
+                modalDownload.style.display = book.pdfUrl ? 'block' : 'none';
+                const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books', { headers });
+                if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
+                const allBooks = await allBooksResponse.json();
+                const otherBooks = allBooks.filter(b => b._id !== id);
+                const randomSuggestions = getRandomItems(otherBooks, 3);
+                suggestions.innerHTML = randomSuggestions.map(s => `
+                    <p><a href="/book-details.html?id=${s._id}">${s.title}</a></p>
+                `).join('');
+                bookModal.style.display = 'block';
+            }
         } catch (err) {
             console.error('Error loading book details:', err);
-            alert('Book not found. Please try again or contact support.'); // Notify user
-            // Stay on current page on error
+            alert('Book not found. Please try again or contact support.');
         }
     };
 
@@ -152,26 +170,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Search Functionality
     if (searchBar) {
-        searchBar.addEventListener('input', (e) => {
+        searchBar.addEventListener('input', async (e) => {
             const query = e.target.value.toLowerCase();
-            fetchBooks().then(books => {
-                const filteredBooks = books.filter(book =>
-                    book.title.toLowerCase().includes(query) ||
-                    book.description.toLowerCase().includes(query)
-                );
-                if (bookList) {
-                    bookList.innerHTML = filteredBooks.map(book => `
-                        <div class="book" data-id="${book._id}">
-                            <h3>${book.title}</h3>
-                            <p>${book.description}</p>
-                            <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
-                            <button onclick="showBookDetails('${book._id}')">View</button>
-                        </div>
-                    `).join('');
-                } else {
-                    console.error('bookList element not found for search');
-                }
-            });
+            const books = await fetchBooks(); // Fetch all books
+            const filteredBooks = books.filter(book =>
+                book.title.toLowerCase().includes(query) ||
+                book.description.toLowerCase().includes(query)
+            );
+            if (bookList) {
+                bookList.innerHTML = filteredBooks.map(book => `
+                    <div class="book" data-id="${book._id}">
+                        <h3>${book.title}</h3>
+                        <p>${book.description}</p>
+                        <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
+                        <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                        <button onclick="showBookDetails('${book._id}')">View</button>
+                    </div>
+                `).join('');
+            } else {
+                console.error('bookList element not found for search');
+            }
         });
     }
 
@@ -180,9 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
         categoryList.addEventListener('click', (e) => {
             if (e.target.tagName === 'LI') {
                 const category = e.target.getAttribute('data-category');
-                fetchBooks(category);
-                categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
-                e.target.classList.add('active');
+                fetchBooks(category).then(() => {
+                    categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+                    e.target.classList.add('active');
+                });
             }
         });
     }
