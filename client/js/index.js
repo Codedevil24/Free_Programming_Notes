@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Show Book Details
+    // Show Book Details by Redirecting to a New Page
     window.showBookDetails = async (id) => {
         try {
             const headers = {};
@@ -131,31 +131,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const book = await response.json();
             console.log('Book details fetched:', book); // Debug log
-            if (bookModal && modalTitle && modalDescription && modalCategory && modalImage && modalNotesPreview && modalDownload && suggestions) {
-                modalTitle.textContent = book.title || 'Untitled';
-                modalDescription.textContent = book.description || 'No description';
-                modalCategory.textContent = book.category || 'Uncategorized';
-                modalImage.src = book.imageUrl || 'https://placehold.co/100x100';
-                modalNotesPreview.src = book.pdfUrl ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdfUrl)}&embedded=true` : '';
-                modalDownload.href = book.pdfUrl || '#';
-                modalDownload.style.display = book.pdfUrl ? 'block' : 'none';
-                const allBooksResponse = await fetch('https://free-programming-notes.onrender.com/api/books', { headers });
-                if (!allBooksResponse.ok) throw new Error('Failed to fetch all books');
-                const allBooks = await allBooksResponse.json();
-                const otherBooks = allBooks.filter(b => b._id !== id);
-                const randomSuggestions = getRandomItems(otherBooks, 3);
-                suggestions.innerHTML = randomSuggestions.map(s => `
-                    <p><a href="/book-details.html?id=${s._id}">${s.title}</a></p>
-                `).join('');
-                bookModal.style.display = 'block';
-            }
+            // Redirect to book-details.html with ID
+            window.location.href = `/book-details.html?id=${id}`;
         } catch (err) {
             console.error('Error loading book details:', err);
-            alert('Book not found. Please try again or contact support.');
+            alert('Book not found. Please try again or contact support.'); // Notify user
+            // Stay on current page on error
         }
     };
 
-    // Close Modal
+    // Close Modal (keeping for consistency, though not used)
     if (closeModal) {
         closeModal.addEventListener('click', () => {
             if (bookModal) bookModal.style.display = 'none';
