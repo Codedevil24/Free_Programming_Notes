@@ -90,15 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`Failed to fetch book details: ${response.status} ${response.statusText}`);
             const book = await response.json();
             bookTitle.textContent = book.title || 'Untitled';
-            bookImage.src = book.image || 'https://placehold.co/100x100';
+            bookImage.src = book.imageUrl || 'https://placehold.co/100x100';
             bookDescription.textContent = book.description || 'No description';
             bookCategory.textContent = book.category || 'Uncategorized';
-            notesPreview.src = book.pdf ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdf)}&embedded=true` : '';
+            notesPreview.src = book.pdfUrl ? `https://docs.google.com/viewer?url=${encodeURIComponent(book.pdfUrl)}&embedded=true` : '';
             if (downloadButton) {
                 downloadButton.onclick = () => {
-                    if (book.pdf) {
+                    if (book.pdfUrl) {
                         const a = document.createElement('a');
-                        a.href = book.pdf;
+                        a.href = book.pdfUrl;
                         a.download = `${book.title}.pdf`;
                         a.click();
                     }

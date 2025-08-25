@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="book" data-id="${book._id}">
                         <h3>${book.title}</h3>
                         <p>${book.description}</p>
-                        <img src="${book.image || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                        <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
                         <button onclick="showBookDetails('${book._id}')">View</button>
                     </div>
                 `).join('');
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="book" data-id="${book._id}">
                             <h3>${book.title}</h3>
                             <p>${book.description}</p>
-                            <img src="${book.image || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                            <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 100px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
                             <button onclick="showBookDetails('${book._id}')">View</button>
                         </div>
                     `).join('');

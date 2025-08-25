@@ -56,6 +56,23 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get a specific book by ID
+router.get('/:id', async (req, res) => {
+    try {
+        console.log('Fetching book with ID:', req.params.id);
+        const book = await Book.findOne({ _id: req.params.id, $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }] }).lean();
+        if (!book) {
+            console.log('Book not found for ID:', req.params.id);
+            return res.status(404).json({ message: 'Book not found' });
+        }
+        console.log('Book fetched:', book);
+        res.json(book);
+    } catch (err) {
+        console.error('Error fetching book:', err.message, err.stack);
+        res.status(500).json({ message: 'Server error', error: err.message });
+    }
+});
+
 // Add a new book (admin only)
 router.post('/', authMiddleware, upload.fields([{ name: 'image' }, { name: 'pdf' }]), async (req, res) => {
     try {
