@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminLoginLink = navbarLinks ? navbarLinks.querySelector('.admin-login') : null;
     const logoutLink = navbarLinks ? document.getElementById('logout-link') : null;
   
+    // Added: Set initial menu state explicitly to ensure proper display
+    const menuIcon = document.getElementById('menu-icon');
+    const closeIcon = document.getElementById('close-icon');
+    if (menuIcon) menuIcon.style.display = 'block';
+    if (closeIcon) closeIcon.style.display = 'none';
+    if (navbarLinks) navbarLinks.classList.remove('show');
+  
     // JWT Authentication
     let jwt_decode = window.jwt_decode || null;
     if (!jwt_decode) {
@@ -46,8 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     // Menu Toggle Functionality
-    const menuIcon = document.getElementById('menu-icon');
-    const closeIcon = document.getElementById('close-icon');
     if (menuIcon && closeIcon && navbarLinks) {
       menuIcon.addEventListener('click', () => {
         navbarLinks.classList.add('show');
@@ -58,6 +63,16 @@ document.addEventListener('DOMContentLoaded', () => {
         navbarLinks.classList.remove('show');
         menuIcon.style.display = 'block';
         closeIcon.style.display = 'none';
+      });
+  
+      // Added: Close menu when clicking any link in the navbar (fixes menu staying open after navigation)
+      const navLinks = navbarLinks.querySelectorAll('a');
+      navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          navbarLinks.classList.remove('show');
+          menuIcon.style.display = 'block';
+          closeIcon.style.display = 'none';
+        });
       });
     }
   
