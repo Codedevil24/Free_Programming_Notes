@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Details</title>
+    <title>Code Devil - Book Details</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/book-details.css">
     <link rel="icon" href="favicon1.ico" type="image/x-icon">
+    <!-- JWT Decode Library -->
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -16,37 +18,67 @@
                 <a href="index.html">Home</a>
                 <a href="courses.html">Courses</a>
                 <a href="category.html">Categories</a>
-                <a href="privacy.html">Privacy & Policy</a>
                 <a href="contact.html">Contact</a>
-                <a href="admin.html">Admin</a>
-                </div>
+                <a href="admin.html" class="admin-only" style="display: none;">Admin</a>
+                <a href="#" class="logout" id="logout-link" style="display: none;">Logout</a>
+            </div>
             <div class="hamburger" id="menu-icon">☰</div>
-            <div class="close-icon" id="close-icon">✖</div>
+            <div class="close-icon" id="close-icon">✖️</div>
         </div>
     </nav>
 
     <main>
         <div id="book-details">
             <div class="book-header">
-                <h3>Loading...</h3>
-                <div id="book-image-container"></div>
+                <h3 id="book-title">Loading...</h3>
+                
+                <!-- Book Image Container -->
+                <div class="book-image-container">
+                    <img id="book-image" src="" alt="Book Cover" style="display: none;" />
+                </div>
+                
+                <!-- Book Meta Information -->
                 <div class="book-meta">
-                    <strong>Category:</strong> <span id="book-category"></span>
+                    <strong>Category:</strong> <span id="book-category">Loading...</span>
                 </div>
+                
+                <!-- Book Description -->
                 <div class="book-description">
-                    <p id="book-description"></p>
+                    <p id="book-description">Loading description...</p>
                 </div>
+
+                <!-- Notes Preview Section -->
+                <div class="notes-preview-section">
+                    <h4>📖 Book Preview</h4>
+                    <iframe id="notes-preview" 
+                            src="" 
+                            width="100%" 
+                            height="400" 
+                            frameborder="0"
+                            sandbox="allow-scripts allow-same-origin"
+                            style="border-radius: 8px; border: 2px solid #e9ecef; display: none;">
+                    </iframe>
+                    <p id="notes-preview-message" style="text-align: center; padding: 20px; color: #6c757d;">
+                        PDF preview will load here...
+                    </p>
+                </div>
+                
+                <!-- Download Section -->
                 <div class="book-download-section">
-                    <a href="#" id="download-button" target="_blank">Download PDF</a>
+                    <button id="download-button" class="download-btn">📥 Download PDF</button>
                 </div>
             </div>
         </div>
 
+        <!-- Suggestions Section -->
         <div id="suggestions">
-            <h4>Suggestions</h4>
-            <div class="suggestions-grid" id="suggestions-list"></div>
+            <h4>📚 Related Books</h4>
+            <div class="suggestions-grid">
+                <ul id="suggestion-list" style="list-style: none; padding: 0; margin: 0;"></ul>
+            </div>
         </div>
 
+        <!-- Back Button -->
         <a href="#" class="back-btn" id="back-icon" onclick="window.history.back()">← Back</a>
     </main>
 
