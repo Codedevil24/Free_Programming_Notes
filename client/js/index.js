@@ -16,6 +16,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeIcon = document.getElementById('close-icon');
     const logoutLink = document.getElementById('logout-link');
 
+    // Set initial menu state
+if (menuIcon) menuIcon.style.display = 'block';
+if (closeIcon) closeIcon.style.display = 'none';
+if (navbarLinks) navbarLinks.classList.remove('show');
+
+// Close menu on link click
+if (navbarLinks) {
+  const navLinks = navbarLinks.querySelectorAll('a');
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      navbarLinks.classList.remove('show');
+      menuIcon.style.display = 'block';
+      closeIcon.style.display = 'none';
+    });
+  });
+}
+
     // JWT Authentication
     let jwt_decode = window.jwt_decode;
     if (!jwt_decode && typeof window.jwt_decode === 'undefined') {
