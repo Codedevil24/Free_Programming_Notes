@@ -201,4 +201,149 @@ async function uploadToTelegram(file, type) {
   return `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.data.result.file_path}`;
 }
 
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const FormData = require('form-data');
+const axios = require('axios');
+const fs = require('fs');
+const Course = require('../models/Course');
+require('dotenv').config();
+
+// Multer storage (temporary)
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = 'tmp/';
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
+
+// Utility: upload a file to Telegram and return its URL
+async function uploadToTelegram(file, type) {
+  const form = new FormData();
+  form.append('chat_id', process.env.TELEGRAM_CHAT_ID);
+  form.append(type === 'document' ? 'document' : type, fs.createReadStream(file.path));
+
+  const endpoint = type === 'video' ? 'sendVideo' : (type === 'document' ? 'sendDocument' : 'sendPhoto');
+  const res = await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${endpoint}`, form, {
+    headers: form.getHeaders()
+  });
+  const result = type === 'photo'
+    ? res.data.result.photo.pop().file_id
+    : (type === 'video' ? res.data.result.video.file_id : res.data.result.document.file_id);
+
+  const fileInfo = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${result}`);
+  const url = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.data.result.file_path}`;
+
+  // Cleanup
+  fs.unlinkSync(file.path);
+  return url;
+}
+
+// Add Course
+router.post('/add-course', upload.any(), async (req, res) => {
+  try {
+    const { title, description, chapters } = req.body;
+    if (!title) return res.status(400).json({ message: 'Title is required' });
+
+    const parsedChapters = JSON.parse(chapters || '[]');
+    // Handle main course files
+    let thumbnailUrl, videoUrl, resourcesUrl;
+    for (const file of req.files) {
+      if (file.fieldname === 'thumbnailFile') {
+        thumbnailUrl = await uploadToTelegram(file, 'photo');
+      }
+      if (file.fieldname === 'videoFile') {
+        videoUrl = await uploadToTelegram(file, 'video');
+      }
+      if (file.fieldname === 'resourcesFile') {
+        resourcesUrl = await uploadToTelegram(file, 'document');
+      }
+    }
+
+    // Handle chapter/module file uploads
+    for (const chap of parsedChapters) {
+      for (const mod of chap.modules) {
+        if (mod.type === 'file') {
+          for (const field of ['thumbnailFile', 'videoFile', 'resourcesFile']) {
+            const file = req.files.find(f => f.fieldname === mod[field]);
+            if (file) {
+              const url = await uploadToTelegram(file, field === 'videoFile' ? 'video' : 'document');
+              if (field === 'thumbnailFile') mod.thumbnail = url;
+              if (field === 'videoFile') mod.videoUrl = url;
+              if (field === 'resourcesFile') mod.resources = url;
+            }
+          }
+        }
+      }
+    }
+
+    const course = new Course({
+      title,
+      description,
+      thumbnail: thumbnailUrl,
+      videoUrl,
+      resources: resourcesUrl,
+      chapters: parsedChapters
+    });
+    await course.save();
+    res.status(201).json({ message: 'Course created', course });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Update Course (similar handling)
+router.put('/:id', upload.any(), async (req, res) => {
+  try {
+    const { title, description, chapters } = req.body;
+    const parsedChapters = JSON.parse(chapters || '[]');
+    const updates = { title, description };
+
+    // Process newly uploaded main files
+    for (const file of req.files) {
+      if (file.fieldname === 'thumbnailFile') {
+        updates.thumbnail = await uploadToTelegram(file, 'photo');
+      }
+      if (file.fieldname === 'videoFile') {
+        updates.videoUrl = await uploadToTelegram(file, 'video');
+      }
+      if (file.fieldname === 'resourcesFile') {
+        updates.resources = await uploadToTelegram(file, 'document');
+      }
+    }
+
+    // Process modules same as above
+    for (const chap of parsedChapters) {
+      for (const mod of chap.modules) {
+        if (mod.type === 'file') {
+          for (const field of ['thumbnailFile', 'videoFile', 'resourcesFile']) {
+            const file = req.files.find(f => f.fieldname === mod[field]);
+            if (file) {
+              const url = await uploadToTelegram(file, field === 'videoFile' ? 'video' : 'document');
+              if (field === 'thumbnailFile') mod.thumbnail = url;
+              if (field === 'videoFile') mod.videoUrl = url;
+              if (field === 'resourcesFile') mod.resources = url;
+            }
+          }
+        }
+      }
+    }
+    updates.chapters = parsedChapters;
+
+    const updated = await Course.findByIdAndUpdate(req.params.id, updates, { new: true });
+    res.json({ message: 'Course updated', course: updated });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+module.exports = router;
+
+
 module.exports = router;
