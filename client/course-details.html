@@ -1,57 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Code Devil - Course Details</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <base href="/">
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
     <nav class="navbar">
-        <div class="menu-icon" id="menu-icon">&#9776;</div>
-        <div class="close-icon" id="close-icon">&times;</div>
-        <ul id="navbar-links">
-            <li><a href="/index.html">Home</a></li>
-            <li><a href="/category.html">Category</a></li>
-            <li><a href="/courses.html">View Courses</a></li> <!-- Added View Courses -->
-            <li class="admin-only" style="display: none;"><a href="/admin.html">Admin</a></li>
-            <li><a href="/privacy.html">Privacy and Policy</a></li>
-            <li><a href="/contact.html">Contact Us</a></li>
-            <li class="admin-login" style="display: block;"><a href="/admin.html">Admin Login</a></li>
-            <li class="logout" style="display: none;"><a href="#" id="logout-link">Logout</a></li>
-        </ul>
+        <div class="navbar-content">
+            <a href="index.html" class="logo">Code Devil</a>
+            <div class="navbar-links" id="navbar-links">
+                <a href="index.html">Home</a>
+                <a href="courses.html">Courses</a>
+                <a href="category.html">Categories</a>
+                <a href="contact.html">Contact</a>
+                <a href="admin.html">Admin</a>
+            </div>
+            <div class="hamburger" id="menu-icon">☰</div>
+            <div class="close-icon" id="close-icon">✖</div>
+        </div>
     </nav>
-    <header>
-        <h1>Code Devil - Course Details</h1>
-    </header>
-    <main>
-        <section id="course-details">
-            <h3 id="course-title">Loading...</h3>
-            <img id="course-thumbnail" alt="Course Thumbnail" style="max-width: 200px;">
-            <p id="course-description"></p>
-            <div id="modules">
-                <h3>Modules</h3>
-                <div id="module-list"></div>
-            </div>
-            <div id="suggestions">
-                <h4>Suggestions</h4>
-                <div id="suggestion-list"></div>
-            </div>
-            <a href="#" id="back-icon" style="display: block; margin-top: 20px;">&larr; Back</a>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2025 Code Devil. All rights reserved.</p>
-    </footer>
-    <script src="https://unpkg.com/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+
+    <div class="container">
+        <div id="courseDetails"></div>
+
+        <div class="modules-section">
+            <h3>Modules</h3>
+            <div id="modules-list"></div>
+        </div>
+
+        <div class="suggestions">
+            <h4>Suggestions</h4>
+            <div id="suggestions-list"></div>
+        </div>
+
+        <button onclick="window.history.back()" class="back-button">← Back</button>
+    </div>
+
+    <script src="js/course-details.js"></script>
+
     <script>
-        if (typeof jwt_decode === 'undefined') {
-            console.error('jwt-decode CDN failed to load, trying local fallback');
-            document.write('<script src="/js/jwt-decode.js"><\/script>');
-        }
+    async function loadCourse() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get("id");
+
+      const res = await fetch("/admin/api/courses/" + id);
+      const course = await res.json();
+
+      const container = document.getElementById("courseDetails");
+      container.innerHTML = `
+        <h2>${course.title}</h2>
+        <img src="${course.thumbnail}" width="200" />
+        <p>${course.description}</p>
+      `;
+
+      course.chapters.forEach(chap => {
+        const chapDiv = document.createElement("div");
+        chapDiv.innerHTML = `<h3>${chap.title}</h3>`;
+
+        chap.modules.forEach(mod => {
+          chapDiv.innerHTML += `
+            <div style="margin-left:20px">
+              <h4>${mod.title}</h4>
+              <img src="${mod.thumbnail}" width="120" />
+              <p><a href="${mod.videoUrl}" target="_blank">Watch Video</a></p>
+              <p>Resources: <a href="${mod.resources}" target="_blank">${mod.resources}</a></p>
+              <p>Notes: ${mod.notes}</p>
+            </div>
+          `;
+        });
+
+        container.appendChild(chapDiv);
+      });
+    }
+    loadCourse();
     </script>
-    <script src="/js/course-details.js"></script>
 </body>
 </html>

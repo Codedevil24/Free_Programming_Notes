@@ -1,121 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Code Devil - Admin Panel</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <base href="/">
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
     <nav class="navbar">
-        <div class="menu-icon" id="menu-icon">&#9776;</div>
-        <div class="close-icon" id="close-icon">&times;</div>
-        <ul id="navbar-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="category.html">Category</a></li>
-            <li><a href="courses.html">View Courses</a></li>
-            <li class="admin-only" style="display: none;"><a href="admin.html">Admin</a></li>
-            <li><a href="privacy.html">Privacy and Policy</a></li>
-            <li><a href="contact.html">Contact Us</a></li>
-            <li class="admin-login" style="display: block;"><a href="admin.html">Admin Login</a></li>
-            <li class="logout" style="display: none;"><a href="#" id="logout">Logout</a></li>
-        </ul>
+        <div class="navbar-content">
+            <a href="index.html" class="logo">Code Devil</a>
+            <div class="navbar-links" id="navbar-links">
+                <a href="index.html">Home</a>
+                <a href="courses.html">Courses</a>
+                <a href="category.html">Categories</a>
+                <a href="contact.html">Contact</a>
+                <a href="#" class="logout" id="logout">Logout</a>
+            </div>
+            <div class="hamburger" id="menu-icon">☰</div>
+            <div class="close-icon" id="close-icon">✖</div>
+        </div>
     </nav>
-    <header>
-        <h1>Code Devil - Admin Panel</h1>
-    </header>
-    <main>
-        <section class="admin-form">
-            <h2 id="auth-status">Please log in</h2>
+
+    <div class="container">
+        <h1>Admin Panel</h1>
+        <p id="message"></p>
+
+        <div class="admin-login">
+            <h2>Please log in</h2>
             <form id="login-form">
-                <input type="text" id="username" placeholder="Username" required>
-                <input type="password" id="password" placeholder="Password" required>
+                <input type="text" id="username" placeholder="Username" required />
+                <input type="password" id="password" placeholder="Password" required />
                 <button type="submit">Login</button>
             </form>
-            <div id="upload-section" style="display: none;">
-                <select id="upload-type">
-                    <option value="notes">Upload Notes</option>
-                    <option value="courses">Upload Courses</option>
-                </select>
-                <form id="book-form" enctype="multipart/form-data">
-                    <h2>Add New Book</h2>
-                    <input type="text" id="title" name="title" placeholder="Book Title" required>
-                    <textarea id="description" name="description" placeholder="Book Description" required></textarea>
-                    <select id="category" name="category" required>
-                        <option value="" disabled selected>Select Category</option>
+        </div>
+
+        <div class="admin-only" id="upload-section" style="display: none;">
+            <select id="upload-type">
+                <option value="notes">Upload Notes</option>
+                <option value="courses">Upload Courses</option>
+            </select>
+
+            <div id="book-form" class="upload-form">
+                <h2>Add New Book</h2>
+                <form id="notes-form" enctype="multipart/form-data">
+                    <input type="text" name="title" placeholder="Book Title" required />
+                    <textarea name="description" placeholder="Book Description" required></textarea>
+                    <select name="category" required>
+                        <option value="">Select Category</option>
                         <option value="Programming">Programming</option>
                         <option value="Algorithms">Algorithms</option>
                         <option value="Data Science">Data Science</option>
                         <option value="Web Development">Web Development</option>
                     </select>
-                    <input type="file" id="image" name="image" accept="image/*" required>
-                    <input type="file" id="pdf" name="pdf" accept=".pdf" required>
+                    <input type="file" name="image" accept="image/*" required />
+                    <input type="file" name="pdf" accept=".pdf" required />
                     <div class="progress-container" style="display: none;">
                         <div class="progress-bar" id="progress-bar"></div>
                         <div class="progress-text" id="progress-text">0%</div>
                     </div>
                     <button type="submit">Add Book</button>
                 </form>
-                <form id="course-form" enctype="multipart/form-data" style="display: none;">
-                    <h2>Add New Course</h2>
-                    <input type="text" id="course-title" name="title" placeholder="Course Title" required>
-                    <textarea id="course-description" name="description" placeholder="Course Description" required></textarea>
-                    <input type="file" id="thumbnail" name="thumbnail" accept="image/*" required>
-                    <input type="file" id="video" name="video" accept="video/*" required>
-                    <div id="modules-container">
-                        <h3>Modules</h3>
-                        <div class="module">
-                            <input type="text" name="module-title" placeholder="Module Title" required>
-                            <textarea name="module-description" placeholder="Module Description" required></textarea>
-                        </div>
-                    </div>
-                    <button type="button" id="add-module">Add Module</button>
-                    <div class="progress-container" style="display: none;">
-                        <div class="progress-bar" id="progress-bar"></div>
-                        <div class="progress-text" id="progress-text">0%</div>
-                    </div>
-                    <button type="submit">Add Course</button>
-                </form>
             </div>
-            <section id="book-list-section" style="display: none;">
-                <h2>Manage Books</h2>
-                <input type="text" id="search-bar" placeholder="Search books by title or description">
-                <div id="book-list"></div>
-            </section>
-            <section id="course-list-section" style="display: none;">
-                <h2>Manage Courses</h2>
-                <input type="text" id="course-search-bar" placeholder="Search courses by title or description">
-                <div id="course-list"></div>
-            </section>
-            <p id="message"></p>
-        </section>
-    </main>
-    <div class="modal" id="book-modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal" id="close-modal">&times;</span>
-            <h3 id="modal-title"></h3>
-            <p id="modal-description"></p>
-            <p><strong>Category:</strong> <span id="modal-category"></span></p>
-            <img id="modal-image" alt="Book Image" style="max-width: 200px;">
-            <a id="modal-download" href="#" target="_blank">Download PDF</a>
+
+            <div id="course-form" class="upload-form" style="display: none;">
+                <h2>Add New Course</h2>
+                <form id="courseForm">
+                    <input type="text" name="title" placeholder="Course Title" required />
+                    <textarea name="description" placeholder="Course Description"></textarea>
+                    <input type="text" name="thumbnail" placeholder="Course Thumbnail URL" />
+
+                    <div id="chaptersContainer"></div>
+                    <button type="button" onclick="addChapter()">+ Add Chapter</button>
+
+                    <br /><br />
+                    <button type="submit">Save Course</button>
+                </form>
+
+                <div class="progress-container" style="display: none;">
+                    <div class="progress-bar" id="progress-bar"></div>
+                    <div class="progress-text" id="progress-text">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="book-list-section" class="admin-only" style="display: none;">
+            <h2>Manage Books</h2>
+            <div id="book-list"></div>
+        </div>
+
+        <div id="course-list-section" class="admin-only" style="display: none;">
+            <h2>Manage Courses</h2>
+            <div id="course-list"></div>
         </div>
     </div>
-    <footer>
-        <p>&copy; 2025 Code Devil. All rights reserved.</p>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-    <script>
-        if (typeof jwt_decode === 'undefined') {
-            console.error('jwt-decode CDN failed to load, falling back to local');
-            const script = document.createElement('script');
-            script.src = '/js/jwt-decode.js';
-            script.onload = () => console.log('Local jwt-decode loaded');
-            script.onerror = () => console.error('Local jwt-decode failed to load');
-            document.body.appendChild(script);
-        }
-    </script>
+
+    <!-- Book Details Modal -->
+    <div class="modal" id="bookModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modal-title"></h2>
+            <p><strong>Category:</strong> <span id="modal-category"></span></p>
+            <p id="modal-description"></p>
+            <a href="#" id="modal-download" target="_blank">Download PDF</a>
+        </div>
+    </div>
+
     <script src="js/admin.js"></script>
 </body>
 </html>
