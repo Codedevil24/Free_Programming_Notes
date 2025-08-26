@@ -1,78 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Devil</title>
-    <link rel="stylesheet" href="/css/styles.css">
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <base href="/">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Code Devil</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/index-books.css" />
+  <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
-    <nav class="navbar">
-        <div class="menu-icon" id="menu-icon">&#9776;</div>
-        <div class="close-icon" id="close-icon">&times;</div>
-        <ul id="navbar-links">
-            <li><a href="/index.html">Home</a></li>
-            <li><a href="/category.html">Category</a></li>
-            <li><a href="/courses.html">View Courses</a></li>
-            <li class="admin-only" style="display: none;"><a href="/admin.html">Admin</a></li>
-            <li><a href="/privacy.html">Privacy and Policy</a></li>
-            <li><a href="/contact.html">Contact Us</a></li>
-            <li class="admin-login" style="display: block;"><a href="/admin.html">Admin Login</a></li>
-            <li class="logout" style="display: none;"><a href="#" id="logout-link">Logout</a></li>
-        </ul>
-    </nav>
-    <header>
-        <h1>Code Devil</h1>
-    </header>
-    <main>
-        <section id="category-section">
-            <h2>Categories</h2>
-            <ul id="category-list">
-                <li data-category="All" class="active">All</li>
-                <li data-category="Programming">Programming</li>
-                <li data-category="Algorithms">Algorithms</li>
-                <li data-category="Data Science">Data Science</li>
-                <li data-category="Web Development">Web Development</li>
-            </ul>
-        </section>
-        <section id="books">
-            <h2>Available Books</h2>
-            <input type="text" id="search-bar" placeholder="Search books by title or description">
-            <div id="book-list"></div>
-        </section>
-        <section id="courses-section">
-            <h2>Courses</h2>
-            <a href="/courses.html" class="courses-link">View Courses</a>
-        </section>
-    </main>
-    <div class="modal" id="book-modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-modal" id="close-modal">&times;</span>
-            <h3 id="modal-title"></h3>
-            <p id="modal-description"></p>
-            <p><strong>Category:</strong> <span id="modal-category"></span></p>
-            <img id="modal-image" alt="Book Image" style="max-width: 200px;">
-            <iframe id="modal-notes-preview" style="width: 100%; height: 300px; border: none;" sandbox="allow-same-origin"></iframe>
-            <a id="modal-download" href="#" target="_blank">Download PDF</a>
-            <div id="suggestions"></div>
-        </div>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="index.html" class="logo">Code Devil</a>
+      <div class="navbar-links" id="navbar-links">
+        <a href="index.html">Home</a>
+        <a href="courses.html">Courses</a>
+        <a href="category.html">Categories</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div class="hamburger" id="menu-icon">☰</div>
+      <div class="close-icon" id="close-icon">✖</div>
     </div>
-    <footer>
-        <p>&copy; 2025 Code Devil. All rights reserved.</p>
-    </footer>
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
-    <script>
-        if (typeof jwt_decode === 'undefined') {
-            console.error('jwt-decode CDN failed to load, falling back to local');
-            const script = document.createElement('script');
-            script.src = '/js/jwt-decode.js';
-            script.onload = () => console.log('Local jwt-decode loaded');
-            script.onerror = () => console.error('Local jwt-decode failed to load');
-            document.body.appendChild(script);
-        }
-    </script>
-    <script src="/js/index.js"></script>
+  </nav>
+
+  <main>
+    <header>
+      <h1>Free Programming Notes</h1>
+      <p>Your gateway to comprehensive programming resources</p>
+    </header>
+
+    <div id="category-section">
+      <h2>Categories</h2>
+      <ul id="category-list">
+        <li class="active"><a href="#" onclick="filterBooks('all')">All</a></li>
+        <li><a href="#" onclick="filterBooks('Programming')">Programming</a></li>
+        <li><a href="#" onclick="filterBooks('Algorithms')">Algorithms</a></li>
+        <li><a href="#" onclick="filterBooks('Data Science')">Data Science</a></li>
+        <li><a href="#" onclick="filterBooks('Web Development')">Web Development</a></li>
+      </ul>
+    </div>
+
+    <input type="text" id="search-bar" placeholder="Search books..." />
+
+    <div id="book-list"></div>
+
+    <section id="courses-section">
+      <h2>Courses</h2>
+      <p>Explore our comprehensive programming courses</p>
+      <a href="courses.html" class="courses-link">View Courses</a>
+    </section>
+  </main>
+
+  <div class="modal" id="bookModal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3 id="modal-title"></h3>
+      <img id="modal-image" alt="" />
+      <p><strong>Category:</strong> <span id="modal-category"></span></p>
+      <p id="modal-description"></p>
+      <div id="modal-notes-preview"></div>
+      <div id="suggestions">
+        <h4>Suggestions</h4>
+        <div id="suggestions-list"></div>
+      </div>
+      <a href="#" id="modal-download" target="_blank">Download PDF</a>
+    </div>
+  </div>
+
+  <script src="js/index.js"></script>
 </body>
 </html>
