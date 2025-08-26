@@ -1,96 +1,110 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const courseList = document.getElementById('course-list');
-    const searchBar = document.getElementById('search-bar');
-    let allCourses = [];
-
-    // JWT Authentication (same as other pages)
-    const token = localStorage.getItem('token');
-    if (token) {
-        try {
-            const decoded = jwt_decode(token);
-            const now = Date.now() / 1000;
-            if (decoded.exp < now) {
-                localStorage.removeItem('token');
-                document.querySelector('.admin-only').style.display = 'none';
-                document.querySelector('.admin-login').style.display = 'block';
-                document.querySelector('.logout').style.display = 'none';
-            } else {
-                document.querySelector('.admin-only').style.display = 'block';
-                document.querySelector('.admin-login').style.display = 'none';
-                document.querySelector('.logout').style.display = 'block';
-            }
-        } catch (err) {
-            console.error('Token validation error:', err);
-            localStorage.removeItem('token');
-            document.querySelector('.admin-only').style.display = 'none';
-            document.querySelector('.admin-login').style.display = 'block';
-            document.querySelector('.logout').style.display = 'none';
-        }
-    }
-
-    // Menu Toggle Functionality
+    const courseGrid = document.getElementById('coursesList');
+    const searchBar = document.getElementById('search-bar'); // if you have a search bar on courses page
+    const navbarLinks = document.getElementById('navbar-links');
     const menuIcon = document.getElementById('menu-icon');
     const closeIcon = document.getElementById('close-icon');
-    const navbarLinks = document.getElementById('navbar-links');
-    if (menuIcon && closeIcon && navbarLinks) {
-        menuIcon.addEventListener('click', () => {
-            navbarLinks.classList.add('show');
-            menuIcon.style.display = 'none';
-            closeIcon.style.display = 'block';
-        });
-
-        closeIcon.addEventListener('click', () => {
-            navbarLinks.classList.remove('show');
-            menuIcon.style.display = 'block';
-            closeIcon.style.display = 'none';
-        });
-    }
-
-    // Logout Functionality
     const logoutLink = document.getElementById('logout-link');
+  
+    // JWT Authentication display toggle
+    function updateAuthDisplay(isAuth) {
+      const adminOnly = document.querySelector('.admin-only');
+      const adminLogin = document.querySelector('.admin-login');
+      const logoutEls = document.querySelectorAll('.logout');
+      if (adminOnly && adminLogin) {
+        adminOnly.style.display = isAuth ? 'block' : 'none';
+        adminLogin.style.display = isAuth ? 'none' : 'block';
+        logoutEls.forEach(el => el.style.display = isAuth ? 'block' : 'none');
+      }
+    }
+  
+    const token = localStorage.getItem('token');
+    if (token && window.jwt_decode) {
+      try {
+        const decoded = jwt_decode(token);
+        if (decoded.exp * 1000 > Date.now()) updateAuthDisplay(true);
+        else { localStorage.removeItem('token'); updateAuthDisplay(false); }
+      } catch {
+        localStorage.removeItem('token');
+        updateAuthDisplay(false);
+      }
+    } else updateAuthDisplay(false);
+  
+    // Navbar toggle
+    if (menuIcon && closeIcon && navbarLinks) {
+      menuIcon.addEventListener('click', () => {
+        navbarLinks.classList.add('show');
+        menuIcon.style.display = 'none';
+        closeIcon.style.display = 'block';
+      });
+      closeIcon.addEventListener('click', () => {
+        navbarLinks.classList.remove('show');
+        menuIcon.style.display = 'block';
+        closeIcon.style.display = 'none';
+      });
+    }
+  
+    // Logout
     if (logoutLink) {
-        logoutLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('token');
-            document.querySelector('.admin-only').style.display = 'none';
-            document.querySelector('.admin-login').style.display = 'block';
-            logoutLink.style.display = 'none';
-            alert('Logged out successfully!');
-            window.location.href = '/index.html';
-        });
+      logoutLink.addEventListener('click', e => {
+        e.preventDefault();
+        localStorage.removeItem('token');
+        updateAuthDisplay(false);
+        alert('Logged out successfully!');
+        window.location.href = '/index.html';
+      });
     }
-
+  
+    let allCourses = [];
+  
+    // Fetch courses from server
     async function fetchCourses() {
-        try {
-            const response = await fetch('https://free-programming-notes.onrender.com/api/courses');
-            if (!response.ok) throw new Error('Failed to fetch courses');
-            allCourses = await response.json();
-            renderCourses(allCourses);
-        } catch (err) {
-            console.error('Error fetching courses:', err);
-            courseList.innerHTML = '<p>Error loading courses: ' + err.message + '</p>';
-        }
+      courseGrid.innerHTML = '<div class="loading">Loading courses...</div>';
+      try {
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch('https://free-programming-notes.onrender.com/api/courses', { headers });
+        if (!res.ok) throw new Error(res.statusText);
+        allCourses = await res.json();
+        renderCourses(allCourses);
+      } catch (err) {
+        courseGrid.innerHTML = `<p class="error">Error loading courses: ${err.message}</p>`;
+      }
     }
-
+  
+    // Render courses grid
     function renderCourses(courses) {
-        courseList.innerHTML = courses.map(course => `
-            <div class="course" data-id="${course._id}">
-                <img src="${course.thumbnail || 'fallback-image.jpg'}" alt="${course.title}" style="max-width: 150px;">
-                <h3>${course.title}</h3>
-                <p>${course.description}</p>
-                <a href="/course-details.html?id=${course._id}" class="view-details">View Details</a>
-            </div>
-        `).join('');
+      if (!courses.length) {
+        courseGrid.innerHTML = '<div class="no-courses">No courses available.</div>';
+        return;
+      }
+      courseGrid.innerHTML = courses.map(course => {
+        const chapCount = course.chapters?.length || 0;
+        const modCount = (course.chapters || []).reduce((sum, chap) => sum + (chap.modules?.length || 0), 0);
+        return `
+          <div class="course-card" data-id="${course._id}">
+            ${course.thumbnail ? `<img src="${course.thumbnail}" alt="${course.title}" />` : ''}
+            <h3 class="course-title">${course.title}</h3>
+            <p class="course-description">${course.description || ''}</p>
+            <div class="chapter-count">📚 ${chapCount} Chapter${chapCount!==1?'s':''} • 🎯 ${modCount} Module${modCount!==1?'s':''}</div>
+            <a href="course-details.html?id=${course._id}" class="view-details-btn">View Details →</a>
+          </div>
+        `;
+      }).join('');
     }
-
-    searchBar.addEventListener('input', (e) => {
+  
+    // (Optional) search filter on courses page
+    if (searchBar) {
+      searchBar.addEventListener('input', e => {
         const query = e.target.value.toLowerCase();
-        const filteredCourses = allCourses.filter(course =>
-            course.title.toLowerCase().includes(query) ||
-            course.description.toLowerCase().includes(query)
+        const filtered = allCourses.filter(c =>
+          c.title.toLowerCase().includes(query) ||
+          (c.description || '').toLowerCase().includes(query)
         );
-        renderCourses(filteredCourses);
-    });
-
+        renderCourses(filtered);
+      });
+    }
+  
     fetchCourses();
-});
+  });
+  

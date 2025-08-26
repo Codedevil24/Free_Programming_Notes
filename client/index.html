@@ -9,6 +9,7 @@
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
+  <!-- Navbar with hamburger and close icons for responsiveness -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="index.html" class="logo">Code Devil</a>
@@ -19,55 +20,64 @@
         <a href="contact.html">Contact</a>
         <a href="admin.html">Admin</a>
       </div>
-      <div class="hamburger" id="menu-icon">☰</div>
-      <div class="close-icon" id="close-icon">✖</div>
+      <div class="hamburger" id="menu-icon" tabindex="0" role="button" aria-label="Open menu">☰</div>
+      <div class="close-icon" id="close-icon" tabindex="0" role="button" aria-label="Close menu">✖</div>
     </div>
   </nav>
 
+  <!-- Main content -->
   <main>
     <header>
       <h1>Free Programming Notes</h1>
       <p>Your gateway to comprehensive programming resources</p>
     </header>
 
-    <div id="category-section">
+    <!-- Category Filter Section -->
+    <section id="category-section">
       <h2>Categories</h2>
-      <ul id="category-list">
-        <li class="active"><a href="#" onclick="filterBooks('all')">All</a></li>
-        <li><a href="#" onclick="filterBooks('Programming')">Programming</a></li>
-        <li><a href="#" onclick="filterBooks('Algorithms')">Algorithms</a></li>
-        <li><a href="#" onclick="filterBooks('Data Science')">Data Science</a></li>
-        <li><a href="#" onclick="filterBooks('Web Development')">Web Development</a></li>
+      <ul id="category-list" role="list">
+        <li class="active"><a href="#" data-category="all" tabindex="0">All</a></li>
+        <li><a href="#" data-category="Programming" tabindex="0">Programming</a></li>
+        <li><a href="#" data-category="Algorithms" tabindex="0">Algorithms</a></li>
+        <li><a href="#" data-category="Data Science" tabindex="0">Data Science</a></li>
+        <li><a href="#" data-category="Web Development" tabindex="0">Web Development</a></li>
       </ul>
-    </div>
+    </section>
 
-    <input type="text" id="search-bar" placeholder="Search books..." />
+    <!-- Search input for filtering books -->
+    <section id="search-section" aria-label="Search books">
+      <input id="search-bar" type="text" placeholder="Search books..." aria-label="Search books" />
+    </section>
 
-    <div id="book-list"></div>
+    <!-- Book list renders here -->
+    <section id="books-section" aria-label="Book List">
+      <div id="book-list" role="list"></div>
+    </section>
 
+    <!-- Courses preview -->
     <section id="courses-section">
       <h2>Courses</h2>
       <p>Explore our comprehensive programming courses</p>
-      <a href="courses.html" class="courses-link">View Courses</a>
+      <a href="courses.html" class="courses-link" role="button" tabindex="0">View Courses</a>
     </section>
   </main>
 
-  <div class="modal" id="bookModal">
+  <!-- Modal for book details -->
+  <div class="modal" id="bookModal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" aria-hidden="true">
     <div class="modal-content">
-      <span class="close-modal">&times;</span>
+      <button class="close-modal" aria-label="Close modal">&times;</button>
       <h3 id="modal-title"></h3>
       <img id="modal-image" alt="" />
       <p><strong>Category:</strong> <span id="modal-category"></span></p>
       <p id="modal-description"></p>
       <div id="modal-notes-preview"></div>
-      <div id="suggestions">
-        <h4>Suggestions</h4>
-        <div id="suggestions-list"></div>
-      </div>
-      <a href="#" id="modal-download" target="_blank">Download PDF</a>
+      <h4>Suggestions</h4>
+      <div id="suggestions-list"></div>
+      <a href="#" id="modal-download" target="_blank" rel="noopener noreferrer">Download PDF</a>
     </div>
   </div>
 
-  <script src="js/index.js"></script>
+  <!-- External JS with deferred loading -->
+  <script src="js/index.js" defer></script>
 </body>
 </html>
