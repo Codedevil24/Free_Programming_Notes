@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const moduleSchema = new mongoose.Schema({
   title: { type: String, required: true },
+  type: { type: String, enum: ['file', 'link'], default: 'link' }, // New field for link/file mode
   thumbnail: { type: String },
   videoUrl: { type: String },
   resources: { type: String },

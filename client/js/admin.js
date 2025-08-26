@@ -7,10 +7,10 @@ function addChapter() {
 
   chapterDiv.innerHTML = `
     <h3>Chapter ${chapterCount} 
-      <button type="button" onclick="this.parentElement.parentElement.remove()">❌</button>
+      <button type="button" class="remove-btn" onclick="this.parentElement.parentElement.remove()">❌ Remove</button>
     </h3>
-    <input type="text" placeholder="Chapter Title" class="chapterTitle" />
-    <div class="modules"></div>
+    <input type="text" placeholder="Chapter Title" class="chapterTitle" required />
+    <div class="modules-container"></div>
     <button type="button" onclick="addModule(this)">+ Add Module</button>
   `;
 
@@ -22,14 +22,45 @@ function addModule(button) {
   moduleDiv.classList.add("module");
 
   moduleDiv.innerHTML = `
-    <input type="text" placeholder="Module Title" class="moduleTitle" />
-    <input type="text" placeholder="Thumbnail URL" class="moduleThumbnail" />
-    <input type="text" placeholder="Video URL" class="moduleVideo" />
-    <input type="text" placeholder="Resources Link" class="moduleResources" />
-    <textarea placeholder="Notes" class="moduleNotes"></textarea>
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">❌ Remove</button>
+    <input type="text" placeholder="Module Title" class="moduleTitle" required />
+    
+    <label>Content Type:</label>
+    <select class="moduleType" onchange="toggleModuleFields(this)">
+      <option value="link">Link</option>
+      <option value="file">File Upload</option>
+    </select>
+    
+    <div class="file-fields">
+      <input type="text" placeholder="Thumbnail URL" class="moduleThumbnail" />
+      <input type="text" placeholder="Video URL" class="moduleVideo" />
+      <input type="text" placeholder="Resources Link" class="moduleResources" />
+      <textarea placeholder="Notes" class="moduleNotes"></textarea>
+    </div>
+    
+    <div class="file-upload-fields hidden">
+      <input type="file" class="thumbnailFile" accept="image/*" placeholder="Upload Thumbnail" />
+      <input type="file" class="videoFile" accept="video/*" placeholder="Upload Video" />
+      <input type="file" class="resourcesFile" accept=".pdf,.doc,.docx,.zip" placeholder="Upload Resources" />
+      <textarea placeholder="Notes" class="moduleNotesFile"></textarea>
+    </div>
   `;
 
   button.previousElementSibling.appendChild(moduleDiv);
+}
+
+function toggleModuleFields(select) {
+  const module = select.closest('.module');
+  const fileFields = module.querySelector('.file-fields');
+  const uploadFields = module.querySelector('.file-upload-fields');
+  
+  if (select.value === 'file') {
+    fileFields.classList.add('hidden');
+    uploadFields.classList.remove('hidden');
+  } else {
+    fileFields.classList.remove('hidden');
+    uploadFields.classList.add('hidden');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -186,18 +217,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Course Form Submit Handler
+  // Course Form Submit Handler - ENHANCED WITH FILE UPLOAD
   const courseFormElement = document.getElementById("courseForm");
   if (courseFormElement) {
     courseFormElement.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const courseData = {
-        title: this.title.value,
-        description: this.description.value,
-        thumbnail: this.thumbnail.value,
-        chapters: [],
-      };
+      const formData = new FormData();
+      formData.append('title', this.title.value);
+      formData.append('description', this.description.value);
+      formData.append('thumbnail', this.thumbnail.value);
+
+      const chapters = [];
+      let fileIndex = 0;
 
       document.querySelectorAll(".chapter").forEach(chap => {
         const chapter = {
@@ -206,26 +238,70 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         chap.querySelectorAll(".module").forEach(mod => {
-          chapter.modules.push({
+          const moduleType = mod.querySelector(".moduleType").value;
+          const moduleData = {
             title: mod.querySelector(".moduleTitle").value,
-            thumbnail: mod.querySelector(".moduleThumbnail").value,
-            videoUrl: mod.querySelector(".moduleVideo").value,
-            resources: mod.querySelector(".moduleResources").value,
-            notes: mod.querySelector(".moduleNotes").value,
-          });
+            type: moduleType,
+          };
+
+          if (moduleType === 'link') {
+            moduleData.thumbnail = mod.querySelector(".moduleThumbnail").value;
+            moduleData.videoUrl = mod.querySelector(".moduleVideo").value;
+            moduleData.resources = mod.querySelector(".moduleResources").value;
+            moduleData.notes = mod.querySelector(".moduleNotes").value;
+          } else if (moduleType === 'file') {
+            const thumbnailFile = mod.querySelector(".thumbnailFile").files[0];
+            const videoFile = mod.querySelector(".videoFile").files[0];
+            const resourcesFile = mod.querySelector(".resourcesFile").files[0];
+            
+            if (thumbnailFile) {
+              const thumbnailFileName = `thumbnail_${fileIndex}_${thumbnailFile.name}`;
+              formData.append(thumbnailFileName, thumbnailFile);
+              moduleData.thumbnailFile = thumbnailFileName;
+            }
+            if (videoFile) {
+              const videoFileName = `video_${fileIndex}_${videoFile.name}`;
+              formData.append(videoFileName, videoFile);
+              moduleData.videoFile = videoFileName;
+            }
+            if (resourcesFile) {
+              const resourcesFileName = `resources_${fileIndex}_${resourcesFile.name}`;
+              formData.append(resourcesFileName, resourcesFile);
+              moduleData.resourcesFile = resourcesFileName;
+            }
+            
+            moduleData.notes = mod.querySelector(".moduleNotesFile").value;
+            fileIndex++;
+          }
+
+          chapter.modules.push(moduleData);
         });
 
-        courseData.chapters.push(chapter);
+        chapters.push(chapter);
       });
 
-      const res = await fetch("/admin/add-course", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(courseData),
-      });
+      formData.append('chapters', JSON.stringify(chapters));
 
-      const result = await res.json();
-      alert(result.message);
+      try {
+        const res = await fetch("/admin/add-course", {
+          method: "POST",
+          headers: { 
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData,
+        });
+
+        const result = await res.json();
+        alert(result.message);
+        if (res.ok) {
+          this.reset();
+          document.getElementById("chaptersContainer").innerHTML = "";
+          chapterCount = 0;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error creating course');
+      }
     });
   }
 
@@ -238,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
       const books = await response.json();
-      console.log('Books fetched:', books); // Debug log
+      console.log('Books fetched:', books);
       bookList.innerHTML = books.map(book => `
         <div class="book-item">
           <img src="${book.imageUrl}" alt="${book.title}" style="width: 100px; height: auto;">
@@ -268,6 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <img src="${course.thumbnail}" alt="${course.title}" style="width: 100px; height: auto;">
           <h3>${course.title}</h3>
           <p>${course.description}</p>
+          <p><strong>Chapters:</strong> ${course.chapters ? course.chapters.length : 0}</p>
           <button onclick="editCourse('${course._id}', '${course.title}', '${course.description}')">Edit</button>
           <button onclick="deleteCourse('${course._id}')">Delete</button>
         </div>

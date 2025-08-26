@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Add a new course (admin only)
+// Add a new course (admin only) - OLD ROUTE
 router.post('/', authMiddleware, upload.fields([{ name: 'thumbnail' }, { name: 'video' }]), async (req, res) => {
   try {
     const { title, description, modules } = req.body;
@@ -104,16 +104,43 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Add Course (with chapters + modules)
-router.post("/add-course", async (req, res) => {
+// NEW: Add Course with chapters + modules and file upload support
+router.post("/add-course", authMiddleware, upload.any(), async (req, res) => {
   try {
     const { title, description, thumbnail, chapters } = req.body;
+    const parsedChapters = JSON.parse(chapters || '[]');
+
+    // Handle file uploads for modules
+    for (const chap of parsedChapters) {
+      for (const mod of chap.modules) {
+        if (mod.type === 'file' && req.files) {
+          // Upload files to Telegram if type is 'file'
+          const thumbnailFile = req.files.find(f => f.originalname === mod.thumbnailFile);
+          const videoFile = req.files.find(f => f.originalname === mod.videoFile);
+          const resourcesFile = req.files.find(f => f.originalname === mod.resourcesFile);
+
+          if (thumbnailFile) {
+            mod.thumbnail = await uploadToTelegram(thumbnailFile, 'photo');
+            fs.unlinkSync(thumbnailFile.path); // Clean up temp file
+          }
+          if (videoFile) {
+            mod.videoUrl = await uploadToTelegram(videoFile, 'video');
+            fs.unlinkSync(videoFile.path);
+          }
+          if (resourcesFile) {
+            mod.resources = await uploadToTelegram(resourcesFile, 'document');
+            fs.unlinkSync(resourcesFile.path);
+          }
+        }
+        // For type 'link', values remain as provided in the form
+      }
+    }
 
     const newCourse = new Course({
       title,
       description,
       thumbnail,
-      chapters,
+      chapters: parsedChapters,
     });
 
     await newCourse.save();
@@ -145,21 +172,32 @@ router.get("/api/courses/:id", async (req, res) => {
   }
 });
 
-// Upload to Telegram (common function)
+// Upload to Telegram (common function) - Enhanced for documents
 async function uploadToTelegram(file, type) {
   const form = new FormData();
   form.append('chat_id', process.env.TELEGRAM_CHAT_ID);
-  form.append(type, fs.createReadStream(file.path));
-  const endpoint = type === 'photo' ? 'sendPhoto' : 'sendVideo';
+  form.append(type === 'document' ? 'document' : type, fs.createReadStream(file.path));
+  
+  let endpoint = 'sendPhoto';
+  if (type === 'video') endpoint = 'sendVideo';
+  if (type === 'document') endpoint = 'sendDocument';
+  
   const response = await axios.post(
     `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${endpoint}`,
     form,
     { headers: form.getHeaders() }
   );
+  
   if (!response.data.ok) throw new Error('Failed to upload to Telegram');
-  const fileId = response.data.result[type].file_id;
+  
+  let fileId;
+  if (type === 'photo') fileId = response.data.result.photo[response.data.result.photo.length - 1].file_id;
+  else if (type === 'video') fileId = response.data.result.video.file_id;
+  else if (type === 'document') fileId = response.data.result.document.file_id;
+  
   const fileInfo = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`);
   if (!fileInfo.data.ok) throw new Error('Failed to get file from Telegram');
+  
   return `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfo.data.result.file_path}`;
 }
 
