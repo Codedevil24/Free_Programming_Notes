@@ -84,35 +84,6 @@
 
         
     </main>
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-          const params = new URLSearchParams(window.location.search);
-          const bookId = params.get('id');
-          
-          if (!bookId) {
-            alert('No book specified');
-            window.location.href = 'index.html';
-            return;
-          }
-          
-          try {
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${bookId}`);
-            if (!response.ok) throw new Error('Book not found');
-            const book = await response.json();
-      
-            document.getElementById('book-title').textContent = book.title;
-            document.getElementById('book-description').textContent = book.description;
-            document.getElementById('book-image').src = book.imageUrl;
-            document.getElementById('book-image').alt = `Cover image of ${book.title}`;
-            document.getElementById('download-link').href = book.pdfUrl;
-      
-          } catch (err) {
-            alert('Unable to load book details. Please try again later.');
-            console.error(err);
-            document.querySelector('.book-details-container').innerHTML = '<p>Failed to load book.</p>';
-          }
-        });
-      </script>
       
     <script src="js/navbar.js"></script>
     <script src="js/book-details.js"></script>
