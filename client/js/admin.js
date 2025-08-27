@@ -234,13 +234,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // UPDATED: Course Form Submit Handler with proper file handling and chapter serialization
+  // FIXED: Course Form Submit Handler with proper chapter data handling
   if (courseForm) {
     courseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const formData = new FormData();
       
-      // FIXED: Safely append main course files only if they exist
+      // Safely append main course files
       const fileFields = ['thumbnailFile', 'videoFile', 'resourcesFile'];
       fileFields.forEach(field => {
         const input = this.elements[field];
@@ -252,40 +252,46 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('title', this.elements.title.value);
       formData.append('description', this.elements.description.value);
       
-      // UPDATED: Collect and serialize chapters data properly
+      // FIXED: Proper chapter data collection from DOM
       const chapters = [];
       document.querySelectorAll('.chapter').forEach((chapterElem, chapterIndex) => {
         const chapterTitle = chapterElem.querySelector('.chapterTitle').value;
-        const modules = [];
+        if (!chapterTitle.trim()) return; // Skip empty chapters
         
+        const modules = [];
         chapterElem.querySelectorAll('.module').forEach((modElem, modIndex) => {
+          const moduleTitle = modElem.querySelector('.moduleTitle').value;
+          if (!moduleTitle.trim()) return; // Skip empty modules
+          
           const type = modElem.querySelector('.moduleType').value;
           const moduleData = {
-            title: modElem.querySelector('.moduleTitle').value,
+            title: moduleTitle,
             type
           };
           
           if (type === 'link') {
-            moduleData.thumbnail = modElem.querySelector('.moduleThumbnail').value;
-            moduleData.videoUrl = modElem.querySelector('.moduleVideo').value;
-            moduleData.resources = modElem.querySelector('.moduleResources').value;
-            moduleData.notes = modElem.querySelector('.moduleNotes').value;
+            moduleData.thumbnail = modElem.querySelector('.moduleThumbnail').value || '';
+            moduleData.videoUrl = modElem.querySelector('.moduleVideo').value || '';
+            moduleData.resources = modElem.querySelector('.moduleResources').value || '';
+            moduleData.notes = modElem.querySelector('.moduleNotes').value || '';
           } else {
-            // FIXED: Handle file uploads with unique keys
+            // Handle file uploads with unique keys
             ['thumbnailFile', 'videoFile', 'resourcesFile'].forEach(field => {
               const fileInput = modElem.querySelector(`.${field}`);
               if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                const uniqueKey = `chapter${chapterIndex}_mod${modIndex}_${field}_${fileInput.files[0].name}`;
+                const uniqueKey = `chapter${chapterIndex}_mod${modIndex}_${field}`;
                 formData.append(uniqueKey, fileInput.files[0]);
                 moduleData[field.replace('File', '')] = uniqueKey;
               }
             });
-            moduleData.notes = modElem.querySelector('.moduleNotesFile').value;
+            moduleData.notes = modElem.querySelector('.moduleNotesFile').value || '';
           }
           modules.push(moduleData);
         });
         
-        chapters.push({ title: chapterTitle, modules });
+        if (modules.length > 0) {
+          chapters.push({ title: chapterTitle, modules });
+        }
       });
       
       formData.append('chapters', JSON.stringify(chapters));
@@ -566,48 +572,58 @@ document.addEventListener('DOMContentLoaded', () => {
       const fd = new FormData(this);
   
       // Append main course files
-      const thumbF = this.thumbnailFile.files[0];
+      const thumbF = this.thumbnailFile?.files[0];
       if (thumbF) fd.append('thumbnailFile', thumbF);
   
-      const videoF = this.videoFile.files[0];
+      const videoF = this.videoFile?.files[0];
       if (videoF) fd.append('videoFile', videoF);
   
-      const resF = this.resourcesFile.files[0];
+      const resF = this.resourcesFile?.files[0];
       if (resF) fd.append('resourcesFile', resF);
   
       // Append chapters/modules as JSON
       const chapters = [];
       let idx = 0;
       document.querySelectorAll('.chapter').forEach(ch => {
+        const chTitle = ch.querySelector('.chapterTitle')?.value;
+        if (!chTitle) return;
+        
         const modArr = [];
         ch.querySelectorAll('.module').forEach(mod => {
-          const type = mod.querySelector('.moduleType').value;
-          const obj = { title: mod.querySelector('.moduleTitle').value, type };
+          const mTitle = mod.querySelector('.moduleTitle')?.value;
+          if (!mTitle) return;
+          
+          const type = mod.querySelector('.moduleType')?.value || 'link';
+          const obj = { title: mTitle, type };
+          
           if (type === 'link') {
-            obj.thumbnail = mod.querySelector('.moduleThumbnail').value;
-            obj.videoUrl = mod.querySelector('.moduleVideo').value;
-            obj.resources = mod.querySelector('.moduleResources').value;
-            obj.notes = mod.querySelector('.moduleNotes').value;
+            obj.thumbnail = mod.querySelector('.moduleThumbnail')?.value || '';
+            obj.videoUrl = mod.querySelector('.moduleVideo')?.value || '';
+            obj.resources = mod.querySelector('.moduleResources')?.value || '';
+            obj.notes = mod.querySelector('.moduleNotes')?.value || '';
           } else {
-            const tF = mod.querySelector('.thumbnailFile').files[0];
-            const vF = mod.querySelector('.videoFile').files[0];
-            const rF = mod.querySelector('.resourcesFile').files[0];
+            const tF = mod.querySelector('.thumbnailFile')?.files[0];
+            const vF = mod.querySelector('.videoFile')?.files[0];
+            const rF = mod.querySelector('.resourcesFile')?.files[0];
             if (tF) { fd.append(`chapter_${idx}_thumb`, tF); obj.thumbnailFile = `chapter_${idx}_thumb`; }
             if (vF) { fd.append(`chapter_${idx}_video`, vF); obj.videoFile = `chapter_${idx}_video`; }
             if (rF) { fd.append(`chapter_${idx}_resources`, rF); obj.resourcesFile = `chapter_${idx}_resources`; }
-            obj.notes = mod.querySelector('.moduleNotesFile').value;
+            obj.notes = mod.querySelector('.moduleNotesFile')?.value || '';
             idx++;
           }
           modArr.push(obj);
         });
-        chapters.push({ title: ch.querySelector('.chapterTitle').value, modules: modArr });
+        
+        if (modArr.length > 0) {
+          chapters.push({ title: chTitle, modules: modArr });
+        }
       });
       fd.append('chapters', JSON.stringify(chapters));
   
       // Progress bar
-      progContainer.style.display = 'block';
+      if (progContainer) progContainer.style.display = 'block';
       xhr.upload.onprogress = e => {
-        if (e.lengthComputable) {
+        if (e.lengthComputable && progBar && progText) {
           const pct = Math.round((e.loaded / e.total) * 100);
           progBar.style.width = pct + '%';
           progText.textContent = pct + '%';
@@ -615,72 +631,30 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   
       xhr.onload = () => {
-        progContainer.style.display = 'none';
-        const res = JSON.parse(xhr.responseText);
-        if (xhr.status === 201) {
-          alert('Course created!');
-          this.reset();
-          document.getElementById('chaptersContainer').innerHTML = '';
-          progBar.style.width = '0%';
-          progText.textContent = '0%';
-        } else {
-          alert(res.message || 'Upload failed');
+        if (progContainer) progContainer.style.display = 'none';
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (xhr.status === 201) {
+            alert('Course created!');
+            this.reset();
+            document.getElementById('chaptersContainer').innerHTML = '';
+            if (progBar) progBar.style.width = '0%';
+            if (progText) progText.textContent = '0%';
+          } else {
+            alert(res.message || 'Upload failed');
+          }
+        } catch {
+          alert('Server response error');
         }
       };
   
       xhr.onerror = () => {
-        progContainer.style.display = 'none';
+        if (progContainer) progContainer.style.display = 'none';
         alert('Error uploading course');
       };
   
-      xhr.open('POST', '/admin/add-course');
+      xhr.open('POST', 'https://free-programming-notes.onrender.com/api/courses/add-course');
       xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
       xhr.send(fd);
     });
-  
-    // Edit course logic: wrap PUT in same XHR + progress
-    window.editCourse = (id, title, desc) => {
-      const editForm = document.getElementById('edit-course-form');
-      const eProgContainer = document.getElementById('edit-course-progress-container');
-      const eProgBar = document.getElementById('edit-course-progress-bar');
-      const eProgText = document.getElementById('edit-course-progress-text');
-  
-      editForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const xhr2 = new XMLHttpRequest();
-        const fd2 = new FormData(this);
-  
-        const tF2 = this.thumbnailFile?.files[0];
-        if (tF2) fd2.append('thumbnailFile', tF2);
-  
-        eProgContainer.style.display = 'block';
-        xhr2.upload.onprogress = ev => {
-          if (ev.lengthComputable) {
-            const pc = Math.round((ev.loaded/ev.total)*100);
-            eProgBar.style.width = pc + '%';
-            eProgText.textContent = pc + '%';
-          }
-        };
-  
-        xhr2.onload = () => {
-          eProgContainer.style.display = 'none';
-          const r2 = JSON.parse(xhr2.responseText);
-          if (xhr2.status === 200) {
-            alert('Course updated!');
-            editForm.remove();
-          } else {
-            alert(r2.message || 'Update failed');
-          }
-        };
-  
-        xhr2.onerror = () => {
-          eProgContainer.style.display = 'none';
-          alert('Error updating course');
-        };
-  
-        xhr2.open('PUT', `/admin/courses/${id}`);
-        xhr2.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
-        xhr2.send(fd2);
-      });
-    };
 });

@@ -81,7 +81,9 @@ async function uploadToTelegram(file, type) {
     }
 
     // Cleanup temp file
-    fs.unlinkSync(file.path);
+    if (file && file.path && fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
 
     return `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfoResp.data.result.file_path}`;
   } catch (error) {
@@ -105,7 +107,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// UPDATED: POST add course with files, modules, chapters - fixed JSON parsing
+// FIXED: POST add course with proper chapter handling and file processing
 router.post(
   '/add-course',
   authMiddleware,
@@ -113,12 +115,15 @@ router.post(
   async (req, res) => {
     try {
       const { title, description, chapters } = req.body;
+      console.log('Received course data:', { title, description, chaptersLength: chapters?.length });
+      
       if (!title) return res.status(400).json({ message: 'Title is required' });
 
-      // FIXED: Parse chapters JSON safely
+      // FIXED: Parse chapters JSON safely with better error handling
       let parsedChapters = [];
       try {
         parsedChapters = JSON.parse(chapters || '[]');
+        console.log('Parsed chapters:', parsedChapters.length);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
         return res.status(400).json({ message: 'Invalid chapters JSON format' });
@@ -127,7 +132,7 @@ router.post(
       const files = req.files || [];
       console.log('Processing files:', files.length);
 
-      // Upload main files to Telegram
+      // Upload main course files
       let thumbnailUrl = null, videoUrl = null, resourcesUrl = null;
 
       const mainThumb = files.find(f => f.fieldname === 'thumbnailFile');
@@ -147,30 +152,42 @@ router.post(
         resourcesUrl = await uploadToTelegram(mainResources, 'document');
       }
 
-      // Upload files for each module in chapters
-      for (const chap of parsedChapters) {
-        if (!Array.isArray(chap.modules)) continue;
+      // FIXED: Process module files with improved matching logic
+      for (const chapter of parsedChapters) {
+        if (!Array.isArray(chapter.modules)) continue;
 
-        for (const mod of chap.modules) {
-          if (mod.type === 'file' && files) {
+        for (const mod of chapter.modules) {
+          if (mod.type === 'file' && files.length > 0) {
             console.log('Processing module files for:', mod.title);
             
-            // FIXED: Find files by matching fieldname patterns
-            const thumbFile = files.find(f => f.fieldname === mod.thumbnailFile || f.originalname === mod.thumbnailFile);
-            const videoFile = files.find(f => f.fieldname === mod.videoFile || f.originalname === mod.videoFile);
-            const resFile = files.find(f => f.fieldname === mod.resourcesFile || f.originalname === mod.resourcesFile);
+            // FIXED: Better file matching using both fieldname and filename patterns
+            const thumbFile = files.find(f => 
+              f.fieldname === mod.thumbnail || 
+              f.originalname === mod.thumbnail ||
+              f.fieldname.includes('thumb') && f.fieldname.includes(mod.title?.replace(/\s+/g, ''))
+            );
+            const videoFile = files.find(f => 
+              f.fieldname === mod.videoUrl || 
+              f.originalname === mod.videoUrl ||
+              f.fieldname.includes('video') && f.fieldname.includes(mod.title?.replace(/\s+/g, ''))
+            );
+            const resFile = files.find(f => 
+              f.fieldname === mod.resources || 
+              f.originalname === mod.resources ||
+              f.fieldname.includes('resources') && f.fieldname.includes(mod.title?.replace(/\s+/g, ''))
+            );
 
             if (thumbFile) {
               mod.thumbnail = await uploadToTelegram(thumbFile, 'photo');
-              delete mod.thumbnailFile; // Clean up
+              console.log('Uploaded module thumbnail');
             }
             if (videoFile) {
               mod.videoUrl = await uploadToTelegram(videoFile, 'video');
-              delete mod.videoFile; // Clean up
+              console.log('Uploaded module video');
             }
             if (resFile) {
               mod.resources = await uploadToTelegram(resFile, 'document');
-              delete mod.resourcesFile; // Clean up
+              console.log('Uploaded module resources');
             }
           }
         }
@@ -179,7 +196,7 @@ router.post(
       // Create and save course document
       const course = new Course({
         title,
-        description,
+        description: description || '',
         thumbnail: thumbnailUrl,
         videoUrl,
         resources: resourcesUrl,
@@ -197,7 +214,7 @@ router.post(
   }
 );
 
-// UPDATED: PUT update course with uploads - fixed JSON parsing
+// FIXED: PUT update course with improved file handling
 router.put(
   '/:id',
   authMiddleware,
@@ -236,27 +253,30 @@ router.put(
         updates.resources = await uploadToTelegram(mainResources, 'document');
       }
 
-      // Upload files in modules
-      for (const chap of parsedChapters) {
-        if (!Array.isArray(chap.modules)) continue;
+      // Process module files in chapters
+      for (const chapter of parsedChapters) {
+        if (!Array.isArray(chapter.modules)) continue;
 
-        for (const mod of chap.modules) {
-          if (mod.type === 'file' && files) {
-            const thumbFile = files.find(f => f.fieldname === mod.thumbnailFile || f.originalname === mod.thumbnailFile);
-            const videoFile = files.find(f => f.fieldname === mod.videoFile || f.originalname === mod.videoFile);
-            const resFile = files.find(f => f.fieldname === mod.resourcesFile || f.originalname === mod.resourcesFile);
+        for (const mod of chapter.modules) {
+          if (mod.type === 'file' && files.length > 0) {
+            const thumbFile = files.find(f => 
+              f.fieldname === mod.thumbnail || f.originalname === mod.thumbnail
+            );
+            const videoFile = files.find(f => 
+              f.fieldname === mod.videoUrl || f.originalname === mod.videoUrl
+            );
+            const resFile = files.find(f => 
+              f.fieldname === mod.resources || f.originalname === mod.resources
+            );
 
             if (thumbFile) {
               mod.thumbnail = await uploadToTelegram(thumbFile, 'photo');
-              delete mod.thumbnailFile;
             }
             if (videoFile) {
               mod.videoUrl = await uploadToTelegram(videoFile, 'video');
-              delete mod.videoFile;
             }
             if (resFile) {
               mod.resources = await uploadToTelegram(resFile, 'document');
-              delete mod.resourcesFile;
             }
           }
         }

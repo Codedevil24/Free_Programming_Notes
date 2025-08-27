@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // UPDATED: Fetch and Display Books with proper category filtering
+    // FIXED: Fetch and Display Books with proper category filtering and VIEW BUTTON RESTORED
     async function fetchBooks(category = 'All') {
         try {
             const headers = {};
@@ -117,16 +117,17 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Books fetched from API:', books);
             
             if (bookList) {
-                // FIXED: Handle empty results properly
+                // FIXED: Handle empty results and RESTORED VIEW BUTTON
                 if (!books || books.length === 0) {
                     bookList.innerHTML = '<p>No books found for this category.</p>';
                 } else {
                     bookList.innerHTML = books.map(book => `
-                        <div class="book" data-id="${book._id}" onclick="showBookDetails('${book._id}')">
+                        <div class="book" data-id="${book._id}">
                             <h3>${book.title}</h3>
                             <p>${book.description}</p>
                             <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
                             <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                            <button onclick="showBookDetails('${book._id}')">View</button>
                         </div>
                     `).join('');
                 }
@@ -179,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Search Functionality
+    // Search Functionality - WITH VIEW BUTTON RESTORED
     if (searchBar) {
         searchBar.addEventListener('input', async (e) => {
             const query = e.target.value.toLowerCase();
@@ -193,11 +194,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     bookList.innerHTML = '<p>No books found matching your search.</p>';
                 } else {
                     bookList.innerHTML = filteredBooks.map(book => `
-                        <div class="book" data-id="${book._id}" onclick="showBookDetails('${book._id}')">
+                        <div class="book" data-id="${book._id}">
                             <h3>${book.title}</h3>
                             <p>${book.description}</p>
                             <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
                             <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                            <button onclick="showBookDetails('${book._id}')">View</button>
                         </div>
                     `).join('');
                 }
@@ -207,18 +209,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // UPDATED: Category Filter with proper active state management
+    // FIXED: Category Filter with proper active state and VIEW BUTTON RESTORED
     if (categoryList) {
         categoryList.addEventListener('click', async (e) => {
             if (e.target.tagName === 'LI' && e.target.classList.contains('category-btn')) {
                 const category = e.target.getAttribute('data-category');
                 console.log('Filtering by category:', category);
                 
-                // FIXED: Update active state properly
+                // Update active state
                 categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
                 e.target.classList.add('active');
                 
-                // FIXED: Use the updated fetchBooks function
+                // FIXED: Use updated fetchBooks function that handles empty results properly
                 try {
                     await fetchBooks(category);
                 } catch (err) {

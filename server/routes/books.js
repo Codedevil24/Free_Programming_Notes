@@ -39,7 +39,7 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// UPDATED: Get all books with category filter - fixed empty results handling
+// FIXED: Get all books with category filter - return empty array instead of 404
 router.get('/', async (req, res) => {
     try {
         console.log('Fetching books from MongoDB (test database)...');
