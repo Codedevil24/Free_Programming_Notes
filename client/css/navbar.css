@@ -257,4 +257,26 @@
       margin-top: 60px;
     }
   }
+
+  /* Prevent content collapsing under the fixed navbar */
+main {
+    margin-top: 80px; /* Ensure main content sits below the  navigation bar */
+  }
   
+  @media (max-width: 768px) {
+    main {
+      margin-top: 70px;
+    }
+  }
+  
+  /* Ensure all mobile navbar links are visible when .show is applied */
+  .navbar-links.show {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* Make each link block-level to force separate lines */
+  .navbar-links a {
+    display: block;
+  }
