@@ -932,3 +932,104 @@ select.form-control {
     font-size: var(--font-size-sm);
   }
 }
+
+/* Container for the book details content */
+.book-details-container {
+  max-width: 600px;
+  margin: 3rem auto 2rem auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* Book title styling */
+.book-details-container h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+/* Book description */
+.book-details-container p.description {
+  font-size: 1.1rem;
+  line-height: 1.5;
+  margin: 0 0 1.5rem 0;
+  color: #444;
+}
+
+/* Book cover image */
+.book-details-container img.book-image {
+  display: block;
+  margin: 1rem auto;
+  max-width: 75%;        /* medium size */
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  object-fit: contain;
+}
+
+/* Back button styled */
+.btn-back {
+  display: inline-block;
+  margin: 1rem 0 2rem 0;
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #667eea;
+  border: none;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s ease;
+}
+.btn-back:hover,
+.btn-back:focus {
+  background-color: #556cd6;
+  outline: none;
+}
+
+/* Download button styling */
+.btn-download {
+  display: inline-block;
+  margin: 2rem auto 3rem auto;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #764ba2;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(118,75,162,0.6);
+  transition: background-color 0.3s ease;
+}
+.btn-download:hover,
+.btn-download:focus {
+  background-color: #5a3585;
+  outline: none;
+}
+
+/* Responsive tweaks for smaller laptop screens or tablets */
+@media (max-width: 1440px) {
+  .book-details-container {
+    margin: 2rem auto 1.5rem auto;
+    max-width: 500px;
+  }
+  .book-details-container img.book-image {
+    max-width: 70%;
+  }
+}
+
+@media (max-width: 768px) {
+  .book-details-container {
+    margin: 1.5rem auto 1rem auto;
+    max-width: 90%;
+  }
+  .btn-back, .btn-download {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 1.1rem;
+  }
+}
