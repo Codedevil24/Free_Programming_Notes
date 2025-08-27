@@ -14,7 +14,7 @@ dotenv.config();
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = 'tmp/';
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
         cb(null, dir);
     },
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -39,7 +39,7 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-// Get all books with category filter
+// UPDATED: Get all books with category filter - fixed empty results handling
 router.get('/', async (req, res) => {
     try {
         console.log('Fetching books from MongoDB (test database)...');
@@ -49,9 +49,11 @@ router.get('/', async (req, res) => {
         }
         const books = await Book.find(query).lean();
         console.log('Query result:', books);
+        
+        // FIXED: Return empty array instead of 404 for no results
         if (!books || books.length === 0) {
             console.log('No books found with isDeleted: false or missing isDeleted');
-            return res.status(404).json({ message: 'No books found' });
+            return res.json([]); // Return empty array instead of 404
         }
         res.json(books);
     } catch (err) {

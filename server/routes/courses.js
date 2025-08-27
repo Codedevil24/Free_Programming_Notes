@@ -12,7 +12,7 @@ require('dotenv').config();
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = 'tmp/';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -105,7 +105,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST add course with files, modules, chapters
+// UPDATED: POST add course with files, modules, chapters - fixed JSON parsing
 router.post(
   '/add-course',
   authMiddleware,
@@ -115,43 +115,63 @@ router.post(
       const { title, description, chapters } = req.body;
       if (!title) return res.status(400).json({ message: 'Title is required' });
 
-      // Parse chapters JSON safely
+      // FIXED: Parse chapters JSON safely
       let parsedChapters = [];
       try {
         parsedChapters = JSON.parse(chapters || '[]');
-      } catch {
-        return res.status(400).json({ message: 'Invalid chapters JSON' });
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return res.status(400).json({ message: 'Invalid chapters JSON format' });
       }
+
+      const files = req.files || [];
+      console.log('Processing files:', files.length);
 
       // Upload main files to Telegram
       let thumbnailUrl = null, videoUrl = null, resourcesUrl = null;
 
-      req.files.forEach((file) => {
-        if (file.fieldname === 'thumbnailFile') thumbnailUrl = file;
-        else if (file.fieldname === 'videoFile') videoUrl = file;
-        else if (file.fieldname === 'resourcesFile') resourcesUrl = file;
-      });
+      const mainThumb = files.find(f => f.fieldname === 'thumbnailFile');
+      const mainVideo = files.find(f => f.fieldname === 'videoFile');
+      const mainResources = files.find(f => f.fieldname === 'resourcesFile');
 
-      if (thumbnailUrl)
-        thumbnailUrl = await uploadToTelegram(thumbnailUrl, 'photo');
-      if (videoUrl)
-        videoUrl = await uploadToTelegram(videoUrl, 'video');
-      if (resourcesUrl)
-        resourcesUrl = await uploadToTelegram(resourcesUrl, 'document');
+      if (mainThumb) {
+        console.log('Uploading main thumbnail...');
+        thumbnailUrl = await uploadToTelegram(mainThumb, 'photo');
+      }
+      if (mainVideo) {
+        console.log('Uploading main video...');
+        videoUrl = await uploadToTelegram(mainVideo, 'video');
+      }
+      if (mainResources) {
+        console.log('Uploading main resources...');
+        resourcesUrl = await uploadToTelegram(mainResources, 'document');
+      }
 
       // Upload files for each module in chapters
       for (const chap of parsedChapters) {
         if (!Array.isArray(chap.modules)) continue;
 
         for (const mod of chap.modules) {
-          if (mod.type === 'file' && req.files) {
-            const thumbFile = req.files.find((f) => f.originalname === mod.thumbnailFile);
-            const videoFile = req.files.find((f) => f.originalname === mod.videoFile);
-            const resFile = req.files.find((f) => f.originalname === mod.resourcesFile);
+          if (mod.type === 'file' && files) {
+            console.log('Processing module files for:', mod.title);
+            
+            // FIXED: Find files by matching fieldname patterns
+            const thumbFile = files.find(f => f.fieldname === mod.thumbnailFile || f.originalname === mod.thumbnailFile);
+            const videoFile = files.find(f => f.fieldname === mod.videoFile || f.originalname === mod.videoFile);
+            const resFile = files.find(f => f.fieldname === mod.resourcesFile || f.originalname === mod.resourcesFile);
 
-            if (thumbFile) mod.thumbnail = await uploadToTelegram(thumbFile, 'photo');
-            if (videoFile) mod.videoUrl = await uploadToTelegram(videoFile, 'video');
-            if (resFile) mod.resources = await uploadToTelegram(resFile, 'document');
+            if (thumbFile) {
+              mod.thumbnail = await uploadToTelegram(thumbFile, 'photo');
+              delete mod.thumbnailFile; // Clean up
+            }
+            if (videoFile) {
+              mod.videoUrl = await uploadToTelegram(videoFile, 'video');
+              delete mod.videoFile; // Clean up
+            }
+            if (resFile) {
+              mod.resources = await uploadToTelegram(resFile, 'document');
+              delete mod.resourcesFile; // Clean up
+            }
           }
         }
       }
@@ -167,15 +187,17 @@ router.post(
       });
 
       await course.save();
+      console.log('Course saved to MongoDB successfully');
 
       res.status(201).json({ message: 'Course created successfully', course });
     } catch (err) {
+      console.error('Course creation error:', err);
       res.status(500).json({ message: 'Server error', error: err.message });
     }
   }
 );
 
-// PUT update course with uploads
+// UPDATED: PUT update course with uploads - fixed JSON parsing
 router.put(
   '/:id',
   authMiddleware,
@@ -187,41 +209,55 @@ router.put(
 
       if (!title) return res.status(400).json({ message: 'Title is required' });
 
+      // FIXED: Parse chapters JSON safely
       let parsedChapters = [];
       try {
         parsedChapters = JSON.parse(chapters || '[]');
-      } catch {
-        return res.status(400).json({ message: 'Invalid chapters JSON' });
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return res.status(400).json({ message: 'Invalid chapters JSON format' });
       }
 
-      const updates = { title, description };
+      const updates = { title, description: description || '' };
+      const files = req.files || [];
 
-      req.files.forEach((file) => {
-        if (file.fieldname === 'thumbnailFile') updates.thumbnail = file;
-        else if (file.fieldname === 'videoFile') updates.videoUrl = file;
-        else if (file.fieldname === 'resourcesFile') updates.resources = file;
-      });
+      // Upload new main files if provided
+      const mainThumb = files.find(f => f.fieldname === 'thumbnailFile');
+      const mainVideo = files.find(f => f.fieldname === 'videoFile');
+      const mainResources = files.find(f => f.fieldname === 'resourcesFile');
 
-      if (updates.thumbnail)
-        updates.thumbnail = await uploadToTelegram(updates.thumbnail, 'photo');
-      if (updates.videoUrl)
-        updates.videoUrl = await uploadToTelegram(updates.videoUrl, 'video');
-      if (updates.resources)
-        updates.resources = await uploadToTelegram(updates.resources, 'document');
+      if (mainThumb) {
+        updates.thumbnail = await uploadToTelegram(mainThumb, 'photo');
+      }
+      if (mainVideo) {
+        updates.videoUrl = await uploadToTelegram(mainVideo, 'video');
+      }
+      if (mainResources) {
+        updates.resources = await uploadToTelegram(mainResources, 'document');
+      }
 
       // Upload files in modules
       for (const chap of parsedChapters) {
         if (!Array.isArray(chap.modules)) continue;
 
         for (const mod of chap.modules) {
-          if (mod.type === 'file' && req.files) {
-            const thumbFile = req.files.find((f) => f.originalname === mod.thumbnailFile);
-            const videoFile = req.files.find((f) => f.originalname === mod.videoFile);
-            const resFile = req.files.find((f) => f.originalname === mod.resourcesFile);
+          if (mod.type === 'file' && files) {
+            const thumbFile = files.find(f => f.fieldname === mod.thumbnailFile || f.originalname === mod.thumbnailFile);
+            const videoFile = files.find(f => f.fieldname === mod.videoFile || f.originalname === mod.videoFile);
+            const resFile = files.find(f => f.fieldname === mod.resourcesFile || f.originalname === mod.resourcesFile);
 
-            if (thumbFile) mod.thumbnail = await uploadToTelegram(thumbFile, 'photo');
-            if (videoFile) mod.videoUrl = await uploadToTelegram(videoFile, 'video');
-            if (resFile) mod.resources = await uploadToTelegram(resFile, 'document');
+            if (thumbFile) {
+              mod.thumbnail = await uploadToTelegram(thumbFile, 'photo');
+              delete mod.thumbnailFile;
+            }
+            if (videoFile) {
+              mod.videoUrl = await uploadToTelegram(videoFile, 'video');
+              delete mod.videoFile;
+            }
+            if (resFile) {
+              mod.resources = await uploadToTelegram(resFile, 'document');
+              delete mod.resourcesFile;
+            }
           }
         }
       }
@@ -232,8 +268,10 @@ router.put(
 
       if (!course) return res.status(404).json({ message: 'Course not found' });
 
+      console.log('Course updated successfully');
       res.json({ message: 'Course updated successfully', course });
     } catch (err) {
+      console.error('Course update error:', err);
       res.status(500).json({ message: 'Server error', error: err.message });
     }
   }
@@ -243,10 +281,19 @@ router.put(
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Soft deleting course with ID:', id);
+    
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid course ID format' });
+    }
+
     const course = await Course.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
     if (!course) return res.status(404).json({ message: 'Course not found' });
+    
+    console.log('Course soft deleted:', id);
     res.json({ message: 'Course deleted successfully' });
   } catch (err) {
+    console.error('Error deleting course:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });

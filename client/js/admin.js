@@ -80,22 +80,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeIcon = document.getElementById('close-icon');
   const logoutLink = document.getElementById('logout');
   const message = document.getElementById('message');
-  // Set initial menu state
-if (menuIcon) menuIcon.style.display = 'block';
-if (closeIcon) closeIcon.style.display = 'none';
-if (navbarLinks) navbarLinks.classList.remove('show');
 
-// Close menu on link click
-if (navbarLinks) {
-  const navLinks = navbarLinks.querySelectorAll('a');
-  navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      navbarLinks.classList.remove('show');
-      menuIcon.style.display = 'block';
-      closeIcon.style.display = 'none';
+  // Set initial menu state
+  if (menuIcon) menuIcon.style.display = 'block';
+  if (closeIcon) closeIcon.style.display = 'none';
+  if (navbarLinks) navbarLinks.classList.remove('show');
+
+  // Close menu on link click
+  if (navbarLinks) {
+    const navLinks = navbarLinks.querySelectorAll('a');
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        navbarLinks.classList.remove('show');
+        menuIcon.style.display = 'block';
+        closeIcon.style.display = 'none';
+      });
     });
-  });
-}
+  }
+
   // JWT Authentication
   let jwt_decode = window.jwt_decode;
   if (!jwt_decode && typeof window.jwt_decode === 'undefined') {
@@ -232,90 +234,89 @@ if (navbarLinks) {
     });
   }
 
-  // Course Form Submit Handler - ENHANCED WITH FILE UPLOAD
-  const courseFormElement = document.getElementById("courseForm");
-  if (courseFormElement) {
-    courseFormElement.addEventListener("submit", async function (e) {
+  // UPDATED: Course Form Submit Handler with proper file handling and chapter serialization
+  if (courseForm) {
+    courseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-
       const formData = new FormData();
-      formData.append('title', this.title.value);
-      formData.append('description', this.description.value);
-      formData.append('thumbnail', this.thumbnail.value);
-
-      const chapters = [];
-      let fileIndex = 0;
-
-      document.querySelectorAll(".chapter").forEach(chap => {
-        const chapter = {
-          title: chap.querySelector(".chapterTitle").value,
-          modules: [],
-        };
-
-        chap.querySelectorAll(".module").forEach(mod => {
-          const moduleType = mod.querySelector(".moduleType").value;
-          const moduleData = {
-            title: mod.querySelector(".moduleTitle").value,
-            type: moduleType,
-          };
-
-          if (moduleType === 'link') {
-            moduleData.thumbnail = mod.querySelector(".moduleThumbnail").value;
-            moduleData.videoUrl = mod.querySelector(".moduleVideo").value;
-            moduleData.resources = mod.querySelector(".moduleResources").value;
-            moduleData.notes = mod.querySelector(".moduleNotes").value;
-          } else if (moduleType === 'file') {
-            const thumbnailFile = mod.querySelector(".thumbnailFile").files[0];
-            const videoFile = mod.querySelector(".videoFile").files[0];
-            const resourcesFile = mod.querySelector(".resourcesFile").files[0];
-            
-            if (thumbnailFile) {
-              const thumbnailFileName = `thumbnail_${fileIndex}_${thumbnailFile.name}`;
-              formData.append(thumbnailFileName, thumbnailFile);
-              moduleData.thumbnailFile = thumbnailFileName;
-            }
-            if (videoFile) {
-              const videoFileName = `video_${fileIndex}_${videoFile.name}`;
-              formData.append(videoFileName, videoFile);
-              moduleData.videoFile = videoFileName;
-            }
-            if (resourcesFile) {
-              const resourcesFileName = `resources_${fileIndex}_${resourcesFile.name}`;
-              formData.append(resourcesFileName, resourcesFile);
-              moduleData.resourcesFile = resourcesFileName;
-            }
-            
-            moduleData.notes = mod.querySelector(".moduleNotesFile").value;
-            fileIndex++;
-          }
-
-          chapter.modules.push(moduleData);
-        });
-
-        chapters.push(chapter);
-      });
-
-      formData.append('chapters', JSON.stringify(chapters));
-
-      try {
-        const res = await fetch("/admin/add-course", {
-          method: "POST",
-          headers: { 
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formData,
-        });
-
-        const result = await res.json();
-        alert(result.message);
-        if (res.ok) {
-          this.reset();
-          document.getElementById("chaptersContainer").innerHTML = "";
-          chapterCount = 0;
+      
+      // FIXED: Safely append main course files only if they exist
+      const fileFields = ['thumbnailFile', 'videoFile', 'resourcesFile'];
+      fileFields.forEach(field => {
+        const input = this.elements[field];
+        if (input && input.files && input.files.length > 0) {
+          formData.append(field, input.files[0]);
         }
+      });
+      
+      formData.append('title', this.elements.title.value);
+      formData.append('description', this.elements.description.value);
+      
+      // UPDATED: Collect and serialize chapters data properly
+      const chapters = [];
+      document.querySelectorAll('.chapter').forEach((chapterElem, chapterIndex) => {
+        const chapterTitle = chapterElem.querySelector('.chapterTitle').value;
+        const modules = [];
+        
+        chapterElem.querySelectorAll('.module').forEach((modElem, modIndex) => {
+          const type = modElem.querySelector('.moduleType').value;
+          const moduleData = {
+            title: modElem.querySelector('.moduleTitle').value,
+            type
+          };
+          
+          if (type === 'link') {
+            moduleData.thumbnail = modElem.querySelector('.moduleThumbnail').value;
+            moduleData.videoUrl = modElem.querySelector('.moduleVideo').value;
+            moduleData.resources = modElem.querySelector('.moduleResources').value;
+            moduleData.notes = modElem.querySelector('.moduleNotes').value;
+          } else {
+            // FIXED: Handle file uploads with unique keys
+            ['thumbnailFile', 'videoFile', 'resourcesFile'].forEach(field => {
+              const fileInput = modElem.querySelector(`.${field}`);
+              if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                const uniqueKey = `chapter${chapterIndex}_mod${modIndex}_${field}_${fileInput.files[0].name}`;
+                formData.append(uniqueKey, fileInput.files[0]);
+                moduleData[field.replace('File', '')] = uniqueKey;
+              }
+            });
+            moduleData.notes = modElem.querySelector('.moduleNotesFile').value;
+          }
+          modules.push(moduleData);
+        });
+        
+        chapters.push({ title: chapterTitle, modules });
+      });
+      
+      formData.append('chapters', JSON.stringify(chapters));
+      
+      try {
+        const response = await fetch('https://free-programming-notes.onrender.com/api/courses/add-course', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: formData
+        });
+        
+        let result;
+        try {
+          result = await response.json();
+        } catch {
+          throw new Error('Invalid server response');
+        }
+        
+        if (!response.ok) {
+          throw new Error(result.message || 'Upload failed');
+        }
+        
+        alert('Course uploaded successfully!');
+        this.reset();
+        document.getElementById('chaptersContainer').innerHTML = '';
+        chapterCount = 0;
+        fetchCourses();
+        
       } catch (error) {
-        console.error('Error:', error);
-        alert('Error creating course');
+        console.error('Course upload error:', error);
+        alert(`Error creating course: ${error.message}`);
       }
     });
   }
@@ -552,17 +553,17 @@ if (navbarLinks) {
   };
 });
 
+// PRESERVED: Additional course form handling (existing functionality)
 document.addEventListener('DOMContentLoaded', () => {
-    // Element refs
-    const courseForm     = document.getElementById('courseForm');
-    const progContainer  = document.getElementById('course-progress-container');
-    const progBar        = document.getElementById('course-progress-bar');
-    const progText       = document.getElementById('course-progress-text');
+    const courseForm = document.getElementById('courseForm');
+    const progContainer = document.getElementById('course-progress-container');
+    const progBar = document.getElementById('course-progress-bar');
+    const progText = document.getElementById('course-progress-text');
   
     courseForm?.addEventListener('submit', function(e) {
       e.preventDefault();
       const xhr = new XMLHttpRequest();
-      const fd  = new FormData(this);
+      const fd = new FormData(this);
   
       // Append main course files
       const thumbF = this.thumbnailFile.files[0];
@@ -584,9 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
           const obj = { title: mod.querySelector('.moduleTitle').value, type };
           if (type === 'link') {
             obj.thumbnail = mod.querySelector('.moduleThumbnail').value;
-            obj.videoUrl  = mod.querySelector('.moduleVideo').value;
+            obj.videoUrl = mod.querySelector('.moduleVideo').value;
             obj.resources = mod.querySelector('.moduleResources').value;
-            obj.notes     = mod.querySelector('.moduleNotes').value;
+            obj.notes = mod.querySelector('.moduleNotes').value;
           } else {
             const tF = mod.querySelector('.thumbnailFile').files[0];
             const vF = mod.querySelector('.videoFile').files[0];
@@ -639,21 +640,18 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Edit course logic: wrap PUT in same XHR + progress
     window.editCourse = (id, title, desc) => {
-      // generate and show edit form...
       const editForm = document.getElementById('edit-course-form');
       const eProgContainer = document.getElementById('edit-course-progress-container');
-      const eProgBar       = document.getElementById('edit-course-progress-bar');
-      const eProgText      = document.getElementById('edit-course-progress-text');
+      const eProgBar = document.getElementById('edit-course-progress-bar');
+      const eProgText = document.getElementById('edit-course-progress-text');
   
       editForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const xhr2 = new XMLHttpRequest();
-        const fd2  = new FormData(this);
+        const fd2 = new FormData(this);
   
-        // Append any new files same as above...
         const tF2 = this.thumbnailFile?.files[0];
         if (tF2) fd2.append('thumbnailFile', tF2);
-        // ... videoFile, resourcesFile
   
         eProgContainer.style.display = 'block';
         xhr2.upload.onprogress = ev => {
@@ -685,5 +683,4 @@ document.addEventListener('DOMContentLoaded', () => {
         xhr2.send(fd2);
       });
     };
-  });
-  
+});

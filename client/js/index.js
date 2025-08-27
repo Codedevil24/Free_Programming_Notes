@@ -17,21 +17,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutLink = document.getElementById('logout-link');
 
     // Set initial menu state
-if (menuIcon) menuIcon.style.display = 'block';
-if (closeIcon) closeIcon.style.display = 'none';
-if (navbarLinks) navbarLinks.classList.remove('show');
+    if (menuIcon) menuIcon.style.display = 'block';
+    if (closeIcon) closeIcon.style.display = 'none';
+    if (navbarLinks) navbarLinks.classList.remove('show');
 
-// Close menu on link click
-if (navbarLinks) {
-  const navLinks = navbarLinks.querySelectorAll('a');
-  navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      navbarLinks.classList.remove('show');
-      menuIcon.style.display = 'block';
-      closeIcon.style.display = 'none';
-    });
-  });
-}
+    // Close menu on link click
+    if (navbarLinks) {
+        const navLinks = navbarLinks.querySelectorAll('a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navbarLinks.classList.remove('show');
+                menuIcon.style.display = 'block';
+                closeIcon.style.display = 'none';
+            });
+        });
+    }
 
     // JWT Authentication
     let jwt_decode = window.jwt_decode;
@@ -97,32 +97,43 @@ if (navbarLinks) {
         });
     }
 
-    // Fetch and Display Books
+    // UPDATED: Fetch and Display Books with proper category filtering
     async function fetchBooks(category = 'All') {
         try {
             const headers = {};
             const token = localStorage.getItem('token');
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`; // Fixed syntax
+                headers['Authorization'] = `Bearer ${token}`;
             }
-            const response = await fetch(`https://free-programming-notes.onrender.com/api/books?category=${category}`, { headers });
+            
+            // FIXED: Proper URL construction for category filtering
+            const url = category === 'All' 
+                ? 'https://free-programming-notes.onrender.com/api/books'
+                : `https://free-programming-notes.onrender.com/api/books?category=${encodeURIComponent(category)}`;
+            
+            const response = await fetch(url, { headers });
             if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
             const books = await response.json();
-            console.log('Books fetched from API:', books); // Debug log
+            console.log('Books fetched from API:', books);
+            
             if (bookList) {
-                bookList.innerHTML = books.map(book => `
-                    <div class="book" data-id="${book._id}">
-                        <h3>${book.title}</h3>
-                        <p>${book.description}</p>
-                        <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
-                        <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
-                        <button onclick="showBookDetails('${book._id}')">View</button>
-                    </div>
-                `).join('');
+                // FIXED: Handle empty results properly
+                if (!books || books.length === 0) {
+                    bookList.innerHTML = '<p>No books found for this category.</p>';
+                } else {
+                    bookList.innerHTML = books.map(book => `
+                        <div class="book" data-id="${book._id}" onclick="showBookDetails('${book._id}')">
+                            <h3>${book.title}</h3>
+                            <p>${book.description}</p>
+                            <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
+                            <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                        </div>
+                    `).join('');
+                }
             } else {
                 console.error('bookList element not found');
             }
-            return books; // Return books for search
+            return books || [];
         } catch (err) {
             console.error('Error fetching books:', err);
             if (bookList) {
@@ -130,7 +141,7 @@ if (navbarLinks) {
             } else {
                 console.error('bookList element not found to display error');
             }
-            return []; // Return empty array on error
+            return [];
         }
     }
 
@@ -140,20 +151,18 @@ if (navbarLinks) {
             const headers = {};
             const token = localStorage.getItem('token');
             if (token) {
-                headers['Authorization'] = `Bearer ${token}`; // Add token if required
+                headers['Authorization'] = `Bearer ${token}`;
             }
             const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, { headers });
             if (!response.ok) {
                 throw new Error(`Failed to fetch book details: ${response.status} ${response.statusText}`);
             }
             const book = await response.json();
-            console.log('Book details fetched:', book); // Debug log
-            // Redirect to book-details.html with ID
+            console.log('Book details fetched:', book);
             window.location.href = `/book-details.html?id=${id}`;
         } catch (err) {
             console.error('Error loading book details:', err);
-            alert('Book not found. Please try again or contact support.'); // Notify user
-            // Stay on current page on error
+            alert('Book not found. Please try again or contact support.');
         }
     };
 
@@ -174,36 +183,47 @@ if (navbarLinks) {
     if (searchBar) {
         searchBar.addEventListener('input', async (e) => {
             const query = e.target.value.toLowerCase();
-            const books = await fetchBooks(); // Fetch all books
+            const books = await fetchBooks();
             const filteredBooks = books.filter(book =>
                 book.title.toLowerCase().includes(query) ||
                 book.description.toLowerCase().includes(query)
             );
             if (bookList) {
-                bookList.innerHTML = filteredBooks.map(book => `
-                    <div class="book" data-id="${book._id}">
-                        <h3>${book.title}</h3>
-                        <p>${book.description}</p>
-                        <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
-                        <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
-                        <button onclick="showBookDetails('${book._id}')">View</button>
-                    </div>
-                `).join('');
+                if (filteredBooks.length === 0) {
+                    bookList.innerHTML = '<p>No books found matching your search.</p>';
+                } else {
+                    bookList.innerHTML = filteredBooks.map(book => `
+                        <div class="book" data-id="${book._id}" onclick="showBookDetails('${book._id}')">
+                            <h3>${book.title}</h3>
+                            <p>${book.description}</p>
+                            <p><strong>Category:</strong> ${book.category || 'Uncategorized'}</p>
+                            <img src="${book.imageUrl || 'https://placehold.co/100x100'}" alt="${book.title}" style="max-width: 150px;" onerror="this.onerror=null; this.src='https://placehold.co/100x100';">
+                        </div>
+                    `).join('');
+                }
             } else {
                 console.error('bookList element not found for search');
             }
         });
     }
 
-    // Category Filter
+    // UPDATED: Category Filter with proper active state management
     if (categoryList) {
-        categoryList.addEventListener('click', (e) => {
-            if (e.target.tagName === 'LI') {
+        categoryList.addEventListener('click', async (e) => {
+            if (e.target.tagName === 'LI' && e.target.classList.contains('category-btn')) {
                 const category = e.target.getAttribute('data-category');
-                fetchBooks(category).then(() => {
-                    categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
-                    e.target.classList.add('active');
-                });
+                console.log('Filtering by category:', category);
+                
+                // FIXED: Update active state properly
+                categoryList.querySelectorAll('li').forEach(li => li.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // FIXED: Use the updated fetchBooks function
+                try {
+                    await fetchBooks(category);
+                } catch (err) {
+                    console.error('Category filter error:', err);
+                }
             }
         });
     }
