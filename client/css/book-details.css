@@ -947,6 +947,7 @@ select.form-control {
   font-size: 2rem;
   margin-bottom: 0.5rem;
   font-weight: 700;
+  text-align: center;
 }
 
 /* Book description */
@@ -955,13 +956,14 @@ select.form-control {
   line-height: 1.5;
   margin: 0 0 1.5rem 0;
   color: #444;
+  text-align: center;
 }
 
 /* Book cover image */
 .book-details-container img.book-image {
   display: block;
   margin: 1rem auto;
-  max-width: 75%;        /* medium size */
+  max-width: 55%;        /* medium size */
   height: auto;
   border-radius: 10px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.15);
@@ -1004,6 +1006,7 @@ select.form-control {
   cursor: pointer;
   box-shadow: 0 6px 14px rgba(118,75,162,0.6);
   transition: background-color 0.3s ease;
+  text-align: center;
 }
 .btn-download:hover,
 .btn-download:focus {
