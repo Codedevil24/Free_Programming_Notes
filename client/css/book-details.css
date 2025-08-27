@@ -1018,7 +1018,7 @@ select.form-control {
     max-width: 500px;
   }
   .book-details-container img.book-image {
-    max-width: 70%;
+    max-width: 50%;
   }
 }
 
@@ -1031,5 +1031,6 @@ select.form-control {
     width: 100%;
     box-sizing: border-box;
     font-size: 1.1rem;
+    text-align: center;
   }
 }
