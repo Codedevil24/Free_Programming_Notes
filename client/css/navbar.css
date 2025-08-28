@@ -1,282 +1,332 @@
+
 /* ===============================================
-   MOBILE RESPONSIVE NAVBAR STYLES
+   COMPLETE FIXED NAVBAR STYLES
    =============================================== */
 
 /* Base navbar styles */
 .navbar {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 1rem 0;
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .navbar-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .logo {
-    color: white;
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-decoration: none;
-    transition: all 0.3s ease;
-  }
-  
-  .logo:hover {
-    color: #ffd700;
-    transform: scale(1.05);
-  }
-  
-  /* Desktop navbar links */
-  .navbar-links {
-    display: flex;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    gap: 2rem;
-    transition: all 0.3s ease;
-  }
-  
-  .navbar-links a {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-  }
-  
-  .navbar-links a:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffd700;
-    transform: translateY(-2px);
-  }
-  
-  /* Hamburger and close icons */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.logo:hover {
+  color: #ffd700;
+  transform: scale(1.05);
+}
+
+/* Desktop navbar links */
+.navbar-links {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.navbar-links a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffd700;
+  transform: translateY(-2px);
+}
+
+/* Menu icons */
+.hamburger,
+.close-icon {
+  display: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.hamburger:hover,
+.close-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.1);
+}
+
+/* ===============================================
+   FIXED MOBILE NAVBAR - COMPLETE SOLUTION
+   =============================================== */
+
+@media (max-width: 768px) {
+  /* Hide menu icon on laptop/desktop (1024px+) */
   .hamburger,
   .close-icon {
-    display: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 5px;
+    display: block;
+  }
+
+  /* Fixed mobile navbar layout */
+  .navbar-links {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    flex-direction: column;
+    padding: 1rem 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transform: translateX(-100%);
+    opacity: 0;
+    visibility: hidden;
     transition: all 0.3s ease;
-    user-select: none;
+    gap: 0;
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
   }
-  
-  .hamburger:hover,
-  .close-icon:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: scale(1.1);
+
+  /* Show navbar links when active */
+  .navbar-links.show {
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
   }
-  
-  /* ===============================================
-     MOBILE STYLES (768px and below)
-     =============================================== */
-  @media (max-width: 768px) {
-    .navbar-content {
-      padding: 0 1rem;
-    }
-  
-    /* Show hamburger icon on mobile */
-    .hamburger {
-      display: block;
-    }
-  
-    .close-icon {
-      display: none;
-    }
-  
-    /* Hide navbar links by default on mobile */
-    .navbar-links {
-      position: fixed;
-      top: 70px;
-      left: 0;
-      width: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      flex-direction: column;
-      padding: 1rem 0;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      transform: translateX(-100%);
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-      gap: 0;
-    }
-  
-    /* Show navbar links when active */
-    .navbar-links.show {
-      transform: translateX(0);
-      opacity: 1;
-      visibility: visible;
-    }
-  
-    /* Individual link styling on mobile */
-    .navbar-links a {
-      display: block;
-      padding: 1rem 2rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin: 0;
-      text-align: left;
-      font-size: 1.1rem;
-      transition: all 0.3s ease;
-    }
-  
-    .navbar-links a:last-child {
-      border-bottom: none;
-    }
-  
-    .navbar-links a:hover {
-      background: rgba(255, 255, 255, 0.15);
-      padding-left: 2.5rem;
-      color: #ffd700;
-      transform: none;
-    }
-  
-    /* Show close icon when menu is open */
-    .navbar-links.show ~ .hamburger {
-      display: none;
-    }
-  
-    .navbar-links.show ~ .close-icon {
-      display: block;
-    }
+
+  /* Mobile menu items - COMPLETE SHOW */
+  .navbar-links a {
+    display: block;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 0;
+    text-align: left;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
   }
-  
-  /* ===============================================
-     TABLET STYLES (769px to 1024px)
-     =============================================== */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .navbar-links {
-      gap: 1.5rem;
-    }
-  
-    .navbar-links a {
-      font-size: 0.95rem;
-      padding: 0.4rem 0.8rem;
-    }
+
+  .navbar-links a:last-child {
+    border-bottom: none;
   }
-  
-  /* ===============================================
-     MOBILE LANDSCAPE (max-height: 500px)
-     =============================================== */
-  @media (max-width: 768px) and (max-height: 500px) {
-    .navbar-links {
-      top: 60px;
-      max-height: calc(100vh - 60px);
-      overflow-y: auto;
-    }
-  
-    .navbar-links a {
-      padding: 0.8rem 2rem;
-      font-size: 1rem;
-    }
+
+  .navbar-links a:hover {
+    background: rgba(255, 255, 255, 0.15);
+    padding-left: 2.5rem;
+    color: #ffd700;
+    transform: none;
   }
-  
-  /* ===============================================
-     ANIMATION ENHANCEMENTS
-     =============================================== */
-  @keyframes slideInLeft {
-    from {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
+
+  /* Show close icon when menu is open */
+  .navbar-links.show ~ .hamburger {
+    display: none;
   }
-  
-  @keyframes slideOutLeft {
-    from {
-      transform: translateX(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
+
+  .navbar-links.show ~ .close-icon {
+    display: block;
   }
-  
-  /* Enhanced mobile menu animation */
-  @media (max-width: 768px) {
-    .navbar-links.show {
-      animation: slideInLeft 0.3s ease-out;
-    }
-  
-    .navbar-links a {
-      animation: fadeInUp 0.3s ease-out;
-      animation-fill-mode: both;
-    }
-  
-    .navbar-links a:nth-child(1) { animation-delay: 0.1s; }
-    .navbar-links a:nth-child(2) { animation-delay: 0.15s; }
-    .navbar-links a:nth-child(3) { animation-delay: 0.2s; }
-    .navbar-links a:nth-child(4) { animation-delay: 0.25s; }
-    .navbar-links a:nth-child(5) { animation-delay: 0.3s; }
-    .navbar-links a:nth-child(6) { animation-delay: 0.35s; }
-  }
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* ===============================================
-     ACCESSIBILITY IMPROVEMENTS
-     =============================================== */
-  .hamburger:focus,
-  .close-icon:focus,
-  .navbar-links a:focus {
-    outline: 2px solid #ffd700;
-    outline-offset: 2px;
-  }
-  
+
   /* Ensure body has proper top margin for fixed navbar */
   body {
     margin-top: 70px;
   }
-  
-  @media (max-width: 768px) {
-    body {
-      margin-top: 60px;
-    }
+
+  main {
+    margin-top: 70px;
+  }
+}
+
+/* ===============================================
+   TABLET RESPONSIVE (768px - 1024px)
+   =============================================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .navbar-links {
+    gap: 1.5rem;
   }
 
-  /* Prevent content collapsing under the fixed navbar */
-main {
-    margin-top: 80px; /* Ensure main content sits below the  navigation bar */
+  .navbar-links a {
+    font-size: 0.95rem;
+    padding: 0.4rem 0.8rem;
   }
-  
-  @media (max-width: 768px) {
-    main {
-      margin-top: 70px;
-    }
+
+  /* Hide menu icons on tablet */
+  .hamburger,
+  .close-icon {
+    display: none;
   }
-  
-  /* Ensure all mobile navbar links are visible when .show is applied */
-  .navbar-links.show {
-    transform: translateX(0) !important;
+}
+
+/* ===============================================
+   LAPTOP/DESKTOP (1024px+)
+   =============================================== */
+@media (min-width: 1025px) {
+  /* Hide menu icons completely on laptop/desktop */
+  .hamburger,
+  .close-icon {
+    display: none !important;
+  }
+
+  /* Always show navbar links on laptop/desktop */
+  .navbar-links {
+    display: flex !important;
     opacity: 1 !important;
     visibility: visible !important;
+    transform: none !important;
+    position: static;
+    background: transparent;
+    box-shadow: none;
+    flex-direction: row;
+    gap: 2rem;
   }
-  
-  /* Make each link block-level to force separate lines */
+
   .navbar-links a {
-    display: block;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border: none;
+    margin: 0;
+    font-size: 1rem;
   }
+}
+
+/* ===============================================
+   MOBILE LANDSCAPE (max-height: 500px)
+   =============================================== */
+@media (max-width: 768px) and (max-height: 500px) {
+  .navbar-links {
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  .navbar-links a {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* ===============================================
+   ANIMATION ENHANCEMENTS
+   =============================================== */
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+/* Enhanced mobile menu animation */
+@media (max-width: 768px) {
+  .navbar-links.show {
+    animation: slideInLeft 0.3s ease-out;
+  }
+
+  .navbar-links a {
+    animation: fadeInUp 0.3s ease-out;
+    animation-fill-mode: both;
+  }
+
+  .navbar-links a:nth-child(1) { animation-delay: 0.1s; }
+  .navbar-links a:nth-child(2) { animation-delay: 0.15s; }
+  .navbar-links a:nth-child(3) { animation-delay: 0.2s; }
+  .navbar-links a:nth-child(4) { animation-delay: 0.25s; }
+  .navbar-links a:nth-child(5) { animation-delay: 0.3s; }
+  .navbar-links a:nth-child(6) { animation-delay: 0.35s; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===============================================
+   ACCESSIBILITY IMPROVEMENTS
+   =============================================== */
+.hamburger:focus,
+.close-icon:focus,
+.navbar-links a:focus {
+  outline: 2px solid #ffd700;
+  outline-offset: 2px;
+}
+
+/* Ensure body has proper top margin for fixed navbar */
+body {
+  margin-top: 70px;
+}
+
+@media (max-width: 768px) {
+  body {
+    margin-top: 60px;
+  }
+}
+
+main {
+  margin-top: 80px;
+}
+
+@media (max-width: 768px) {
+  main {
+    margin-top: 70px;
+  }
+}
+
+/* ===============================================
+   SCROLLBAR STYLING FOR MOBILE
+   =============================================== */
+@media (max-width: 768px) {
+  .navbar-links::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .navbar-links::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-links::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+  }
+}
