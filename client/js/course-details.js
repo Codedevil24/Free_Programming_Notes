@@ -85,9 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Global function for toggling chapters
   window.toggleChapter = function(chapterElement) {
+    if (!chapterElement) return;
+    
     const content = chapterElement.querySelector('.chapter-content');
     const header = chapterElement.querySelector('.chapter-header');
     const toggle = chapterElement.querySelector('.chapter-toggle');
+    
+    if (!content || !header || !toggle) return;
     
     const isExpanded = content.classList.contains('expanded');
     
@@ -108,15 +112,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const header = ch.querySelector('.chapter-header');
       const toggle = ch.querySelector('.chapter-toggle');
       
-      content.classList.toggle('expanded', allExpanded);
-      header.classList.toggle('active', allExpanded);
-      toggle.classList.toggle('expanded', allExpanded);
-      toggle.textContent = allExpanded ? '▲' : '▼';
+      if (content && header && toggle) {
+        content.classList.toggle('expanded', allExpanded);
+        header.classList.toggle('active', allExpanded);
+        toggle.classList.toggle('expanded', allExpanded);
+        toggle.textContent = allExpanded ? '▲' : '▼';
+      }
     });
     
     const expandBtn = document.getElementById('expandAllBtn');
     if (expandBtn) {
       expandBtn.textContent = allExpanded ? 'Collapse All Chapters' : 'Expand All Chapters';
+    }
+  };
+
+  // Global function to navigate to module lecture
+  window.viewModule = function(courseId, chapterIndex, moduleIndex) {
+    if (courseId && !isNaN(chapterIndex) && !isNaN(moduleIndex)) {
+      window.location.href = `module-lecture.html?courseId=${courseId}&chapterIndex=${chapterIndex}&moduleIndex=${moduleIndex}`;
     }
   };
 
@@ -130,23 +143,44 @@ document.addEventListener('DOMContentLoaded', () => {
       if (token) headers['Authorization'] = `Bearer ${token}`;
       
       const res = await fetch(`https://free-programming-notes.onrender.com/api/courses/${courseId}`, { headers });
-      if (!res.ok) throw new Error(res.statusText);
+      
+      if (!res.ok) {
+        throw new Error(`Failed to load course: ${res.status} ${res.statusText}`);
+      }
       
       const course = await res.json();
+      
+      if (!course) {
+        container.innerHTML = '<p class="error">Course not found.</p>';
+        return;
+      }
+
+      // Clear loading state
       container.innerHTML = '';
 
       // Course header
       const hdr = document.createElement('div');
       hdr.className = 'course-header';
-      hdr.innerHTML = `
-        <h1 class="course-title">${course.title}</h1>
-        ${course.thumbnail ? `<img src="${course.thumbnail}" alt="${course.title}" />` : ''}
-        <p class="course-description">${course.description || ''}</p>
-      `;
+      
+      let headerHTML = `<h1 class="course-title">${course.title || 'Untitled Course'}</h1>`;
+      
+      if (course.thumbnail) {
+        headerHTML += `<img src="${course.thumbnail}" alt="${course.title || 'Course'}" />`;
+      }
+      
+      if (course.description) {
+        headerHTML += `<p class="course-description">${course.description}</p>`;
+      }
+      
+      hdr.innerHTML = headerHTML;
       container.appendChild(hdr);
 
-      if (!course.chapters || !course.chapters.length) {
-        container.insertAdjacentHTML('beforeend', '<p class="loading">No chapters yet.</p>');
+      // Check if chapters exist
+      if (!course.chapters || !Array.isArray(course.chapters) || course.chapters.length === 0) {
+        const noChaptersMsg = document.createElement('p');
+        noChaptersMsg.className = 'no-chapters';
+        noChaptersMsg.textContent = 'No chapters available for this course yet.';
+        container.appendChild(noChaptersMsg);
         return;
       }
 
@@ -164,48 +198,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render chapters and modules
       course.chapters.forEach((chap, chapIndex) => {
+        if (!chap) return;
+        
         const chapDiv = document.createElement('div');
         chapDiv.className = 'chapter';
         
-        const modCount = chap.modules ? chap.modules.length : 0;
+        const modCount = chap.modules && Array.isArray(chap.modules) ? chap.modules.length : 0;
+        
         chapDiv.innerHTML = `
           <div class="chapter-header" onclick="toggleChapter(this.parentElement)">
             <div class="chapter-info">
-              <div class="chapter-title">${chap.title}</div>
+              <div class="chapter-title">${chap.title || `Chapter ${chapIndex + 1}`}</div>
               <small>${modCount} module${modCount !== 1 ? 's' : ''}</small>
             </div>
             <div class="chapter-toggle">▼</div>
           </div>
           <div class="chapter-content">
             <div class="modules-container" id="modules-${chapIndex}">
-              ${modCount === 0 ? '<p class="no-modules">No modules available</p>' : ''}
+              ${modCount === 0 ? '<p class="no-modules">No modules available in this chapter</p>' : ''}
             </div>
           </div>
         `;
         
         chaptersContainer.appendChild(chapDiv);
         
-        // Populate modules
+        // Populate modules safely
         const modulesContainer = document.getElementById(`modules-${chapIndex}`);
-        if (chap.modules && chap.modules.length > 0) {
+        if (chap.modules && Array.isArray(chap.modules) && chap.modules.length > 0) {
           chap.modules.forEach((mod, modIndex) => {
+            if (!mod) return;
+            
             const modDiv = document.createElement('div');
             modDiv.className = 'module';
             
-            modDiv.innerHTML = `
-              <div class="module-info">
-                ${mod.thumbnail ? `<img src="${mod.thumbnail}" class="module-thumbnail" alt="${mod.title}" />` : ''}
-                <div class="module-details">
-                  <div class="module-title">${mod.title}</div>
-                  ${mod.notes ? `<div class="module-notes">${mod.notes.substring(0, 100)}${mod.notes.length > 100 ? '...' : ''}</div>` : ''}
-                </div>
-              </div>
-              <div class="module-actions">
-                ${mod.videoUrl ? `<button onclick="viewModule('${courseId}', ${chapIndex}, ${modIndex})" class="module-btn primary">🎥 Watch Lecture</button>` : ''}
-                ${mod.resources ? `<a href="${mod.resources}" class="module-btn secondary" target="_blank">📚 Resources</a>` : ''}
-              </div>
+            let moduleHTML = '<div class="module-info">';
+            
+            if (mod.thumbnail) {
+              moduleHTML += `<img src="${mod.thumbnail}" class="module-thumbnail" alt="${mod.title || 'Module thumbnail'}" loading="lazy" />`;
+            }
+            
+            moduleHTML += `
+              <div class="module-details">
+                <div class="module-title">${mod.title || `Module ${modIndex + 1}`}</div>
             `;
             
+            if (mod.notes) {
+              const shortNotes = mod.notes.length > 100 ? mod.notes.substring(0, 100) + '...' : mod.notes;
+              moduleHTML += `<div class="module-notes">${shortNotes}</div>`;
+            }
+            
+            moduleHTML += '</div></div><div class="module-actions">';
+            
+            if (mod.videoUrl) {
+              moduleHTML += `<button onclick="viewModule('${courseId}', ${chapIndex}, ${modIndex})" class="module-btn primary">🎥 Watch Lecture</button>`;
+            }
+            
+            if (mod.resources) {
+              moduleHTML += `<a href="${mod.resources}" class="module-btn secondary" target="_blank" rel="noopener noreferrer">📚 Resources</a>`;
+            }
+            
+            moduleHTML += '</div>';
+            
+            modDiv.innerHTML = moduleHTML;
             modulesContainer.appendChild(modDiv);
           });
         }
@@ -214,14 +268,10 @@ document.addEventListener('DOMContentLoaded', () => {
       container.appendChild(chaptersContainer);
       
     } catch (err) {
+      console.error('Error loading course:', err);
       container.innerHTML = `<p class="error">Error loading course: ${err.message}</p>`;
     }
   })();
-
-  // Global function to navigate to module lecture
-  window.viewModule = function(courseId, chapterIndex, moduleIndex) {
-    window.location.href = `module-lecture.html?courseId=${courseId}&chapterIndex=${chapterIndex}&moduleIndex=${moduleIndex}`;
-  };
 });
 
 // Back button function
