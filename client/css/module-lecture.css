@@ -288,3 +288,87 @@
       max-height: 50vh;
     }
   }
+  /* Video specific styles */
+.video-wrapper {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+  
+  .video-element {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    display: block;
+  }
+  
+  .video-error {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    color: #721c24;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    margin: 2rem 0;
+    border: 1px solid #f5c6cb;
+  }
+  
+  .video-error h3 {
+    margin: 0 0 1rem 0;
+    color: #721c24;
+  }
+  
+  .video-error code {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.5rem;
+    border-radius: 4px;
+    display: block;
+    margin: 0.5rem 0;
+    word-break: break-all;
+    font-size: 0.9rem;
+  }
+  
+  .retry-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0.5rem;
+    transition: background-color 0.3s;
+  }
+  
+  .retry-btn:hover {
+    background: var(--color-primary-hover);
+  }
+  
+  .error-container {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .error-container h1 {
+    color: var(--color-error);
+    margin-bottom: 1rem;
+  }
+  
+  .error-container button {
+    margin-top: 1rem;
+  }
+  
+  /* Responsive video controls */
+  @media (max-width: 768px) {
+    .custom-controls {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    
+    .video-element {
+      max-height: 50vh;
+    }
+  }

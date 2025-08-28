@@ -28,14 +28,17 @@
 
   <main>
     <button onclick="goBack()" class="back-button">← Back to Course Details</button>
+    
     <div class="module-container">
-      <h1 id="module-title">Module Title</h1>
+      <h1 id="module-title">Loading...</h1>
+      
       <div class="video-wrapper">
-        <video id="video-player" class="video-element" playsinline>
-          <source src="" type="video/mp4">
+        <video id="video-player" class="video-element" playsinline controls>
           Your browser does not support the video tag.
         </video>
-        <div class="custom-controls">
+        
+        <!-- Custom controls will be added here if video loads successfully -->
+        <div class="custom-controls" id="video-controls" style="display: none;">
           <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
           <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
           <button id="fast-forward-btn" aria-label="Fast forward 10 seconds">⏩</button>
@@ -49,15 +52,13 @@
             <option value="1.75">1.75x</option>
             <option value="2">2x</option>
           </select>
-          <button id="cast-btn" aria-label="Cast">📺</button>
           <button id="fullscreen-btn" aria-label="Fullscreen">⛶</button>
-        </div>
-        <div class="progress-bar" id="progress-bar">
-          <div class="progress-filled" id="progress-filled"></div>
-          <div class="progress-handle" id="progress-handle"></div>
-        </div>
-        <div class="time-display">
-          <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+          <div class="progress-bar" id="progress-bar">
+            <div class="progress-filled" id="progress-filled"></div>
+          </div>
+          <div class="time-display">
+            <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+          </div>
         </div>
       </div>
       
@@ -69,9 +70,10 @@
         
         <div class="resources-section">
           <h3>Resources</h3>
-          <a id="resources" href="#" target="_blank" rel="noopener noreferrer" class="download-btn">
+          <a id="resources" href="#" target="_blank" rel="noopener noreferrer" class="download-btn" style="display: none;">
             📁 Download Resources
           </a>
+          <p id="no-resources" style="display: none;">No resources available for this module.</p>
         </div>
       </div>
     </div>
