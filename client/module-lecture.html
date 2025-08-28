@@ -6,7 +6,8 @@
   <title>Code Devil - Module Lecture</title>
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/navbar.css">
-  <link rel="stylesheet" href="css/module-lecture.css">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+  <link rel="stylesheet" href="css/module-lecture-updated.css">
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
@@ -32,55 +33,72 @@
     <div class="module-container">
       <h1 id="module-title">Loading...</h1>
       
-      <div class="video-wrapper">
-        <video id="video-player" class="video-element" playsinline controls>
-          Your browser does not support the video tag.
-        </video>
+      <!-- Smart Video Container -->
+      <div class="smart-video-container">
+        <!-- Loading state -->
+        <div id="video-loading" class="video-loading">
+          <div class="loading-spinner"></div>
+          <p>Loading video...</p>
+        </div>
         
-        <!-- Custom controls will be added here if video loads successfully -->
-        <div class="custom-controls" id="video-controls" style="display: none;">
-          <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
-          <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
-          <button id="fast-forward-btn" aria-label="Fast forward 10 seconds">⏩</button>
-          <select id="speed-control" aria-label="Playback speed">
-            <option value="0.25">0.25x</option>
-            <option value="0.5">0.5x</option>
-            <option value="0.75">0.75x</option>
-            <option value="1" selected>1x</option>
-            <option value="1.25">1.25x</option>
-            <option value="1.5">1.5x</option>
-            <option value="1.75">1.75x</option>
-            <option value="2">2x</option>
-          </select>
-          <button id="fullscreen-btn" aria-label="Fullscreen">⛶</button>
-          <div class="progress-bar" id="progress-bar">
-            <div class="progress-filled" id="progress-filled"></div>
+        <!-- YouTube Player (hidden by default) -->
+        <div id="youtube-player" class="youtube-embed" style="display: none;">
+          <iframe id="youtube-iframe" 
+                  width="100%" 
+                  height="500" 
+                  frameborder="0" 
+                  allowfullscreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+          </iframe>
+        </div>
+        
+        <!-- DRM Player (hidden by default) -->
+        <div id="drm-player-container" style="display: none;">
+          <video id="drm-player" class="drm-video" playsinline controls>
+            <source src="" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          
+          <!-- Enhanced controls for DRM player -->
+          <div class="custom-controls" id="custom-controls" style="display: none;">
+            <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
+            <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
+            <button id="fast-forward-btn" aria-label="Fast forward 10 seconds">⏩</button>
+            <select id="speed-control" aria-label="Playback speed">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+            <button id="fullscreen-btn" aria-label="Fullscreen">⛶</button>
           </div>
-          <div class="time-display">
-            <span id="current-time">0:00</span> / <span id="duration">0:00</span>
-          </div>
+        </div>
+        
+        <!-- Error state -->
+        <div id="video-error" class="video-error" style="display: none;">
+          <h3>🎥 Video Error</h3>
+          <p id="error-message">Unable to load video</p>
+          <button onclick="window.location.reload()" class="retry-btn">🔄 Retry</button>
+          <button onclick="goBack()" class="back-btn">← Go Back</button>
         </div>
       </div>
       
       <div class="module-info">
-        <div class="notes-section">
-          <h3>Notes</h3>
-          <p id="notes">Loading notes...</p>
-        </div>
+        <h3>Notes</h3>
+        <p id="notes">Loading notes...</p>
         
-        <div class="resources-section">
-          <h3>Resources</h3>
-          <a id="resources" href="#" target="_blank" rel="noopener noreferrer" class="download-btn" style="display: none;">
-            📁 Download Resources
-          </a>
-          <p id="no-resources" style="display: none;">No resources available for this module.</p>
-        </div>
+        <a id="resources" href="#" target="_blank" rel="noopener noreferrer" class="download-btn" style="display: none;">
+          📁 Download Resources
+        </a>
+        <p id="no-resources" style="display: none;">📄 No resources available for this lecture</p>
       </div>
     </div>
   </main>
 
+  <!-- Scripts -->
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="js/navbar.js"></script>
-  <script src="js/module-lecture.js"></script>
+  <script src="js/module-lecture-updated.js"></script>
   <script src="js/jwt-decode.js"></script>
 </body>
 </html>
