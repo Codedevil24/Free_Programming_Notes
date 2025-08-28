@@ -6,6 +6,7 @@
   <title>Code Devil - Module Lecture</title>
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/module-lecture.css">
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
@@ -26,7 +27,7 @@
   </nav>
 
   <main>
-    <button onclick="window.history.back()" class="back-button">← Back to Course Details</button>
+    <button onclick="goBack()" class="back-button">← Back to Course Details</button>
     <div class="module-container">
       <h1 id="module-title">Module Title</h1>
       <div class="video-wrapper">
@@ -39,19 +40,40 @@
           <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
           <button id="fast-forward-btn" aria-label="Fast forward 10 seconds">⏩</button>
           <select id="speed-control" aria-label="Playback speed">
+            <option value="0.25">0.25x</option>
             <option value="0.5">0.5x</option>
+            <option value="0.75">0.75x</option>
             <option value="1" selected>1x</option>
+            <option value="1.25">1.25x</option>
             <option value="1.5">1.5x</option>
+            <option value="1.75">1.75x</option>
             <option value="2">2x</option>
           </select>
-          <button id="cast-btn" aria-label="Cast" onclick="alert('Cast functionality not implemented')">📺</button>
+          <button id="cast-btn" aria-label="Cast">📺</button>
+          <button id="fullscreen-btn" aria-label="Fullscreen">⛶</button>
         </div>
         <div class="progress-bar" id="progress-bar">
           <div class="progress-filled" id="progress-filled"></div>
+          <div class="progress-handle" id="progress-handle"></div>
+        </div>
+        <div class="time-display">
+          <span id="current-time">0:00</span> / <span id="duration">0:00</span>
         </div>
       </div>
-      <p id="notes">Notes: Loading...</p>
-      <a id="resources" href="#" target="_blank" rel="noopener noreferrer">Download Resources</a>
+      
+      <div class="module-info">
+        <div class="notes-section">
+          <h3>Notes</h3>
+          <p id="notes">Loading notes...</p>
+        </div>
+        
+        <div class="resources-section">
+          <h3>Resources</h3>
+          <a id="resources" href="#" target="_blank" rel="noopener noreferrer" class="download-btn">
+            📁 Download Resources
+          </a>
+        </div>
+      </div>
     </div>
   </main>
 

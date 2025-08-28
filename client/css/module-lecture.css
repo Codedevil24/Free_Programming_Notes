@@ -1,0 +1,171 @@
+/* Module Lecture Styles */
+:root {
+    --video-bg: #000;
+    --controls-bg: rgba(0, 0, 0, 0.8);
+    --progress-color: #667eea;
+    --handle-color: #fff;
+  }
+  
+  .module-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .module-container h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--color-text);
+  }
+  
+  .video-wrapper {
+    position: relative;
+    background: var(--video-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  
+  .video-element {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    display: block;
+  }
+  
+  .custom-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--controls-bg);
+    color: white;
+  }
+  
+  .custom-controls button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: transform 0.2s;
+  }
+  
+  .custom-controls button:hover {
+    transform: scale(1.2);
+  }
+  
+  #speed-control {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+  
+  .progress-bar {
+    position: relative;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 0 1rem;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  
+  .progress-filled {
+    height: 100%;
+    background: var(--progress-color);
+    border-radius: 3px;
+    transition: width 0.1s;
+  }
+  
+  .progress-handle {
+    position: absolute;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--handle-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: grab;
+  }
+  
+  .time-display {
+    color: white;
+    font-size: 0.9rem;
+    margin-left: auto;
+  }
+  
+  .module-info {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .notes-section, .resources-section {
+    background: var(--color-surface);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
+  
+  .notes-section h3, .resources-section h3 {
+    margin-bottom: 1rem;
+    color: var(--color-text);
+  }
+  
+  .download-btn {
+    display: inline-block;
+    background: var(--color-primary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+  }
+  
+  .download-btn:hover {
+    background: var(--color-primary-hover);
+  }
+  
+  .no-video {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: white;
+    font-size: 1.2rem;
+  }
+  
+  .error-container {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .error-container h1 {
+    color: var(--color-error);
+    margin-bottom: 1rem;
+  }
+  
+  .error-container button {
+    margin-top: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .module-container {
+      padding: 1rem;
+    }
+    
+    .module-info {
+      grid-template-columns: 1fr;
+    }
+    
+    .custom-controls {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .video-element {
+      max-height: 50vh;
+    }
+  }
