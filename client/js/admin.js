@@ -305,13 +305,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let result;
         try {
-          result = await response.json();
+            result = await response.json();
         } catch {
-          throw new Error('Invalid server response');
+            throw new Error('Invalid server response');
         }
         
         if (!response.ok) {
-          throw new Error(result.message || 'Upload failed');
+            throw new Error(result.message || 'Upload failed');
         }
         
         alert('Course uploaded successfully!');
@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(notesFormElement);
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`); 
 
       const progressContainer = document.querySelector('.progress-container');
       if (progressContainer) progressContainer.style.display = 'block';
@@ -572,58 +572,48 @@ document.addEventListener('DOMContentLoaded', () => {
       const fd = new FormData(this);
   
       // Append main course files
-      const thumbF = this.thumbnailFile?.files[0];
+      const thumbF = this.thumbnailFile.files[0];
       if (thumbF) fd.append('thumbnailFile', thumbF);
   
-      const videoF = this.videoFile?.files[0];
+      const videoF = this.videoFile.files[0];
       if (videoF) fd.append('videoFile', videoF);
   
-      const resF = this.resourcesFile?.files[0];
+      const resF = this.resourcesFile.files[0];
       if (resF) fd.append('resourcesFile', resF);
   
       // Append chapters/modules as JSON
       const chapters = [];
       let idx = 0;
       document.querySelectorAll('.chapter').forEach(ch => {
-        const chTitle = ch.querySelector('.chapterTitle')?.value;
-        if (!chTitle) return;
-        
         const modArr = [];
         ch.querySelectorAll('.module').forEach(mod => {
-          const mTitle = mod.querySelector('.moduleTitle')?.value;
-          if (!mTitle) return;
-          
-          const type = mod.querySelector('.moduleType')?.value || 'link';
-          const obj = { title: mTitle, type };
-          
+          const type = mod.querySelector('.moduleType').value;
+          const obj = { title: mod.querySelector('.moduleTitle').value, type };
           if (type === 'link') {
-            obj.thumbnail = mod.querySelector('.moduleThumbnail')?.value || '';
-            obj.videoUrl = mod.querySelector('.moduleVideo')?.value || '';
-            obj.resources = mod.querySelector('.moduleResources')?.value || '';
-            obj.notes = mod.querySelector('.moduleNotes')?.value || '';
+            obj.thumbnail = mod.querySelector('.moduleThumbnail').value;
+            obj.videoUrl  = mod.querySelector('.moduleVideo').value;
+            obj.resources = mod.querySelector('.moduleResources').value;
+            obj.notes     = mod.querySelector('.moduleNotes').value;
           } else {
-            const tF = mod.querySelector('.thumbnailFile')?.files[0];
-            const vF = mod.querySelector('.videoFile')?.files[0];
-            const rF = mod.querySelector('.resourcesFile')?.files[0];
+            const tF = mod.querySelector('.thumbnailFile').files[0];
+            const vF = mod.querySelector('.videoFile').files[0];
+            const rF = mod.querySelector('.resourcesFile').files[0];
             if (tF) { fd.append(`chapter_${idx}_thumb`, tF); obj.thumbnailFile = `chapter_${idx}_thumb`; }
             if (vF) { fd.append(`chapter_${idx}_video`, vF); obj.videoFile = `chapter_${idx}_video`; }
             if (rF) { fd.append(`chapter_${idx}_resources`, rF); obj.resourcesFile = `chapter_${idx}_resources`; }
-            obj.notes = mod.querySelector('.moduleNotesFile')?.value || '';
+            obj.notes = mod.querySelector('.moduleNotesFile').value;
             idx++;
           }
           modArr.push(obj);
         });
-        
-        if (modArr.length > 0) {
-          chapters.push({ title: chTitle, modules: modArr });
-        }
+        chapters.push({ title: ch.querySelector('.chapterTitle').value, modules: modArr });
       });
       fd.append('chapters', JSON.stringify(chapters));
   
       // Progress bar
-      if (progContainer) progContainer.style.display = 'block';
+      progContainer.style.display = 'block';
       xhr.upload.onprogress = e => {
-        if (e.lengthComputable && progBar && progText) {
+        if (e.lengthComputable) {
           const pct = Math.round((e.loaded / e.total) * 100);
           progBar.style.width = pct + '%';
           progText.textContent = pct + '%';
@@ -631,25 +621,21 @@ document.addEventListener('DOMContentLoaded', () => {
       };
   
       xhr.onload = () => {
-        if (progContainer) progContainer.style.display = 'none';
-        try {
-          const res = JSON.parse(xhr.responseText);
-          if (xhr.status === 201) {
-            alert('Course created!');
-            this.reset();
-            document.getElementById('chaptersContainer').innerHTML = '';
-            if (progBar) progBar.style.width = '0%';
-            if (progText) progText.textContent = '0%';
-          } else {
-            alert(res.message || 'Upload failed');
-          }
-        } catch {
-          alert('Server response error');
+        progContainer.style.display = 'none';
+        const res = JSON.parse(xhr.responseText);
+        if (xhr.status === 201) {
+          alert('Course created!');
+          this.reset();
+          document.getElementById('chaptersContainer').innerHTML = '';
+          progBar.style.width = '0%';
+          progText.textContent = '0%';
+        } else {
+          alert(res.message || 'Upload failed');
         }
       };
   
       xhr.onerror = () => {
-        if (progContainer) progContainer.style.display = 'none';
+        progContainer.style.display = 'none';
         alert('Error uploading course');
       };
   
@@ -657,4 +643,53 @@ document.addEventListener('DOMContentLoaded', () => {
       xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
       xhr.send(fd);
     });
-});
+  
+    // Edit course logic: wrap PUT in same XHR + progress
+    window.editCourse = (id, title, desc) => {
+      // generate and show edit form...
+      const editForm = document.getElementById('edit-course-form');
+      const eProgContainer = document.getElementById('edit-course-progress-container');
+      const eProgBar = document.getElementById('edit-course-progress-bar');
+      const eProgText = document.getElementById('edit-course-progress-text');
+  
+      editForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const xhr2 = new XMLHttpRequest();
+        const fd2 = new FormData(this);
+  
+        // Append any new files same as above...
+        const tF2 = this.thumbnailFile?.files[0];
+        if (tF2) fd2.append('thumbnailFile', tF2);
+        // ... videoFile, resourcesFile
+  
+        eProgContainer.style.display = 'block';
+        xhr2.upload.onprogress = ev => {
+          if (ev.lengthComputable) {
+            const pc = Math.round((ev.loaded/ev.total)*100);
+            eProgBar.style.width = pc + '%';
+            eProgText.textContent = pc + '%';
+          }
+        };
+  
+        xhr2.onload = () => {
+          eProgContainer.style.display = 'none';
+          const r2 = JSON.parse(xhr2.responseText);
+          if (xhr2.status === 200) {
+            alert('Course updated!');
+            editForm.remove();
+          } else {
+            alert(r2.message || 'Update failed');
+          }
+        };
+  
+        xhr2.onerror = () => {
+          eProgContainer.style.display = 'none';
+          alert('Error updating course');
+        };
+  
+        xhr2.open('PUT', `https://free-programming-notes.onrender.com/api/courses/${id}`);
+        xhr2.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+        xhr2.send(fd2);
+      });
+    };
+  });

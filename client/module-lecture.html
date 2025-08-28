@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Devil - Module Lecture</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="icon" href="favicon1.ico" type="image/x-icon" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="index.html" class="logo">Code Devil</a>
+      <div class="navbar-links" id="navbar-links">
+        <a href="index.html">Home</a>
+        <a href="courses.html">Courses</a>
+        <a href="category.html">Categories</a>
+        <a href="privacy.html">Privacy & Policy</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div class="hamburger" id="menu-icon">☰</div>
+      <div class="close-icon" id="close-icon">✖</div>
+    </div>
+  </nav>
+
+  <main>
+    <button onclick="window.history.back()" class="back-button">← Back to Course Details</button>
+    <div class="module-container">
+      <h1 id="module-title">Module Title</h1>
+      <div class="video-wrapper">
+        <video id="video-player" class="video-element" playsinline>
+          <source src="" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+        <div class="custom-controls">
+          <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
+          <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
+          <button id="fast-forward-btn" aria-label="Fast forward 10 seconds">⏩</button>
+          <select id="speed-control" aria-label="Playback speed">
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="1.5">1.5x</option>
+            <option value="2">2x</option>
+          </select>
+          <button id="cast-btn" aria-label="Cast" onclick="alert('Cast functionality not implemented')">📺</button>
+        </div>
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress-filled" id="progress-filled"></div>
+        </div>
+      </div>
+      <p id="notes">Notes: Loading...</p>
+      <a id="resources" href="#" target="_blank" rel="noopener noreferrer">Download Resources</a>
+    </div>
+  </main>
+
+  <script src="js/navbar.js"></script>
+  <script src="js/module-lecture.js"></script>
+  <script src="js/jwt-decode.js"></script>
+</body>
+</html>
