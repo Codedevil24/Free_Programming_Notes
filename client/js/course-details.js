@@ -133,6 +133,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Create a safe append function
+  function safeAppend(parent, child) {
+    if (parent && child) {
+      parent.appendChild(child);
+    }
+  }
+
+  // Create elements safely
+  function createElement(tag, className, innerHTML) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (innerHTML) element.innerHTML = innerHTML;
+    return element;
+  }
+
   container.innerHTML = '<div class="loading">Loading course details...</div>';
 
   // Fetch and render course details
@@ -159,13 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
       container.innerHTML = '';
 
       // Course header
-      const hdr = document.createElement('div');
-      hdr.className = 'course-header';
+      const hdr = createElement('div', 'course-header');
       
       let headerHTML = `<h1 class="course-title">${course.title || 'Untitled Course'}</h1>`;
       
       if (course.thumbnail) {
-        headerHTML += `<img src="${course.thumbnail}" alt="${course.title || 'Course'}" />`;
+        headerHTML += `<img src="${course.thumbnail}" alt="${course.title || 'Course'}" loading="lazy" />`;
       }
       
       if (course.description) {
@@ -173,35 +187,30 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       hdr.innerHTML = headerHTML;
-      container.appendChild(hdr);
+      safeAppend(container, hdr);
 
       // Check if chapters exist
       if (!course.chapters || !Array.isArray(course.chapters) || course.chapters.length === 0) {
-        const noChaptersMsg = document.createElement('p');
-        noChaptersMsg.className = 'no-chapters';
-        noChaptersMsg.textContent = 'No chapters available for this course yet.';
-        container.appendChild(noChaptersMsg);
+        const noChaptersMsg = createElement('p', 'no-chapters', 'No chapters available for this course yet.');
+        safeAppend(container, noChaptersMsg);
         return;
       }
 
       // Expand all button
-      const expandBtn = document.createElement('button');
+      const expandBtn = createElement('button', 'expand-all-btn', 'Expand All Chapters');
       expandBtn.id = 'expandAllBtn';
-      expandBtn.className = 'expand-all-btn';
-      expandBtn.textContent = 'Expand All Chapters';
       expandBtn.onclick = () => window.toggleAllChapters();
-      container.appendChild(expandBtn);
+      safeAppend(container, expandBtn);
 
       // Chapters container
-      const chaptersContainer = document.createElement('div');
-      chaptersContainer.className = 'chapters-container';
+      const chaptersContainer = createElement('div', 'chapters-container');
+      safeAppend(container, chaptersContainer);
 
       // Render chapters and modules
       course.chapters.forEach((chap, chapIndex) => {
         if (!chap) return;
         
-        const chapDiv = document.createElement('div');
-        chapDiv.className = 'chapter';
+        const chapDiv = createElement('div', 'chapter');
         
         const modCount = chap.modules && Array.isArray(chap.modules) ? chap.modules.length : 0;
         
@@ -220,16 +229,20 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
         
-        chaptersContainer.appendChild(chapDiv);
+        safeAppend(chaptersContainer, chapDiv);
+        
+        // Get the modules container safely
+        const modulesContainer = document.getElementById(`modules-${chapIndex}`);
+        if (!modulesContainer) return;
         
         // Populate modules safely
-        const modulesContainer = document.getElementById(`modules-${chapIndex}`);
         if (chap.modules && Array.isArray(chap.modules) && chap.modules.length > 0) {
+          let hasValidModules = false;
+          
           chap.modules.forEach((mod, modIndex) => {
             if (!mod) return;
             
-            const modDiv = document.createElement('div');
-            modDiv.className = 'module';
+            const modDiv = createElement('div', 'module');
             
             let moduleHTML = '<div class="module-info">';
             
@@ -260,13 +273,18 @@ document.addEventListener('DOMContentLoaded', () => {
             moduleHTML += '</div>';
             
             modDiv.innerHTML = moduleHTML;
-            modulesContainer.appendChild(modDiv);
+            safeAppend(modulesContainer, modDiv);
+            hasValidModules = true;
           });
+          
+          // Remove "no modules" message if we have valid modules
+          const noModulesMsg = modulesContainer.querySelector('.no-modules');
+          if (noModulesMsg && hasValidModules) {
+            noModulesMsg.remove();
+          }
         }
       });
 
-      container.appendChild(chaptersContainer);
-      
     } catch (err) {
       console.error('Error loading course:', err);
       container.innerHTML = `<p class="error">Error loading course: ${err.message}</p>`;
