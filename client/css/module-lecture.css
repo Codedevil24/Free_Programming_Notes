@@ -150,6 +150,8 @@
   .error-container button {
     margin-top: 1rem;
   }
+
+  
   
   @media (max-width: 768px) {
     .module-container {
@@ -162,6 +164,123 @@
     
     .custom-controls {
       flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .video-element {
+      max-height: 50vh;
+    }
+  }
+
+  /* Video player styles */
+.video-wrapper {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+  
+  .video-element {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+    display: block;
+  }
+  
+  .custom-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    flex-wrap: wrap;
+  }
+  
+  .custom-controls button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: transform 0.2s;
+  }
+  
+  .custom-controls button:hover {
+    transform: scale(1.2);
+  }
+  
+  #speed-control {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+  
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    cursor: pointer;
+    margin: 0 1rem;
+    position: relative;
+  }
+  
+  .progress-filled {
+    height: 100%;
+    background: var(--color-primary);
+    border-radius: 3px;
+    transition: width 0.1s;
+  }
+  
+  .time-display {
+    color: white;
+    font-size: 0.9rem;
+    min-width: 80px;
+  }
+  
+  .video-error {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: white;
+    background: rgba(255, 0, 0, 0.2);
+    border-radius: 12px;
+    margin: 2rem 0;
+  }
+  
+  .retry-btn {
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 1rem;
+  }
+  
+  .error-container {
+    text-align: center;
+    padding: 4rem 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .error-container h1 {
+    color: var(--color-error);
+    margin-bottom: 1rem;
+  }
+  
+  .error-container button {
+    margin-top: 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .custom-controls {
+      justify-content: center;
       gap: 0.5rem;
     }
     
