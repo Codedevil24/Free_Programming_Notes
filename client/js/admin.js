@@ -643,6 +643,73 @@ document.addEventListener('DOMContentLoaded', () => {
       xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
       xhr.send(fd);
     });
+
+    courseForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData();
+    
+      // Append main course files
+      ['thumbnailFile','videoFile','resourcesFile'].forEach(field => {
+        const input = this.elements[field];
+        if (input?.files?.length) {
+          formData.append(field, input.files[0]);
+        }
+      });
+    
+      formData.append('title', this.elements.title.value);
+      formData.append('description', this.elements.description.value);
+    
+      // Build chapters/modules from the DOM
+      const chapters = [];
+      document.querySelectorAll('.chapter').forEach((chapElem, ci) => {
+        const title = chapElem.querySelector('.chapterTitle').value.trim();
+        if (!title) return;
+        const modules = [];
+        chapElem.querySelectorAll('.module').forEach((modElem, mi) => {
+          const modTitle = modElem.querySelector('.moduleTitle').value.trim();
+          if (!modTitle) return;
+          const type = modElem.querySelector('.moduleType').value;
+          const modObj = { title: modTitle, type };
+          if (type === 'link') {
+            modObj.thumbnail = modElem.querySelector('.moduleThumbnail').value || '';
+            modObj.videoUrl  = modElem.querySelector('.moduleVideo').value || '';
+            modObj.resources = modElem.querySelector('.moduleResources').value || '';
+            modObj.notes     = modElem.querySelector('.moduleNotes').value || '';
+          } else {  // file type
+            ['thumbnailFile','videoFile','resourcesFile'].forEach(fld => {
+              const input = modElem.querySelector(`.${fld}`);
+              if (input?.files?.length) {
+                const key = `chapter${ci}_mod${mi}_${fld}`;
+                formData.append(key, input.files[0]);
+                modObj[fld.replace('File','')] = key;
+              }
+            });
+            modObj.notes = modElem.querySelector('.moduleNotesFile').value || '';
+          }
+          modules.push(modObj);
+        });
+        if (modules.length) chapters.push({ title, modules });
+      });
+    
+      formData.append('chapters', JSON.stringify(chapters));
+    
+      try {
+        const res = await fetch('/api/courses/add-course', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: formData
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        alert('Course uploaded successfully!');
+        courseForm.reset();
+        document.getElementById('chaptersContainer').innerHTML = '';
+      } catch (err) {
+        console.error('Course upload error:', err);
+        alert(`Error creating course: ${err.message}`);
+      }
+    });
+    
   
     // Edit course logic: wrap PUT in same XHR + progress
     window.editCourse = (id, title, desc) => {
