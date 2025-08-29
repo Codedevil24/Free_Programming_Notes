@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  /* 🔧 CHANGE #1: Replaced tbvws logic with official YT IFrame API */
+  // ✅ CHANGE #1: Replaced tbvws.js calls with official YouTube IFrame API
   function loadYouTubePlayer(videoId) {
     debugLog('Loading YouTube player via IFrame API:', videoId);
     hideElement(videoLoading);
@@ -81,15 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Load DRM player (unchanged except minor cleanup)
+  // Load DRM player with enhanced features
   function loadDRMPPlayer(videoUrl) {
-    debugLog('Loading DRM player', videoUrl);
+    debugLog('Loading DRM player:', videoUrl);
     hideElement(videoLoading);
     showElement(videoElement.parentElement, [youtubeContainer, videoError]);
     showElement(customControls, [youtubeContainer]);
 
     videoElement.src = videoUrl;
     if (plyrPlayer) plyrPlayer.destroy();
+
     plyrPlayer = new Plyr(videoElement, {
       controls: [
         'play-large', 'restart', 'rewind', 'play', 'fast-forward',
@@ -98,14 +99,17 @@ document.addEventListener('DOMContentLoaded', () => {
       ],
       settings: ['captions', 'quality', 'speed', 'loop'],
       ratio: '16:9',
-      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] }
+      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
+      keyboard: { focused: true, global: true }
     });
+
     setupCustomControls();
   }
 
-  // Setup custom controls (unchanged)
+  // Setup custom controls (preserving existing functionality)
   function setupCustomControls() {
     if (!plyrPlayer) return;
+
     const playPauseBtn = document.getElementById('play-pause-btn');
     const rewindBtn = document.getElementById('rewind-btn');
     const forwardBtn = document.getElementById('fast-forward-btn');
@@ -133,24 +137,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Show error (unchanged)
+  // Show error (preserving existing functionality)
   function showVideoError(title, message) {
     hideElement(videoLoading);
     hideElement(youtubeContainer);
     hideElement(videoElement.parentElement);
     showElement(videoError);
+
     document.getElementById('error-message').textContent = message;
   }
 
-  // Load module details (unchanged)
+  // ✅ CHANGE #2 & #3: Added guards for empty chapters / missing courseId
   async function fetchModuleDetails() {
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('courseId');
-    const chapterIndex = parseInt(urlParams.get('chapterIndex'));
-    const moduleIndex = parseInt(urlParams.get('moduleIndex'));
+    const chapterIndex = parseInt(urlParams.get('chapterIndex'), 10);
+    const moduleIndex = parseInt(urlParams.get('moduleIndex'), 10);
 
-    if (!courseId || isNaN(chapterIndex) || isNaN(moduleIndex)) {
-      showVideoError('Invalid URL', 'Please check the URL and try again');
+    if (!courseId || courseId.length !== 24 || isNaN(chapterIndex) || isNaN(moduleIndex)) {
+      showVideoError('Invalid URL parameters', 'Please check the URL and try again');
       return;
     }
 
@@ -163,8 +168,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
       const course = await response.json();
-      const module = course.chapters[chapterIndex]?.modules[moduleIndex];
 
+      // Guard for empty chapters array
+      if (!course.chapters || !course.chapters.length) {
+        showVideoError('No Content', 'This course currently has no chapters.');
+        return;
+      }
+
+      const module = course.chapters[chapterIndex]?.modules[moduleIndex];
       if (!module) {
         showVideoError('Module not found', 'The requested module could not be found');
         return;
@@ -210,20 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const urlParams = new URLSearchParams(window.location.search);
-const courseId = urlParams.get('courseId');
-const chapterIndex = parseInt(urlParams.get('chapterIndex'));
-const moduleIndex = parseInt(urlParams.get('moduleIndex'));
-
-/* 🔧 NEW GUARD */
-if (!courseId || courseId === 'undefined' || isNaN(chapterIndex) || isNaN(moduleIndex)) {
-  showVideoError('Bad URL', 'Course ID is missing or URL is malformed.');
-  console.error('Missing courseId or indices');
-  return;
-}
-
-
-  /* ---------- Preserve existing navbar & JWT code (unchanged) ---------- */
+  /* ---------- Below is 100 % original code preserved ---------- */
   // Set initial menu state
   if (menuIcon) menuIcon.style.display = 'block';
   if (closeIcon) closeIcon.style.display = 'none';
