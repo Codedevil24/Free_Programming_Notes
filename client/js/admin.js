@@ -23,7 +23,7 @@ function addModule(button) {
   moduleDiv.classList.add("module");
 
   moduleDiv.innerHTML = `
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">âŒ Remove</button>
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
     <input type="text" placeholder="Module Title" class="moduleTitle" required />
     
     <label>Content Type:</label>
