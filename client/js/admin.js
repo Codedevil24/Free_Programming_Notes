@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
       xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
       xhr.send(fd);
     });
-
+//course upload fix
     courseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const formData = new FormData();
