@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/module-lecture.css" />
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
+  <!-- Official YouTube IFrame API (no ads, no decipher libs) -->
+  <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
   <nav class="navbar">
@@ -28,34 +30,38 @@
 
   <main>
     <button onclick="window.history.back()" class="back-button">← Back to Course Details</button>
-    
+
     <div class="module-container">
       <h1 id="module-title">Loading...</h1>
-      
+
       <!-- Enhanced Video Container -->
       <div class="video-wrapper" id="video-container">
-        <video id="video-player" class="video-element" playsinline controls>
+        <!-- DRM / direct mp4 player -->
+        <video id="video-player" class="video-element" playsinline>
           <source src="" type="video/mp4">
           Your browser does not support the video tag.
         </video>
-        
-        <!-- YouTube iframe fallback -->
-        <iframe id="youtube-iframe" 
-                class="youtube-embed" 
-                width="100%" 
-                height="400" 
-                frameborder="0" 
-                allowfullscreen
-                style="display: none;"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-        </iframe>
-        
+
+        <!-- YouTube IFrame container -->
+        <div id="youtube-container" style="display:none;">
+          <div id="player"></div>
+        </div>
+
+        <!-- Fallback for no-JS / blocked JS -->
+        <noscript>
+          <iframe id="noscript-yt"
+                  width="100%" height="400"
+                  frameborder="0"
+                  allowfullscreen>
+          </iframe>
+        </noscript>
+
         <!-- Loading state -->
         <div id="video-loading" class="video-loading" style="display: none;">
           <div class="loading-spinner"></div>
           <p>Loading video...</p>
         </div>
-        
+
         <!-- Error state -->
         <div id="video-error" class="video-error" style="display: none;">
           <h3>🎥 Video Error</h3>
@@ -64,7 +70,7 @@
           <button onclick="window.history.back()" class="back-btn">← Go Back</button>
         </div>
       </div>
-      
+
       <!-- Existing controls for direct videos -->
       <div class="custom-controls" id="custom-controls">
         <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
@@ -78,7 +84,7 @@
         </select>
         <button id="fullscreen-btn" aria-label="Fullscreen">⛶</button>
       </div>
-      
+
       <p id="notes">Notes: Loading...</p>
       <a id="resources" href="#" target="_blank" rel="noopener noreferrer">Download Resources</a>
     </div>
