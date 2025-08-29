@@ -14,7 +14,10 @@ function addChapter() {
     <button type="button" onclick="addModule(this)">+ Add Module</button>
   `;
 
-  document.getElementById("chaptersContainer").appendChild(chapterDiv);
+  const container = document.getElementById("chaptersContainer");
+  if (container) {
+    container.appendChild(chapterDiv);
+  }
 }
 
 function addModule(button) {
@@ -46,20 +49,24 @@ function addModule(button) {
     </div>
   `;
 
-  button.previousElementSibling.appendChild(moduleDiv);
+  if (button.previousElementSibling) {
+    button.previousElementSibling.appendChild(moduleDiv);
+  }
 }
 
 function toggleModuleFields(select) {
   const module = select.closest('.module');
+  if (!module) return;
+  
   const fileFields = module.querySelector('.file-fields');
   const uploadFields = module.querySelector('.file-upload-fields');
   
   if (select.value === 'file') {
-    fileFields.classList.add('hidden');
-    uploadFields.classList.remove('hidden');
+    if (fileFields) fileFields.classList.add('hidden');
+    if (uploadFields) uploadFields.classList.remove('hidden');
   } else {
-    fileFields.classList.remove('hidden');
-    uploadFields.classList.add('hidden');
+    if (fileFields) fileFields.classList.remove('hidden');
+    if (uploadFields) uploadFields.classList.add('hidden');
   }
 }
 
@@ -92,8 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
     navLinks.forEach(link => {
       link.addEventListener('click', () => {
         navbarLinks.classList.remove('show');
-        menuIcon.style.display = 'block';
-        closeIcon.style.display = 'none';
+        if (menuIcon) menuIcon.style.display = 'block';
+        if (closeIcon) closeIcon.style.display = 'none';
       });
     });
   }
@@ -184,8 +191,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+      const usernameElement = document.getElementById('username');
+      const passwordElement = document.getElementById('password');
+      
+      if (!usernameElement || !passwordElement) {
+        console.error('Username or password field not found');
+        return;
+      }
+      
+      const username = usernameElement.value;
+      const password = passwordElement.value;
 
       try {
         const response = await fetch('https://free-programming-notes.onrender.com/api/auth/login', {
@@ -234,13 +249,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // FIXED: Course Form Submit Handler with proper chapter data handling
+  // Course Form Submit Handler
   if (courseForm) {
     courseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       const formData = new FormData();
       
-      // Safely append main course files
+      // Safely append files only if they exist
       const fileFields = ['thumbnailFile', 'videoFile', 'resourcesFile'];
       fileFields.forEach(field => {
         const input = this.elements[field];
@@ -249,52 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
       
-      formData.append('title', this.elements.title.value);
-      formData.append('description', this.elements.description.value);
+      const titleElement = this.elements.title;
+      const descriptionElement = this.elements.description;
       
-      // FIXED: Proper chapter data collection from DOM
-      const chapters = [];
-      document.querySelectorAll('.chapter').forEach((chapterElem, chapterIndex) => {
-        const chapterTitle = chapterElem.querySelector('.chapterTitle').value;
-        if (!chapterTitle.trim()) return; // Skip empty chapters
-        
-        const modules = [];
-        chapterElem.querySelectorAll('.module').forEach((modElem, modIndex) => {
-          const moduleTitle = modElem.querySelector('.moduleTitle').value;
-          if (!moduleTitle.trim()) return; // Skip empty modules
-          
-          const type = modElem.querySelector('.moduleType').value;
-          const moduleData = {
-            title: moduleTitle,
-            type
-          };
-          
-          if (type === 'link') {
-            moduleData.thumbnail = modElem.querySelector('.moduleThumbnail').value || '';
-            moduleData.videoUrl = modElem.querySelector('.moduleVideo').value || '';
-            moduleData.resources = modElem.querySelector('.moduleResources').value || '';
-            moduleData.notes = modElem.querySelector('.moduleNotes').value || '';
-          } else {
-            // Handle file uploads with unique keys
-            ['thumbnailFile', 'videoFile', 'resourcesFile'].forEach(field => {
-              const fileInput = modElem.querySelector(`.${field}`);
-              if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                const uniqueKey = `chapter${chapterIndex}_mod${modIndex}_${field}`;
-                formData.append(uniqueKey, fileInput.files[0]);
-                moduleData[field.replace('File', '')] = uniqueKey;
-              }
-            });
-            moduleData.notes = modElem.querySelector('.moduleNotesFile').value || '';
-          }
-          modules.push(moduleData);
-        });
-        
-        if (modules.length > 0) {
-          chapters.push({ title: chapterTitle, modules });
-        }
-      });
-      
-      formData.append('chapters', JSON.stringify(chapters));
+      if (titleElement) formData.append('title', titleElement.value);
+      if (descriptionElement) formData.append('description', descriptionElement.value);
+      formData.append('chapters', JSON.stringify(window.chaptersData || []));
       
       try {
         const response = await fetch('https://free-programming-notes.onrender.com/api/courses/add-course', {
@@ -305,18 +280,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let result;
         try {
-            result = await response.json();
+          result = await response.json();
         } catch {
-            throw new Error('Invalid server response');
+          throw new Error('Invalid server response');
         }
         
         if (!response.ok) {
-            throw new Error(result.message || 'Upload failed');
+          throw new Error(result.message || 'Upload failed');
         }
         
         alert('Course uploaded successfully!');
         this.reset();
-        document.getElementById('chaptersContainer').innerHTML = '';
+        const chaptersContainer = document.getElementById('chaptersContainer');
+        if (chaptersContainer) chaptersContainer.innerHTML = '';
         chapterCount = 0;
         fetchCourses();
         
@@ -331,9 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchBooks() {
     if (!bookListSection || !bookList) return;
     try {
-      const response = await fetch('https://free-programming-notes.onrender.com/api/books', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const headers = {};
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('https://free-programming-notes.onrender.com/api/books', { headers });
       if (!response.ok) throw new Error('Failed to fetch books: ' + response.statusText);
       const books = await response.json();
       console.log('Books fetched:', books);
@@ -348,7 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     } catch (err) {
       console.error('Error fetching books:', err);
-      bookList.innerHTML = 'Error loading books: ' + err.message + '<br>';
+      if (bookList) {
+        bookList.innerHTML = 'Error loading books: ' + err.message + '<br>';
+      }
     }
   }
 
@@ -356,9 +338,13 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchCourses() {
     if (!courseListSection || !courseList) return;
     try {
-      const response = await fetch('https://free-programming-notes.onrender.com/api/courses', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const headers = {};
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch('https://free-programming-notes.onrender.com/api/courses', { headers });
       if (!response.ok) throw new Error('Failed to fetch courses: ' + response.statusText);
       const courses = await response.json();
       courseList.innerHTML = courses.map(course => `
@@ -373,7 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     } catch (err) {
       console.error('Error fetching courses:', err);
-      courseList.innerHTML = 'Error loading courses: ' + err.message + '<br>';
+      if (courseList) {
+        courseList.innerHTML = 'Error loading courses: ' + err.message + '<br>';
+      }
     }
   }
 
@@ -385,7 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(notesFormElement);
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+      
+      const token = localStorage.getItem('token');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
 
       const progressContainer = document.querySelector('.progress-container');
       if (progressContainer) progressContainer.style.display = 'block';
@@ -404,8 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
           alert('Book added successfully!');
           notesFormElement.reset();
         } else {
-          const data = JSON.parse(xhr.responseText);
-          alert(data.message || 'Failed to add book');
+          try {
+            const data = JSON.parse(xhr.responseText);
+            alert(data.message || 'Failed to add book');
+          } catch {
+            alert('Failed to add book');
+          }
         }
       };
 
@@ -438,31 +434,45 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="submit">Update Book</button>
       <button type="button" id="cancel-edit">Cancel</button>
     `;
+    
     if (bookListSection) bookListSection.appendChild(editForm);
     if (notesForm) notesForm.style.display = 'none';
 
-    document.getElementById('cancel-edit').addEventListener('click', () => {
-      if (editForm) editForm.remove();
-      if (notesForm) notesForm.style.display = 'block';
-    });
+    const cancelButton = document.getElementById('cancel-edit');
+    if (cancelButton) {
+      cancelButton.addEventListener('click', () => {
+        if (editForm) editForm.remove();
+        if (notesForm) notesForm.style.display = 'block';
+      });
+    }
 
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData();
-      formData.append('title', document.getElementById('edit-title').value);
-      formData.append('description', document.getElementById('edit-description').value);
-      formData.append('category', document.getElementById('edit-category').value);
-      const image = document.getElementById('edit-image').files[0];
-      const pdf = document.getElementById('edit-pdf').files[0];
-      if (image) formData.append('image', image);
-      if (pdf) formData.append('pdf', pdf);
+      
+      const titleField = document.getElementById('edit-title');
+      const descField = document.getElementById('edit-description');
+      const categoryField = document.getElementById('edit-category');
+      const imageField = document.getElementById('edit-image');
+      const pdfField = document.getElementById('edit-pdf');
+      
+      if (titleField) formData.append('title', titleField.value);
+      if (descField) formData.append('description', descField.value);
+      if (categoryField) formData.append('category', categoryField.value);
+      if (imageField && imageField.files[0]) formData.append('image', imageField.files[0]);
+      if (pdfField && pdfField.files[0]) formData.append('pdf', pdfField.files[0]);
 
       try {
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
         const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
           method: 'PUT',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers,
           body: formData
         });
+        
         if (!response.ok) throw new Error('Failed to update book: ' + response.statusText);
         const data = await response.json();
         alert('Book updated successfully!');
@@ -478,11 +488,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delete Book
   window.deleteBook = async (id) => {
+    if (!confirm('Are you sure you want to delete this book?')) return;
+    
     try {
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
       const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers
       });
+      
       if (!response.ok) throw new Error('Failed to delete book: ' + response.statusText);
       fetchBooks();
       alert('Book deleted successfully!');
@@ -505,30 +522,43 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="submit">Update Course</button>
       <button type="button" id="cancel-edit">Cancel</button>
     `;
+    
     if (courseListSection) courseListSection.appendChild(editForm);
     if (courseForm) courseForm.style.display = 'none';
 
-    document.getElementById('cancel-edit').addEventListener('click', () => {
-      if (editForm) editForm.remove();
-      if (courseForm) courseForm.style.display = 'block';
-    });
+    const cancelButton = document.getElementById('cancel-edit');
+    if (cancelButton) {
+      cancelButton.addEventListener('click', () => {
+        if (editForm) editForm.remove();
+        if (courseForm) courseForm.style.display = 'block';
+      });
+    }
 
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData();
-      formData.append('title', document.getElementById('edit-course-title').value);
-      formData.append('description', document.getElementById('edit-course-description').value);
-      const thumbnail = document.getElementById('edit-thumbnail').files[0];
-      const video = document.getElementById('edit-video').files[0];
-      if (thumbnail) formData.append('thumbnail', thumbnail);
-      if (video) formData.append('video', video);
+      
+      const titleField = document.getElementById('edit-course-title');
+      const descField = document.getElementById('edit-course-description');
+      const thumbnailField = document.getElementById('edit-thumbnail');
+      const videoField = document.getElementById('edit-video');
+      
+      if (titleField) formData.append('title', titleField.value);
+      if (descField) formData.append('description', descField.value);
+      if (thumbnailField && thumbnailField.files[0]) formData.append('thumbnail', thumbnailField.files[0]);
+      if (videoField && videoField.files[0]) formData.append('video', videoField.files[0]);
 
       try {
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        
         const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
           method: 'PUT',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          headers,
           body: formData
         });
+        
         if (!response.ok) throw new Error('Failed to update course: ' + response.statusText);
         const data = await response.json();
         alert('Course updated successfully!');
@@ -544,11 +574,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delete Course
   window.deleteCourse = async (id) => {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+    
     try {
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      
       const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers
       });
+      
       if (!response.ok) throw new Error('Failed to delete course: ' + response.statusText);
       fetchCourses();
       alert('Course deleted successfully!');
@@ -559,206 +596,115 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 });
 
-// PRESERVED: Additional course form handling (existing functionality)
+// Additional course form handler with progress bar
 document.addEventListener('DOMContentLoaded', () => {
-    const courseForm = document.getElementById('courseForm');
-    const progContainer = document.getElementById('course-progress-container');
-    const progBar = document.getElementById('course-progress-bar');
-    const progText = document.getElementById('course-progress-text');
-  
-    courseForm?.addEventListener('submit', function(e) {
+  const courseForm = document.getElementById('courseForm');
+  const progContainer = document.getElementById('course-progress-container');
+  const progBar = document.getElementById('course-progress-bar');
+  const progText = document.getElementById('course-progress-text');
+
+  if (courseForm) {
+    courseForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const xhr = new XMLHttpRequest();
       const fd = new FormData(this);
-  
+
       // Append main course files
-      const thumbF = this.thumbnailFile.files[0];
+      const thumbF = this.thumbnailFile?.files[0];
       if (thumbF) fd.append('thumbnailFile', thumbF);
-  
-      const videoF = this.videoFile.files[0];
+
+      const videoF = this.videoFile?.files[0];
       if (videoF) fd.append('videoFile', videoF);
-  
-      const resF = this.resourcesFile.files[0];
+
+      const resF = this.resourcesFile?.files[0];
       if (resF) fd.append('resourcesFile', resF);
-  
+
       // Append chapters/modules as JSON
       const chapters = [];
       let idx = 0;
       document.querySelectorAll('.chapter').forEach(ch => {
         const modArr = [];
         ch.querySelectorAll('.module').forEach(mod => {
-          const type = mod.querySelector('.moduleType').value;
-          const obj = { title: mod.querySelector('.moduleTitle').value, type };
+          const typeSelect = mod.querySelector('.moduleType');
+          const titleInput = mod.querySelector('.moduleTitle');
+          
+          if (!typeSelect || !titleInput) return;
+          
+          const type = typeSelect.value;
+          const obj = { title: titleInput.value, type };
+          
           if (type === 'link') {
-            obj.thumbnail = mod.querySelector('.moduleThumbnail').value;
-            obj.videoUrl  = mod.querySelector('.moduleVideo').value;
-            obj.resources = mod.querySelector('.moduleResources').value;
-            obj.notes     = mod.querySelector('.moduleNotes').value;
+            const thumbnailInput = mod.querySelector('.moduleThumbnail');
+            const videoInput = mod.querySelector('.moduleVideo');
+            const resourcesInput = mod.querySelector('.moduleResources');
+            const notesInput = mod.querySelector('.moduleNotes');
+            
+            obj.thumbnail = thumbnailInput ? thumbnailInput.value : '';
+            obj.videoUrl = videoInput ? videoInput.value : '';
+            obj.resources = resourcesInput ? resourcesInput.value : '';
+            obj.notes = notesInput ? notesInput.value : '';
           } else {
-            const tF = mod.querySelector('.thumbnailFile').files[0];
-            const vF = mod.querySelector('.videoFile').files[0];
-            const rF = mod.querySelector('.resourcesFile').files[0];
+            const tF = mod.querySelector('.thumbnailFile')?.files[0];
+            const vF = mod.querySelector('.videoFile')?.files[0];
+            const rF = mod.querySelector('.resourcesFile')?.files[0];
+            const notesFileInput = mod.querySelector('.moduleNotesFile');
+            
             if (tF) { fd.append(`chapter_${idx}_thumb`, tF); obj.thumbnailFile = `chapter_${idx}_thumb`; }
             if (vF) { fd.append(`chapter_${idx}_video`, vF); obj.videoFile = `chapter_${idx}_video`; }
             if (rF) { fd.append(`chapter_${idx}_resources`, rF); obj.resourcesFile = `chapter_${idx}_resources`; }
-            obj.notes = mod.querySelector('.moduleNotesFile').value;
+            obj.notes = notesFileInput ? notesFileInput.value : '';
             idx++;
           }
           modArr.push(obj);
         });
-        chapters.push({ title: ch.querySelector('.chapterTitle').value, modules: modArr });
+        
+        const chapterTitleInput = ch.querySelector('.chapterTitle');
+        if (chapterTitleInput) {
+          chapters.push({ title: chapterTitleInput.value, modules: modArr });
+        }
       });
       fd.append('chapters', JSON.stringify(chapters));
-  
+
       // Progress bar
-      progContainer.style.display = 'block';
+      if (progContainer) progContainer.style.display = 'block';
       xhr.upload.onprogress = e => {
         if (e.lengthComputable) {
           const pct = Math.round((e.loaded / e.total) * 100);
-          progBar.style.width = pct + '%';
-          progText.textContent = pct + '%';
+          if (progBar) progBar.style.width = pct + '%';
+          if (progText) progText.textContent = pct + '%';
         }
       };
-  
+
       xhr.onload = () => {
-        progContainer.style.display = 'none';
-        const res = JSON.parse(xhr.responseText);
-        if (xhr.status === 201) {
-          alert('Course created!');
-          this.reset();
-          document.getElementById('chaptersContainer').innerHTML = '';
-          progBar.style.width = '0%';
-          progText.textContent = '0%';
-        } else {
-          alert(res.message || 'Upload failed');
+        if (progContainer) progContainer.style.display = 'none';
+        try {
+          const res = JSON.parse(xhr.responseText);
+          if (xhr.status === 201) {
+            alert('Course created!');
+            this.reset();
+            const chaptersContainer = document.getElementById('chaptersContainer');
+            if (chaptersContainer) chaptersContainer.innerHTML = '';
+            if (progBar) progBar.style.width = '0%';
+            if (progText) progText.textContent = '0%';
+          } else {
+            alert(res.message || 'Upload failed');
+          }
+        } catch {
+          alert('Upload completed but response was invalid');
         }
       };
-  
+
       xhr.onerror = () => {
-        progContainer.style.display = 'none';
+        if (progContainer) progContainer.style.display = 'none';
         alert('Error uploading course');
       };
-  
+
       xhr.open('POST', 'https://free-programming-notes.onrender.com/api/courses/add-course');
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+      const token = localStorage.getItem('token');
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
       xhr.send(fd);
     });
-//course upload fix
-    courseForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const formData = new FormData();
-    
-      // Append main course files
-      ['thumbnailFile','videoFile','resourcesFile'].forEach(field => {
-        const input = this.elements[field];
-        if (input?.files?.length) {
-          formData.append(field, input.files[0]);
-        }
-      });
-    
-      formData.append('title', this.elements.title.value);
-      formData.append('description', this.elements.description.value);
-    
-      // Build chapters/modules from the DOM
-      const chapters = [];
-      document.querySelectorAll('.chapter').forEach((chapElem, ci) => {
-        const title = chapElem.querySelector('.chapterTitle').value.trim();
-        if (!title) return;
-        const modules = [];
-        chapElem.querySelectorAll('.module').forEach((modElem, mi) => {
-          const modTitle = modElem.querySelector('.moduleTitle').value.trim();
-          if (!modTitle) return;
-          const type = modElem.querySelector('.moduleType').value;
-          const modObj = { title: modTitle, type };
-          if (type === 'link') {
-            modObj.thumbnail = modElem.querySelector('.moduleThumbnail').value || '';
-            modObj.videoUrl  = modElem.querySelector('.moduleVideo').value || '';
-            modObj.resources = modElem.querySelector('.moduleResources').value || '';
-            modObj.notes     = modElem.querySelector('.moduleNotes').value || '';
-          } else {  // file type
-            ['thumbnailFile','videoFile','resourcesFile'].forEach(fld => {
-              const input = modElem.querySelector(`.${fld}`);
-              if (input?.files?.length) {
-                const key = `chapter${ci}_mod${mi}_${fld}`;
-                formData.append(key, input.files[0]);
-                modObj[fld.replace('File','')] = key;
-              }
-            });
-            modObj.notes = modElem.querySelector('.moduleNotesFile').value || '';
-          }
-          modules.push(modObj);
-        });
-        if (modules.length) chapters.push({ title, modules });
-      });
-    
-      formData.append('chapters', JSON.stringify(chapters));
-    
-      try {
-        const res = await fetch('/api/courses/add-course', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-          body: formData
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
-        alert('Course uploaded successfully!');
-        courseForm.reset();
-        document.getElementById('chaptersContainer').innerHTML = '';
-      } catch (err) {
-        console.error('Course upload error:', err);
-        alert(`Error creating course: ${err.message}`);
-      }
-    });
-    
-  
-    // Edit course logic: wrap PUT in same XHR + progress
-    window.editCourse = (id, title, desc) => {
-      const editForm = document.getElementById('edit-course-form');
-      const eProgContainer = document.getElementById('edit-course-progress-container');
-      const eProgBar       = document.getElementById('edit-course-progress-bar');
-      const eProgText      = document.getElementById('edit-course-progress-text');
-  
-      editForm?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const xhr2 = new XMLHttpRequest();
-        const fd2  = new FormData(this);
-  
-        // Append any new files same as above...
-        const tF2 = this.thumbnailFile?.files[0];
-        if (tF2) fd2.append('thumbnailFile', tF2);
-        const vF2 = this.videoFile?.files[0];
-        if (vF2) fd2.append('videoFile', vF2);
-        const rF2 = this.resourcesFile?.files[0];
-        if (rF2) fd2.append('resourcesFile', rF2);
-  
-        eProgContainer.style.display = 'block';
-        xhr2.upload.onprogress = ev => {
-          if (ev.lengthComputable) {
-            const pc = Math.round((ev.loaded/ev.total)*100);
-            eProgBar.style.width = pc + '%';
-            eProgText.textContent = pc + '%';
-          }
-        };
-  
-        xhr2.onload = () => {
-          eProgContainer.style.display = 'none';
-          const r2 = JSON.parse(xhr2.responseText);
-          if (xhr2.status === 200) {
-            alert('Course updated!');
-            editForm.remove();
-          } else {
-            alert(r2.message || 'Update failed');
-          }
-        };
-  
-        xhr2.onerror = () => {
-          eProgContainer.style.display = 'none';
-          alert('Error updating course');
-        };
-  
-        xhr2.open('PUT', `https://free-programming-notes.onrender.com/api/courses/${id}`);
-        xhr2.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
-        xhr2.send(fd2);
-      });
-    };
+  }
 });
