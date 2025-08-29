@@ -210,6 +210,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const urlParams = new URLSearchParams(window.location.search);
+const courseId = urlParams.get('courseId');
+const chapterIndex = parseInt(urlParams.get('chapterIndex'));
+const moduleIndex = parseInt(urlParams.get('moduleIndex'));
+
+/* 🔧 NEW GUARD */
+if (!courseId || courseId === 'undefined' || isNaN(chapterIndex) || isNaN(moduleIndex)) {
+  showVideoError('Bad URL', 'Course ID is missing or URL is malformed.');
+  console.error('Missing courseId or indices');
+  return;
+}
+
+
   /* ---------- Preserve existing navbar & JWT code (unchanged) ---------- */
   // Set initial menu state
   if (menuIcon) menuIcon.style.display = 'block';
