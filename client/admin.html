@@ -1,152 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Devil - Admin Panel</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/navbar.css">
-    <link rel="icon" href="favicon1.ico" type="image/x-icon">
-    <style>
-        .chapter { 
-            border: 2px solid #ddd; 
-            margin: 15px 0; 
-            padding: 15px; 
-            border-radius: 8px; 
-            background: #f9f9f9;
-        }
-        .module { 
-            border: 1px solid #ccc; 
-            margin: 10px 0; 
-            padding: 10px; 
-            border-radius: 5px; 
-            background: #fff;
-        }
-        .file-fields { 
-            margin-top: 10px; 
-        }
-        .file-fields.hidden { 
-            display: none; 
-        }
-        .remove-btn {
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            float: right;
-        }
-        .modules-container { 
-            margin-left: 20px; 
-            border-left: 3px solid #007acc; 
-            padding-left: 15px; 
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel - Code Devil</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="index.html" class="logo">Code Devil</a>
-            <div class="navbar-links" id="navbar-links">
-                <a href="index.html">Home</a>
-                <a href="courses.html">Courses</a>
-                <a href="category.html">Categories</a>
-                <a href="privacy.html">Privacy & Policy</a>
-                <a href="contact.html">Contact</a>
-                <a href="#" class="logout" id="logout">Logout</a>
-            </div>
-            <div class="hamburger" id="menu-icon">☰</div>
-            <div class="close-icon" id="close-icon">✖</div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <h1>Admin Panel</h1>
-        <p id="message"></p>
-
-        <div class="admin-login">
-            <h2>Please log in</h2>
-            <form id="login-form">
-                <input type="text" id="username" placeholder="Username" required>
-                <input type="password" id="password" placeholder="Password" required>
-                <button type="submit">Login</button>
-            </form>
-        </div>
-
-        <div class="admin-only" id="upload-section" style="display: none;">
-            <select id="upload-type">
-                <option value="notes">Upload Notes</option>
-                <option value="courses">Upload Courses</option>
-            </select>
-
-            <div id="book-form" class="upload-form">
-                <h2>Add New Book</h2>
-                <form id="notes-form" enctype="multipart/form-data">
-                    <input type="text" name="title" placeholder="Book Title" required>
-                    <textarea name="description" placeholder="Book Description" required></textarea>
-                    <select name="category" required>
-                        <option value="">Select Category</option>
-                        <option value="Programming">Programming</option>
-                        <option value="Algorithms">Algorithms</option>
-                        <option value="Data Science">Data Science</option>
-                        <option value="Web Development">Web Development</option>
-                    </select>
-                    <input type="file" name="image" accept="image/*" required>
-                    <input type="file" name="pdf" accept=".pdf" required>
-                    <div class="progress-container" style="display: none;">
-                        <div class="progress-bar" id="progress-bar"></div>
-                        <div class="progress-text" id="progress-text">0%</div>
-                    </div>
-                    <button type="submit">Add Book</button>
-                </form>
-            </div>
-
-            <div id="course-form" class="upload-form" style="display: none;">
-                <h2>Add New Course</h2>
-                <form id="courseForm" enctype="multipart/form-data">
-                    <input type="text" name="title" placeholder="Course Title" required />
-                    <textarea name="description" placeholder="Course Description"></textarea>
-                    <input type="text" name="thumbnail" placeholder="Course Thumbnail URL" />
-
-                    <div id="chaptersContainer"></div>
-                    <button type="button" onclick="addChapter()">+ Add Chapter</button>
-
-                    <br /><br />
-                    <button type="submit">Save Course</button>
-                </form>
-
-                <div class="progress-container" style="display: none;">
-                    <div class="progress-bar" id="progress-bar"></div>
-                    <div class="progress-text" id="progress-text">0%</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="book-list-section" class="admin-only" style="display: none;">
-            <h2>Manage Books</h2>
-            <div id="book-list"></div>
-        </div>
-
-        <div id="course-list-section" class="admin-only" style="display: none;">
-            <h2>Manage Courses</h2>
-            <div id="course-list"></div>
-        </div>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="index.html" class="logo">Code Devil</a>
+      <div class="navbar-links" id="navbar-links">
+        <a href="index.html">Home</a>
+        <a href="courses.html">Courses</a>
+        <a href="category.html">Categories</a>
+        <a href="privacy.html">Privacy & Policy</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div class="hamburger" id="menu-icon" tabindex="0" role="button" aria-label="Open menu">☰</div>
+      <div class="close-icon" id="close-icon" tabindex="0" role="button" aria-label="Close menu">✖</div>
     </div>
+  </nav>
 
-    <!-- Book Details Modal -->
-   <!-- <div class="modal" id="bookModal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modal-title"></h2>
-            <p><strong>Category:</strong> <span id="modal-category"></span></p>
-            <p id="modal-description"></p>
-            <a href="#" id="modal-download" target="_blank">Download PDF</a>
+  <!-- Main Content -->
+  <main>
+    <h1>Admin Panel</h1>
+    <div id="message"></div>
+
+    <!-- Login Form -->
+    <section class="admin-login" style="display: none;">
+      <h2>Admin Login</h2>
+      <form id="login-form">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <!-- Dashboard -->
+    <section class="admin-only" id="upload-section" style="display: none;">
+      <h2>Admin Dashboard</h2>
+      <div class="upload-toggle">
+        <label for="upload-type">Upload Type:</label>
+        <select id="upload-type">
+          <option value="notes">Notes/Books</option>
+          <option value="courses">Courses</option>
+        </select>
+      </div>
+
+      <!-- Notes/Books Form -->
+      <div id="book-form" class="upload-form">
+        <h2>Add Book/Notes</h2>
+        <form id="notes-form" enctype="multipart/form-data">
+          <input type="text" name="title" placeholder="Book Title" required />
+          <textarea name="description" placeholder="Book Description" required></textarea>
+          <select name="category" required>
+            <option value="">Select Category</option>
+            <option value="Programming">Programming</option>
+            <option value="Algorithms">Algorithms</option>
+            <option value="Data Science">Data Science</option>
+            <option value="Web Development">Web Development</option>
+            <option value="Mobile Development">Mobile Development</option>
+            <option value="DevOps">DevOps</option>
+            <option value="AI/ML">AI/ML</option>
+            <option value="Cybersecurity">Cybersecurity</option>
+          </select>
+          <input type="file" name="image" accept="image/*" required />
+          <input type="file" name="pdf" accept=".pdf" required />
+          <button type="submit">Add Book</button>
+        </form>
+        <div class="progress-container" style="display: none;">
+          <div class="progress-bar"><div id="progress-bar" class="progress-fill"></div></div>
+          <span id="progress-text">0%</span>
         </div>
-    </div> -->
-    
-    <script src="js/navbar.js"></script>
-    <script src="js/admin.js"></script>
-    <script src="js/jwt-decode.js"></script>
+      </div>
+
+      <!-- Courses Form -->
+      <div id="course-form" class="upload-form" style="display: none;">
+        <h2>Add Course</h2>
+        <form id="enhanced-course-form" enctype="multipart/form-data">
+          <div class="form-section">
+            <h3>Basic Information</h3>
+            <input type="text" name="title" placeholder="Course Title" required />
+            <textarea name="shortDescription" placeholder="Short Description" rows="3" required></textarea>
+            <textarea name="longDescription" placeholder="Long Description" rows="5"></textarea>
+            <select name="category" required>
+              <option value="">Select Category</option>
+              <option value="Programming">Programming</option>
+              <option value="Algorithms">Algorithms</option>
+              <option value="Data Science">Data Science</option>
+              <option value="Web Development">Web Development</option>
+              <option value="Mobile Development">Mobile Development</option>
+              <option value="DevOps">DevOps</option>
+              <option value="AI/ML">AI/ML</option>
+              <option value="Cybersecurity">Cybersecurity</option>
+            </select>
+            <select name="difficulty">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+            <label class="checkbox-label">
+              <input type="checkbox" name="featured" /> Featured Course
+            </label>
+          </div>
+
+          <div class="form-section">
+            <h3>Thumbnail</h3>
+            <select name="thumbType" onchange="toggleThumbnailFields()">
+              <option value="upload">Upload File</option>
+              <option value="link">Use Link</option>
+            </select>
+            <div id="thumbUpload" class="thumbnail-field">
+              <label>Upload Image:</label>
+              <input type="file" name="thumbnailFile" accept="image/*" />
+            </div>
+            <div id="thumbLink" class="thumbnail-field hidden">
+              <label>Image URL:</label>
+              <input type="url" name="thumbnailUrl" placeholder="https://..." />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Media (Optional)</h3>
+            <label>Intro Video:</label>
+            <input type="file" name="videoFile" accept="video/*" />
+            <label>Resources (PDF/ZIP):</label>
+            <input type="file" name="resourcesFile" accept=".pdf,.zip,.doc,.docx" />
+          </div>
+
+          <div class="form-section">
+            <h3>Chapters & Modules</h3>
+            <div id="chaptersContainer"></div>
+            <button type="button" class="add-chapter-btn" onclick="addChapter()">+ Add Chapter</button>
+          </div>
+
+          <button type="submit" class="submit-btn">Add Course</button>
+        </form>
+        <div class="progress-container" id="course-progress-container" style="display: none;">
+          <div class="progress-bar"><div id="course-progress-bar" class="progress-fill"></div></div>
+          <span id="course-progress-text">0%</span>
+        </div>
+      </div>
+
+      <!-- Existing Books -->
+      <section id="book-list-section"><h2>Existing Books</h2><div id="book-list"></div></section>
+      <!-- Existing Courses -->
+      <section id="course-list-section" style="display: none;"><h2>Existing Courses</h2><div id="course-list"></div></section>
+      <!-- Logout -->
+      <div class="logout"><a href="#" id="logout">Logout</a></div>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/navbar.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/jwt-decode.js"></script>
 </body>
 </html>

@@ -1,72 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/navbar.css">
-    <link rel="stylesheet" href="css/category-contact.css">
-    <link rel="icon" href="favicon1.ico" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Categories - Code Devil</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/navbar.css">
+  <link rel="stylesheet" href="css/category.css" />
+  <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
-
 <body>
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="index.html" class="o">Code Devil</a>
-            <div class="navbar-links" id="navbar-links">
-                <a href="index.html">home</a>
-                <a href="courses.html">Courses</a>
-                <a href="category.html">Categories</a>
-                <a href="privacy.html">Privacy & Policy</a>
-                <a href="contact.html">Contact</a>
-                <a href="admin.html">Admin</a>
-            </div>
-            <div class="hamburger" id="u-icon">☰</div>
-            <div class="close-icon" id="close-icon">✖</div>
-        </div>
-    </nav>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <a href="index.html" class="logo">Code Devil</a>
+      <div class="navbar-links" id="navbar-links">
+        <a href="index.html">Home</a>
+        <a href="courses.html">Courses</a>
+        <a href="category.html">Categories</a>
+        <a href="privacy.html">Privacy & Policy</a>
+        <a href="contact.html">Contact</a>
+        <a href="admin.html">Admin</a>
+      </div>
+      <div class="hamburger" id="menu-icon" tabindex="0" role="button" aria-label="Open menu">☰</div>
+      <div class="close-icon" id="close-icon" tabindex="0" role="button" aria-label="Close menu">✖</div>
+    </div>
+  </nav>
 
-    <main>
-        <div class="page-hero">
-            <h1>Book Categories</h1>
-            <p>Explore our comprehensive collection ganized by categories</p>
-        </div>
+  <!-- Main -->
+  <main>
+    <header class="categories-header">
+      <h1>Browse by Category</h1>
+      <p>Explore our organized collection of programming resources</p>
+    </header>
 
-        <div class="category-grid">
-            <div class="category-card">
-                <div class="category-icon">💻</div>
-                <h3>Programming</h3>
-                <p>Learn various programming languages and paradigms with comprehensive guides and examples</p>
-                <a href="index.html" class="btn">Explore Books</a>
-            </div>
+    <!-- Category Grid -->
+    <section class="categories-grid">
+      <div class="category-card" onclick="filterByCategory('Programming')">
+        <div class="category-icon">💻</div>
+        <h3>Programming</h3>
+        <p>Fundamentals & advanced concepts</p>
+        <span class="item-count" id="programming-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('Algorithms')">
+        <div class="category-icon">🧮</div>
+        <h3>Algorithms</h3>
+        <p>Data structures & problem solving</p>
+        <span class="item-count" id="algorithms-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('Data Science')">
+        <div class="category-icon">📊</div>
+        <h3>Data Science</h3>
+        <p>Analytics, ML & statistics</p>
+        <span class="item-count" id="data-science-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('Web Development')">
+        <div class="category-icon">🌐</div>
+        <h3>Web Development</h3>
+        <p>Frontend, backend & full-stack</p>
+        <span class="item-count" id="web-development-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('Mobile Development')">
+        <div class="category-icon">📱</div>
+        <h3>Mobile Development</h3>
+        <p>iOS, Android & cross-platform</p>
+        <span class="item-count" id="mobile-development-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('DevOps')">
+        <div class="category-icon">⚙️</div>
+        <h3>DevOps</h3>
+        <p>CI/CD, containers & infra</p>
+        <span class="item-count" id="devops-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('AI/ML')">
+        <div class="category-icon">🤖</div>
+        <h3>AI/ML</h3>
+        <p>Artificial Intelligence & Machine Learning</p>
+        <span class="item-count" id="ai-ml-count">0 items</span>
+      </div>
+      <div class="category-card" onclick="filterByCategory('Cybersecurity')">
+        <div class="category-icon">🔒</div>
+        <h3>Cybersecurity</h3>
+        <p>Security practices & ethical hacking</p>
+        <span class="item-count" id="cybersecurity-count">0 items</span>
+      </div>
+    </section>
 
-            <div class="category-card">
-                <div class="category-icon">🧮</div>
-                <h3>Algorithms</h3>
-                <p>Master data structures and algorithmic thinking with detailed explanations and implementations</p>
-                <a href="index.html" class="btn">xplore Books</a>
-            </div>
+    <!-- Results -->
+    <section id="results-section" style="display: none;">
+      <div class="results-header">
+        <h2 id="results-title">Category Results</h2>
+        <button id="back-btn" onclick="goBack()">← Back</button>
+      </div>
+      <div class="search-container">
+        <input id="search-bar" type="text" placeholder="Search within category..." />
+      </div>
+      <div class="content-toggle">
+        <button class="toggle-btn active" onclick="toggleContentType('books')">Books</button>
+        <button class="toggle-btn" onclick="toggleContentType('courses')">Courses</button>
+      </div>
+      <div id="results-grid" class="results-grid"></div>
+    </section>
+  </main>
 
-            <div class="category-card">
-                <div class="category-icon">📊</div>
-                <h3>Data Science</h3>
-                <p>Dive into data analysis, machine learning, and statistics th practical resources</p>
-                <a href="index.html" class="btn">Explore Books</a>
-            </div>
-
-            <div class="category-card">
-                <div class="category-icon">🌐</div>
-                <h3>Web Development</h3>
-                <p>Build modern web applications and websites with the latest technologies and frameworks</p>
-                <a href="index.html" class="btn">Explore Books</a>
-            </div>
-        </div>
-    </main>
-    <script src="js/navbar.js"></script>
-    <script src="js/category.js"></script>
-    <script src="js/jwt-decode.js"></script>
+  <!-- Scripts -->
+  <script src="js/navbar.js"></script>
+  <script src="js/category.js" defer></script>
+  <script src="js/jwt-decode.js"></script>
 </body>
-
 </html>

@@ -113,10 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="course-title">${course.title}</h3>
             <p class="course-description">${course.description || ''}</p>
             <div class="course-meta">
-              <span class="chapters-count">📚 ${chapCount} Chapter${chapCount !== 1 ? 's' : ''}</span>
-              <span class="modules-count">🎯 ${modCount} Module${modCount !== 1 ? 's' : ''}</span>
+              <span class="chapters-count">ðŸ“š ${chapCount} Chapter${chapCount !== 1 ? 's' : ''}</span>
+              <span class="modules-count">ðŸŽ¯ ${modCount} Module${modCount !== 1 ? 's' : ''}</span>
             </div>
-            <a href="course-details.html?id=${course._id}" class="view-details-btn">View Details →</a>
+            <a href="course-details.html?id=${course._id}" class="view-details-btn">View Details â†’</a>
           </div>
         </div>
       `;

@@ -7,7 +7,7 @@ function addChapter() {
 
   chapterDiv.innerHTML = `
     <h3>Chapter ${chapterCount} 
-      <button type="button" class="remove-btn" onclick="this.parentElement.parentElement.remove()">❌ Remove</button>
+      <button type="button" class="remove-btn" onclick="this.parentElement.parentElement.remove()">âŒ Remove</button>
     </h3>
     <input type="text" placeholder="Chapter Title" class="chapterTitle" required />
     <div class="modules-container"></div>
@@ -22,7 +22,7 @@ function addModule(button) {
   moduleDiv.classList.add("module");
 
   moduleDiv.innerHTML = `
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">❌ Remove</button>
+    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">âŒ Remove</button>
     <input type="text" placeholder="Module Title" class="moduleTitle" required />
     
     <label>Content Type:</label>
@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(notesFormElement);
       const xhr = new XMLHttpRequest();
       xhr.open('POST', 'https://free-programming-notes.onrender.com/api/books', true);
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`); 
+      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
 
       const progressContainer = document.querySelector('.progress-container');
       if (progressContainer) progressContainer.style.display = 'block';
@@ -646,21 +646,23 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Edit course logic: wrap PUT in same XHR + progress
     window.editCourse = (id, title, desc) => {
-      // generate and show edit form...
       const editForm = document.getElementById('edit-course-form');
       const eProgContainer = document.getElementById('edit-course-progress-container');
-      const eProgBar = document.getElementById('edit-course-progress-bar');
-      const eProgText = document.getElementById('edit-course-progress-text');
+      const eProgBar       = document.getElementById('edit-course-progress-bar');
+      const eProgText      = document.getElementById('edit-course-progress-text');
   
-      editForm.addEventListener('submit', function(e) {
+      editForm?.addEventListener('submit', function(e) {
         e.preventDefault();
         const xhr2 = new XMLHttpRequest();
-        const fd2 = new FormData(this);
+        const fd2  = new FormData(this);
   
         // Append any new files same as above...
         const tF2 = this.thumbnailFile?.files[0];
         if (tF2) fd2.append('thumbnailFile', tF2);
-        // ... videoFile, resourcesFile
+        const vF2 = this.videoFile?.files[0];
+        if (vF2) fd2.append('videoFile', vF2);
+        const rF2 = this.resourcesFile?.files[0];
+        if (rF2) fd2.append('resourcesFile', rF2);
   
         eProgContainer.style.display = 'block';
         xhr2.upload.onprogress = ev => {
@@ -692,4 +694,4 @@ document.addEventListener('DOMContentLoaded', () => {
         xhr2.send(fd2);
       });
     };
-  });
+});

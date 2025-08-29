@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Code Devil - Courses</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courses - Code Devil</title>
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/courses.css" />
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
+  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="index.html" class="logo">Code Devil</a>
@@ -21,23 +22,71 @@
         <a href="contact.html">Contact</a>
         <a href="admin.html">Admin</a>
       </div>
-      <div class="hamburger" id="menu-icon">☰</div>
-      <div class="close-icon" id="close-icon">✖</div>
+      <div class="hamburger" id="menu-icon" tabindex="0" role="button" aria-label="Open menu">☰</div>
+      <div class="close-icon" id="close-icon" tabindex="0" role="button" aria-label="Close menu">✖</div>
     </div>
   </nav>
 
+  <!-- Main Content -->
   <main>
-    <header>
-      <h1>Available Courses</h1>
-      <p>Master programming with our structured courses</p>
+    <header class="courses-header">
+      <h1>Programming Courses</h1>
+      <p>Master programming with our comprehensive courses</p>
     </header>
 
-    <div class="courses-grid" id="coursesList">
-      <div class="loading">Loading courses...</div>
+    <!-- Category Filter -->
+    <section id="category-section">
+      <h2>Categories</h2>
+      <ul id="category-list">
+        <li data-category="All" class="category-btn active">All</li>
+        <li data-category="Programming" class="category-btn">Programming</li>
+        <li data-category="Algorithms" class="category-btn">Algorithms</li>
+        <li data-category="Data Science" class="category-btn">Data Science</li>
+        <li data-category="Web Development" class="category-btn">Web Development</li>
+        <li data-category="Mobile Development" class="category-btn">Mobile Development</li>
+        <li data-category="DevOps" class="category-btn">DevOps</li>
+        <li data-category="AI/ML" class="category-btn">AI/ML</li>
+        <li data-category="Cybersecurity" class="category-btn">Cybersecurity</li>
+      </ul>
+    </section>
+
+    <!-- Search -->
+    <section id="search-section" aria-label="Search courses">
+      <input id="search-bar" type="text" placeholder="Search courses..." aria-label="Search courses" />
+    </section>
+
+    <!-- Courses Grid -->
+    <section id="courses-section" aria-label="Course List">
+      <div id="courses-grid" role="list">
+        <div class="loading">Loading courses...</div>
+      </div>
+    </section>
+
+    <!-- Course Modal -->
+    <div class="modal" id="course-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-description" aria-hidden="true">
+      <div class="modal-content">
+        <button class="close-modal" id="close-modal" aria-label="Close modal">&times;</button>
+        <img id="modal-image" alt="" />
+        <h3 id="modal-title"></h3>
+        <p><strong>Category:</strong> <span id="modal-category"></span></p>
+        <p><strong>Difficulty:</strong> <span id="modal-difficulty"></span></p>
+        <p><strong>Featured:</strong> <span id="modal-featured"></span></p>
+        <div id="modal-short-description"></div>
+        <div id="modal-long-description"></div>
+        <div id="modal-chapters">
+          <h4>Course Content:</h4>
+          <div id="chapters-list"></div>
+        </div>
+        <div class="modal-actions">
+          <a href="#" id="modal-start-course" class="start-course-btn">Start Course</a>
+        </div>
+      </div>
     </div>
   </main>
+
+  <!-- Scripts -->
   <script src="js/navbar.js"></script>
-  <script src="js/courses.js"></script>
+  <script src="js/courses.js" defer></script>
   <script src="js/jwt-decode.js"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
-  <!-- Navbar with hamburger and close icons for responsiveness -->
+  <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="index.html" class="logo">Code Devil</a>
@@ -34,7 +34,7 @@
       <p>Your gateway to comprehensive programming resources</p>
     </header>
 
-    <!-- Category Filter Section -->
+    <!-- Category Filter -->
     <section id="category-section">
       <h2>Categories</h2>
       <ul id="category-list">
@@ -43,20 +43,24 @@
         <li data-category="Algorithms" class="category-btn">Algorithms</li>
         <li data-category="Data Science" class="category-btn">Data Science</li>
         <li data-category="Web Development" class="category-btn">Web Development</li>
+        <li data-category="Mobile Development" class="category-btn">Mobile Development</li>
+        <li data-category="DevOps" class="category-btn">DevOps</li>
+        <li data-category="AI/ML" class="category-btn">AI/ML</li>
+        <li data-category="Cybersecurity" class="category-btn">Cybersecurity</li>
       </ul>
     </section>
-    
-    <!-- Search input for filtering books -->
+
+    <!-- Search -->
     <section id="search-section" aria-label="Search books">
       <input id="search-bar" type="text" placeholder="Search books..." aria-label="Search books" />
     </section>
 
-    <!-- Book list renders here -->
+    <!-- Books -->
     <section id="books-section" aria-label="Book List">
       <div id="book-list" role="list"></div>
     </section>
 
-    <!-- RESTORED: Courses preview section with proper styling -->
+    <!-- Courses preview -->
     <section id="courses-section">
       <h2>Courses</h2>
       <p>Explore our comprehensive programming courses</p>
@@ -64,7 +68,7 @@
     </section>
   </main>
 
-  <!-- External JS with deferred loading -->
+  <!-- Scripts -->
   <script src="js/navbar.js"></script>
   <script src="js/index.js" defer></script>
   <script src="js/jwt-decode.js"></script>
