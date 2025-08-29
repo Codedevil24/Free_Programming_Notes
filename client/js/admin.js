@@ -7,7 +7,7 @@ function addChapter() {
 
   chapterDiv.innerHTML = `
     <h3>Chapter ${chapterCount} 
-      <button type="button" class="remove-btn" onclick="this.parentElement.parentElement.remove()">âŒ Remove</button>
+      <button type="button" class="remove-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>
     </h3>
     <input type="text" placeholder="Chapter Title" class="chapterTitle" required />
     <div class="modules-container"></div>
