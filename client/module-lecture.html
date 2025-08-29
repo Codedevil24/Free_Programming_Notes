@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/module-lecture.css" />
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
+  <!-- Plyr CSS and JS (fix for Plyr not loading) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
   <!-- Official YouTube IFrame API (no ads, no decipher libs) -->
   <script src="https://www.youtube.com/iframe_api"></script>
 </head>
@@ -21,7 +24,8 @@
         <a href="category.html">Categories</a>
         <a href="privacy.html">Privacy & Policy</a>
         <a href="contact.html">Contact</a>
-        <a href="admin.html">Admin</a>
+        <a href="admin.html" class="admin-login">Admin</a>
+        <a href="#" class="logout" id="logout-link" style="display: none;">Logout</a>
       </div>
       <div class="hamburger" id="menu-icon">☰</div>
       <div class="close-icon" id="close-icon">✖</div>
@@ -56,8 +60,8 @@
           </iframe>
         </noscript>
 
-        <!-- Loading state -->
-        <div id="video-loading" class="video-loading" style="display: none;">
+        <!-- Loading state (changed to display:block to show initially) -->
+        <div id="video-loading" class="video-loading" style="display: block;">
           <div class="loading-spinner"></div>
           <p>Loading video...</p>
         </div>
@@ -87,6 +91,7 @@
 
       <p id="notes">Notes: Loading...</p>
       <a id="resources" href="#" target="_blank" rel="noopener noreferrer">Download Resources</a>
+      <p id="no-resources" style="display: none;">No resources available for this module.</p>
     </div>
   </main>
 
