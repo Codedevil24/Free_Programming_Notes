@@ -27,13 +27,11 @@
     </div>
   </nav>
 
-  <!-- Main Content -->
   <main>
     <h1>Admin Panel</h1>
-    <div id="message"></div>
 
-    <!-- Login Form -->
-    <section class="admin-login" style="display: none;">
+    <!-- Admin Login Section -->
+    <section class="admin-login" id="admin-login">
       <h2>Admin Login</h2>
       <form id="login-form">
         <input type="text" id="username" placeholder="Username" required />
@@ -42,10 +40,12 @@
       </form>
     </section>
 
-    <!-- Dashboard -->
+    <!-- Admin Dashboard (hidden by default) -->
     <section class="admin-only" id="upload-section" style="display: none;">
       <h2>Admin Dashboard</h2>
-      <div class="upload-toggle">
+
+      <!-- Upload Type Selection -->
+      <div class="form-group">
         <label for="upload-type">Upload Type:</label>
         <select id="upload-type">
           <option value="notes">Notes/Books</option>
@@ -53,12 +53,12 @@
         </select>
       </div>
 
-      <!-- Notes/Books Form -->
+      <!-- Book/Notes Upload Form -->
       <div id="book-form" class="upload-form">
         <h2>Add Book/Notes</h2>
         <form id="notes-form" enctype="multipart/form-data">
           <input type="text" name="title" placeholder="Book Title" required />
-          <textarea name="description" placeholder="Book Description" required></textarea>
+          <textarea name="description" placeholder="Book Description" rows="4" required></textarea>
           <select name="category" required>
             <option value="">Select Category</option>
             <option value="Programming">Programming</option>
@@ -74,13 +74,15 @@
           <input type="file" name="pdf" accept=".pdf" required />
           <button type="submit">Add Book</button>
         </form>
+
+        <!-- Progress Bar for Book Upload -->
         <div class="progress-container" style="display: none;">
-          <div class="progress-bar"><div id="progress-bar" class="progress-fill"></div></div>
+          <div class="progress-bar"><div id="progress-bar" style="width: 0%;"></div></div>
           <span id="progress-text">0%</span>
         </div>
       </div>
 
-      <!-- Courses Form -->
+      <!-- Course Upload Form -->
       <div id="course-form" class="upload-form" style="display: none;">
         <h2>Add Course</h2>
         <form id="enhanced-course-form" enctype="multipart/form-data">
@@ -112,17 +114,17 @@
 
           <div class="form-section">
             <h3>Thumbnail</h3>
-            <select name="thumbType" onchange="toggleThumbnailFields()">
-              <option value="upload">Upload File</option>
-              <option value="link">Use Link</option>
-            </select>
-            <div id="thumbUpload" class="thumbnail-field">
+            <div class="radio-group">
+              <label><input type="radio" name="thumbnailType" value="file" checked /> Upload File</label>
+              <label><input type="radio" name="thumbnailType" value="url" /> Use Link</label>
+            </div>
+            <div class="conditional-field" id="thumbnailFile-field">
               <label>Upload Image:</label>
               <input type="file" name="thumbnailFile" accept="image/*" />
             </div>
-            <div id="thumbLink" class="thumbnail-field hidden">
+            <div class="conditional-field hidden" id="thumbnailUrl-field">
               <label>Image URL:</label>
-              <input type="url" name="thumbnailUrl" placeholder="https://..." />
+              <input type="url" name="thumbnailUrl" placeholder="https://example.com/image.jpg" />
             </div>
           </div>
 
@@ -137,29 +139,62 @@
           <div class="form-section">
             <h3>Chapters & Modules</h3>
             <div id="chaptersContainer"></div>
-            <button type="button" class="add-chapter-btn" onclick="addChapter()">+ Add Chapter</button>
+            <button type="button" onclick="addChapter()">+ Add Chapter</button>
           </div>
 
-          <button type="submit" class="submit-btn">Add Course</button>
+          <button type="submit">Add Course</button>
         </form>
-        <div class="progress-container" id="course-progress-container" style="display: none;">
-          <div class="progress-bar"><div id="course-progress-bar" class="progress-fill"></div></div>
+
+        <!-- Progress Bar for Course Upload -->
+        <div id="course-progress-container" class="progress-container" style="display: none;">
+          <div class="progress-bar"><div id="course-progress-bar" style="width: 0%;"></div></div>
           <span id="course-progress-text">0%</span>
         </div>
       </div>
 
-      <!-- Existing Books -->
-      <section id="book-list-section"><h2>Existing Books</h2><div id="book-list"></div></section>
-      <!-- Existing Courses -->
-      <section id="course-list-section" style="display: none;"><h2>Existing Courses</h2><div id="course-list"></div></section>
-      <!-- Logout -->
-      <div class="logout"><a href="#" id="logout">Logout</a></div>
-    </section>
-  </main>
+      <!-- Existing Books Section -->
+      <section id="book-list-section">
+        <h2>Existing Books</h2>
+        <div id="book-list"></div>
+      </section>
 
-  <!-- Scripts -->
+      <!-- Existing Courses Section -->
+      <section id="course-list-section" style="display: none;">
+        <h2>Existing Courses</h2>
+        <div id="course-list"></div>
+      </section>
+
+      <!-- Logout Button -->  
+      <div class="logout">
+        <button id="logout">Logout</button>
+      </div>
+    </section>
+
+    <div id="message" class="message"></div>
+  </main>
+  
+    <!-- Scripts -->
   <script src="js/navbar.js"></script>
-  <script src="js/admin.js"></script>
   <script src="js/jwt-decode.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // Thumbnail toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      const radios = document.querySelectorAll('input[name="thumbnailType"]');
+      const fileField = document.getElementById('thumbnailFile-field');
+      const urlField = document.getElementById('thumbnailUrl-field');
+      radios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          if (e.target.value === 'file') {
+            fileField?.classList.remove('hidden');
+            urlField?.classList.add('hidden');
+          } else {
+            fileField?.classList.add('hidden');
+            urlField?.classList.remove('hidden');
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

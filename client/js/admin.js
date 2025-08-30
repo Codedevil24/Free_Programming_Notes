@@ -14,8 +14,7 @@ function addChapter() {
     <button type="button" onclick="addModule(this)">+ Add Module</button>
   `;
 
-  const container = document.getElementById("chaptersContainer");
-  if (container) container.appendChild(chapterDiv);
+  document.getElementById("chaptersContainer").appendChild(chapterDiv);
 }
 
 function addModule(button) {
@@ -47,22 +46,20 @@ function addModule(button) {
     </div>
   `;
 
-  const modulesContainer = button.previousElementSibling;
-  if (modulesContainer) modulesContainer.appendChild(moduleDiv);
+  button.previousElementSibling.appendChild(moduleDiv);
 }
 
 function toggleModuleFields(select) {
   const module = select.closest('.module');
-  if (!module) return;
   const fileFields = module.querySelector('.file-fields');
   const uploadFields = module.querySelector('.file-upload-fields');
   
   if (select.value === 'file') {
-    if (fileFields) fileFields.classList.add('hidden');
-    if (uploadFields) uploadFields.classList.remove('hidden');
+    fileFields.classList.add('hidden');
+    uploadFields.classList.remove('hidden');
   } else {
-    if (fileFields) fileFields.classList.remove('hidden');
-    if (uploadFields) uploadFields.classList.add('hidden');
+    fileFields.classList.remove('hidden');
+    uploadFields.classList.add('hidden');
   }
 }
 
@@ -72,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const uploadType = document.getElementById('upload-type');
   const notesForm = document.getElementById('book-form');
   const courseForm = document.getElementById('course-form');
+  const enhancedCourseForm = document.getElementById('enhanced-course-form'); // NEW: Found this in HTML
   const bookListSection = document.getElementById('book-list-section');
   const bookList = document.getElementById('book-list');
   const courseListSection = document.getElementById('course-list-section');
@@ -95,8 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
     navLinks.forEach(link => {
       link.addEventListener('click', () => {
         navbarLinks.classList.remove('show');
-        if (menuIcon) menuIcon.style.display = 'block';
-        if (closeIcon) closeIcon.style.display = 'none';
+        menuIcon.style.display = 'block';
+        closeIcon.style.display = 'none';
       });
     });
   }
@@ -128,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Token validation error:', err);
-      localStorage.removeItem('token');
+      localStorage.removeToken('token');
       updateAuthDisplay(false);
       if (uploadSection) uploadSection.style.display = 'none';
       if (bookListSection) bookListSection.style.display = 'none';
@@ -187,16 +185,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const usernameInput = document.getElementById('username');
-      const passwordInput = document.getElementById('password');
-      
-      if (!usernameInput || !passwordInput) {
-        console.error('Username or password input not found');
-        return;
-      }
-      
-      const username = usernameInput.value;
-      const password = passwordInput.value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
 
       try {
         const response = await fetch('https://free-programming-notes.onrender.com/api/auth/login', {
@@ -245,32 +235,108 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Course Form Submit Handler - ENHANCED WITH FILE UPLOAD
-  if (courseForm) {
-    courseForm.addEventListener('submit', async function(e) {
+  // FIXED: Enhanced Course Form Handler (for id="enhanced-course-form")
+  if (enhancedCourseForm) {
+    enhancedCourseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
+      console.log('Enhanced course form submitted');
+      
       const formData = new FormData();
       
-      // Safely append files only if they exist
-      const fileFields = ['thumbnailFile', 'videoFile', 'resourcesFile'];
-      fileFields.forEach(field => {
-        const input = this.elements && this.elements[field];
-        if (input && input.files && input.files.length > 0) {
-          formData.append(field, input.files[0]);
+      // Get form fields directly from the enhanced form
+      const titleInput = this.querySelector('input[name="title"]');
+      const shortDescInput = this.querySelector('textarea[name="shortDescription"]');
+      const longDescInput = this.querySelector('textarea[name="longDescription"]');
+      const categorySelect = this.querySelector('select[name="category"]');
+      const difficultySelect = this.querySelector('select[name="difficulty"]');
+      const featuredCheckbox = this.querySelector('input[name="featured"]');
+      
+      console.log('Form elements found:', {
+        title: !!titleInput,
+        shortDesc: !!shortDescInput,
+        longDesc: !!longDescInput,
+        category: !!categorySelect,
+        difficulty: !!difficultySelect,
+        featured: !!featuredCheckbox
+      });
+      
+      // Validation
+      const title = titleInput ? titleInput.value.trim() : '';
+      if (!title) {
+        alert('Course title is required!');
+        if (titleInput) titleInput.focus();
+        return;
+      }
+      
+      // Add basic form data
+      formData.append('title', title);
+      
+      if (shortDescInput) {
+        formData.append('description', shortDescInput.value.trim()); // Use shortDescription as main description
+      }
+      if (longDescInput) {
+        formData.append('longDescription', longDescInput.value.trim());
+      }
+      if (categorySelect) {
+        formData.append('category', categorySelect.value);
+      }
+      if (difficultySelect) {
+        formData.append('difficulty', difficultySelect.value);
+      }
+      if (featuredCheckbox) {
+        formData.append('featured', featuredCheckbox.checked);
+      }
+      
+      // Handle file uploads - look for all file inputs in the form
+      const fileInputs = this.querySelectorAll('input[type="file"]');
+      fileInputs.forEach(input => {
+        if (input.files && input.files.length > 0) {
+          const fieldName = input.name || input.className || 'file';
+          formData.append(fieldName, input.files[0]);
+          console.log(`Added file ${fieldName}:`, input.files[0].name);
         }
       });
       
-      // Get chapters data from global variable or build it
+      // Handle thumbnail choice (file upload vs URL)
+      const thumbnailFileInput = this.querySelector('input[name="thumbnailFile"]');
+      const thumbnailUrlInput = this.querySelector('input[name="thumbnailUrl"]');
+      const thumbnailToggle = this.querySelector('input[name="thumbnailType"]:checked');
+      
+      if (thumbnailToggle) {
+        if (thumbnailToggle.value === 'file' && thumbnailFileInput && thumbnailFileInput.files[0]) {
+          formData.append('thumbnailFile', thumbnailFileInput.files[0]);
+        } else if (thumbnailToggle.value === 'url' && thumbnailUrlInput && thumbnailUrlInput.value) {
+          formData.append('thumbnailUrl', thumbnailUrlInput.value);
+        }
+      }
+      
+      // Handle video and resource files
+      const videoInput = this.querySelector('input[name="videoFile"]');
+      const resourcesInput = this.querySelector('input[name="resourcesFile"]');
+      
+      if (videoInput && videoInput.files && videoInput.files[0]) {
+        formData.append('videoFile', videoInput.files[0]);
+      }
+      if (resourcesInput && resourcesInput.files && resourcesInput.files[0]) {
+        formData.append('resourcesFile', resourcesInput.files[0]);
+      }
+      
+      // Build chapters data
       let chaptersData = [];
       try {
         chaptersData = buildChaptersData();
+        console.log('Chapters data:', chaptersData);
       } catch (error) {
         console.error('Error building chapters data:', error);
       }
       
-      formData.append('title', this.elements && this.elements.title ? this.elements.title.value : '');
-      formData.append('description', this.elements && this.elements.description ? this.elements.description.value : '');
       formData.append('chapters', JSON.stringify(chaptersData));
+      
+      // Debug FormData contents
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, ':', typeof value === 'object' && value.name ? value.name : value);
+      }
       
       try {
         const response = await fetch('https://free-programming-notes.onrender.com/api/courses/add-course', {
@@ -286,8 +352,10 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error('Invalid server response');
         }
         
+        console.log('Server response:', result);
+        
         if (!response.ok) {
-          throw new Error(result.message || 'Upload failed');
+          throw new Error(result.message || `Upload failed with status ${response.status}`);
         }
         
         alert('Course uploaded successfully!');
@@ -304,7 +372,78 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Helper function to build chapters data
+  // Legacy Course Form Handler (for id="course-form")
+  if (courseForm) {
+    const legacyCourseFormElement = courseForm.querySelector('form');
+    if (legacyCourseFormElement) {
+      legacyCourseFormElement.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        console.log('Legacy course form submitted');
+        
+        const formData = new FormData();
+        
+        // Try to find title field with multiple methods
+        let titleInput = this.querySelector('input[name="title"]') || 
+                        this.querySelector('#title') ||
+                        this.querySelector('input[placeholder*="title" i]') ||
+                        this.querySelector('input[type="text"]');
+                        
+        const title = titleInput ? titleInput.value.trim() : '';
+        if (!title) {
+          alert('Course title is required!');
+          return;
+        }
+        
+        formData.append('title', title);
+        
+        // Get description
+        const descInput = this.querySelector('textarea') || this.querySelector('input[name="description"]');
+        if (descInput) {
+          formData.append('description', descInput.value);
+        }
+        
+        // Handle files
+        const fileInputs = this.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+          if (input.files && input.files.length > 0) {
+            const fieldName = input.name || input.className || 'file';
+            formData.append(fieldName, input.files[0]);
+          }
+        });
+        
+        // Build chapters
+        const chaptersData = buildChaptersData();
+        formData.append('chapters', JSON.stringify(chaptersData));
+        
+        try {
+          const response = await fetch('https://free-programming-notes.onrender.com/api/courses/add-course', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+            body: formData
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.message || 'Upload failed');
+          }
+          
+          alert('Course uploaded successfully!');
+          this.reset();
+          const chaptersContainer = document.getElementById('chaptersContainer');
+          if (chaptersContainer) chaptersContainer.innerHTML = '';
+          chapterCount = 0;
+          fetchCourses();
+          
+        } catch (error) {
+          console.error('Course upload error:', error);
+          alert(`Error creating course: ${error.message}`);
+        }
+      });
+    }
+  }
+
+  // Build chapters data function
   function buildChaptersData() {
     const chapters = [];
     document.querySelectorAll('.chapter').forEach(chapter => {
@@ -372,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     } catch (err) {
       console.error('Error fetching books:', err);
-      if (bookList) bookList.innerHTML = 'Error loading books: ' + err.message + '<br>';
+      bookList.innerHTML = 'Error loading books: ' + err.message + '<br>';
     }
   }
 
@@ -387,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const courses = await response.json();
       courseList.innerHTML = courses.map(course => `
         <div class="course-item">
-          <img src="${course.thumbnail || 'https://placehold.co/100x100'}" alt="${course.title}" style="width: 100px; height: auto;">
+          <img src="${course.thumbnail}" alt="${course.title}" style="width: 100px; height: auto;">
           <h3>${course.title}</h3>
           <p>${course.description}</p>
           <p><strong>Chapters:</strong> ${course.chapters ? course.chapters.length : 0}</p>
@@ -397,11 +536,11 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     } catch (err) {
       console.error('Error fetching courses:', err);
-      if (courseList) courseList.innerHTML = 'Error loading courses: ' + err.message + '<br>';
+      courseList.innerHTML = 'Error loading courses: ' + err.message + '<br>';
     }
   }
 
-  // Book-related functions (existing functionality preserved)
+  // Notes/Books Form Submit
   const notesFormElement = document.getElementById('notes-form');
   if (notesFormElement) {
     notesFormElement.addEventListener('submit', (e) => {
@@ -465,28 +604,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookListSection) bookListSection.appendChild(editForm);
     if (notesForm) notesForm.style.display = 'none';
 
-    const cancelBtn = document.getElementById('cancel-edit');
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => {
-        if (editForm) editForm.remove();
-        if (notesForm) notesForm.style.display = 'block';
-      });
-    }
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      if (editForm) editForm.remove();
+      if (notesForm) notesForm.style.display = 'block';
+    });
 
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData();
-      const titleInput = document.getElementById('edit-title');
-      const descInput = document.getElementById('edit-description');
-      const categoryInput = document.getElementById('edit-category');
-      const imageInput = document.getElementById('edit-image');
-      const pdfInput = document.getElementById('edit-pdf');
-      
-      if (titleInput) formData.append('title', titleInput.value);
-      if (descInput) formData.append('description', descInput.value);
-      if (categoryInput) formData.append('category', categoryInput.value);
-      if (imageInput && imageInput.files[0]) formData.append('image', imageInput.files[0]);
-      if (pdfInput && pdfInput.files[0]) formData.append('pdf', pdfInput.files[0]);
+      formData.append('title', document.getElementById('edit-title').value);
+      formData.append('description', document.getElementById('edit-description').value);
+      formData.append('category', document.getElementById('edit-category').value);
+      const image = document.getElementById('edit-image').files[0];
+      const pdf = document.getElementById('edit-pdf').files[0];
+      if (image) formData.append('image', image);
+      if (pdf) formData.append('pdf', pdf);
 
       try {
         const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
@@ -509,19 +641,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delete Book
   window.deleteBook = async (id) => {
-    if (confirm('Are you sure you want to delete this book?')) {
-      try {
-        const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (!response.ok) throw new Error('Failed to delete book: ' + response.statusText);
-        fetchBooks();
-        alert('Book deleted successfully!');
-      } catch (err) {
-        console.error('Error deleting book:', err);
-        alert('Error deleting book: ' + err.message);
-      }
+    try {
+      const response = await fetch(`https://free-programming-notes.onrender.com/api/books/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (!response.ok) throw new Error('Failed to delete book: ' + response.statusText);
+      fetchBooks();
+      alert('Book deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting book:', err);
+      alert('Error deleting book: ' + err.message);
     }
   };
 
@@ -541,26 +671,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (courseListSection) courseListSection.appendChild(editForm);
     if (courseForm) courseForm.style.display = 'none';
 
-    const cancelBtn = document.getElementById('cancel-edit');
-    if (cancelBtn) {
-      cancelBtn.addEventListener('click', () => {
-        if (editForm) editForm.remove();
-        if (courseForm) courseForm.style.display = 'block';
-      });
-    }
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      if (editForm) editForm.remove();
+      if (courseForm) courseForm.style.display = 'block';
+    });
 
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData();
-      const titleInput = document.getElementById('edit-course-title');
-      const descInput = document.getElementById('edit-course-description');
-      const thumbnailInput = document.getElementById('edit-thumbnail');
-      const videoInput = document.getElementById('edit-video');
-      
-      if (titleInput) formData.append('title', titleInput.value);
-      if (descInput) formData.append('description', descInput.value);
-      if (thumbnailInput && thumbnailInput.files[0]) formData.append('thumbnail', thumbnailInput.files[0]);
-      if (videoInput && videoInput.files[0]) formData.append('video', videoInput.files[0]);
+      formData.append('title', document.getElementById('edit-course-title').value);
+      formData.append('description', document.getElementById('edit-course-description').value);
+      const thumbnail = document.getElementById('edit-thumbnail').files[0];
+      const video = document.getElementById('edit-video').files[0];
+      if (thumbnail) formData.append('thumbnail', thumbnail);
+      if (video) formData.append('video', video);
 
       try {
         const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
@@ -583,65 +707,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Delete Course
   window.deleteCourse = async (id) => {
-    if (confirm('Are you sure you want to delete this course?')) {
-      try {
-        const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (!response.ok) throw new Error('Failed to delete course: ' + response.statusText);
-        fetchCourses();
-        alert('Course deleted successfully!');
-      } catch (err) {
-        console.error('Error deleting course:', err);
-        alert('Error deleting course: ' + err.message);
-      }
+    try {
+      const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (!response.ok) throw new Error('Failed to delete course: ' + response.statusText);
+      fetchCourses();
+      alert('Course deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting course:', err);
+      alert('Error deleting course: ' + err.message);
     }
   };
-
-  // Initial fetch
-  fetchBooks();
-  fetchCourses();
 });
 
-// Enhanced XHR upload with progress bar for course form (alternative implementation)
+// Additional XHR-based course form handler with progress bar (keeping existing functionality)
 document.addEventListener('DOMContentLoaded', () => {
   const courseForm = document.getElementById('courseForm');
   const progContainer = document.getElementById('course-progress-container');
   const progBar = document.getElementById('course-progress-bar');
   const progText = document.getElementById('course-progress-text');
 
-  // Safe file input helper
-  function safeFileInput(mod, selector) {
-    const input = mod ? mod.querySelector(selector) : null;
-    return (input && input.files && input.files[0]) ? input.files[0] : null;
-  }
-
-  if (courseForm && progContainer && progBar && progText) {
+  if (courseForm) {
     courseForm.addEventListener('submit', function(e) {
       e.preventDefault();
       const xhr = new XMLHttpRequest();
       const fd = new FormData(this);
 
       // Append main course files
-      const titleInput = this.elements ? this.elements.title : null;
-      const descInput = this.elements ? this.elements.description : null;
-      const thumbFileInput = this.elements ? this.elements.thumbnailFile : null;
-      const videoFileInput = this.elements ? this.elements.videoFile : null;
-      const resFileInput = this.elements ? this.elements.resourcesFile : null;
+      const thumbF = this.thumbnailFile?.files[0];
+      if (thumbF) fd.append('thumbnailFile', thumbF);
 
-      if (titleInput) fd.append('title', titleInput.value || '');
-      if (descInput) fd.append('description', descInput.value || '');
+      const videoF = this.videoFile?.files[0];
+      if (videoF) fd.append('videoFile', videoF);
 
-      if (thumbFileInput && thumbFileInput.files && thumbFileInput.files[0]) {
-        fd.append('thumbnailFile', thumbFileInput.files[0]);
-      }
-      if (videoFileInput && videoFileInput.files && videoFileInput.files[0]) {
-        fd.append('videoFile', videoFileInput.files[0]);
-      }
-      if (resFileInput && resFileInput.files && resFileInput.files[0]) {
-        fd.append('resourcesFile', resFileInput.files[0]);
-      }
+      const resF = this.resourcesFile?.files[0];
+      if (resF) fd.append('resourcesFile', resF);
 
       // Append chapters/modules as JSON
       const chapters = [];
@@ -666,9 +768,9 @@ document.addEventListener('DOMContentLoaded', () => {
             obj.resources = resInput ? resInput.value : '';
             obj.notes = notesInput ? notesInput.value : '';
           } else {
-            const tF = safeFileInput(mod, '.thumbnailFile');
-            const vF = safeFileInput(mod, '.videoFile');
-            const rF = safeFileInput(mod, '.resourcesFile');
+            const tF = mod.querySelector('.thumbnailFile')?.files[0];
+            const vF = mod.querySelector('.videoFile')?.files[0];
+            const rF = mod.querySelector('.resourcesFile')?.files[0];
             const notesInput = mod.querySelector('.moduleNotesFile');
             
             if (tF) { fd.append(`chapter_${idx}_thumb`, tF); obj.thumbnailFile = `chapter_${idx}_thumb`; }
@@ -687,29 +789,29 @@ document.addEventListener('DOMContentLoaded', () => {
       fd.append('chapters', JSON.stringify(chapters));
 
       // Progress bar
-      progContainer.style.display = 'block';
-      xhr.upload.onprogress = e => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          progBar.style.width = pct + '%';
-          progText.textContent = pct + '%';
-        }
-      };
+      if (progContainer && progBar && progText) {
+        progContainer.style.display = 'block';
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            progBar.style.width = pct + '%';
+            progText.textContent = pct + '%';
+          }
+        };
+      }
 
       xhr.onload = () => {
-        progContainer.style.display = 'none';
+        if (progContainer) progContainer.style.display = 'none';
         try {
           const res = JSON.parse(xhr.responseText);
           if (xhr.status === 201) {
-            alert('Course created!');
+            alert('Course created successfully!');
             this.reset();
             const chaptersContainer = document.getElementById('chaptersContainer');
             if (chaptersContainer) chaptersContainer.innerHTML = '';
-            progBar.style.width = '0%';
-            progText.textContent = '0%';
+            if (progBar) progBar.style.width = '0%';
+            if (progText) progText.textContent = '0%';
             chapterCount = 0;
-            // Refresh courses list if fetchCourses function exists
-            if (typeof fetchCourses === 'function') fetchCourses();
           } else {
             alert(res.message || 'Upload failed');
           }
@@ -719,7 +821,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       xhr.onerror = () => {
-        progContainer.style.display = 'none';
+        if (progContainer) progContainer.style.display = 'none';
         alert('Error uploading course');
       };
 
