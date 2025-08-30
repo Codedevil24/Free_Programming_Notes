@@ -131,7 +131,7 @@ router.post(
   upload.any(),
   async (req, res) => {
     try {
-      const { title, description, chapters } = req.body;
+      const { title, shortDescription, longDescription, category, difficulty, featured, thumbnailType } = req.body;
       if (!title) return res.status(400).json({ message: 'Title is required' });
 
       // Parse chapters JSON safely
@@ -180,11 +180,16 @@ router.post(
       // Create and save course document
       const course = new Course({
         title,
-        description,
+        shortDescription,
+        longDescription,
+        category,
         thumbnail: thumbnailUrl,
+        thumbnailType,
         videoUrl,
-        resources: resourcesUrl,
+        resources,
         chapters: parsedChapters,
+        featured,
+        difficulty
       });
 
       await course.save();
