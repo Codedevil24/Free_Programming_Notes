@@ -7,7 +7,7 @@ function addChapter() {
 
   chapterDiv.innerHTML = `
     <h3>Chapter ${chapterCount} 
-      <button type="button" class="remove-btn" onclick="this.parentElement.parentElement.remove()">Remove</button>
+      <button type="button" class="remove-btn" onclick="removeChapter(this)">Remove</button>
     </h3>
     <input type="text" placeholder="Chapter Title" class="chapterTitle" required />
     <div class="modules-container"></div>
@@ -17,12 +17,20 @@ function addChapter() {
   document.getElementById("chaptersContainer").appendChild(chapterDiv);
 }
 
+function removeChapter(button) {
+  // Safely remove chapter and decrement count
+  const chapterDiv = button.closest('.chapter');
+  if (chapterDiv) {
+    chapterDiv.remove();
+  }
+}
+
 function addModule(button) {
   const moduleDiv = document.createElement("div");
   moduleDiv.classList.add("module");
 
   moduleDiv.innerHTML = `
-    <button type="button" class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+    <button type="button" class="remove-btn" onclick="removeModule(this)">Remove</button>
     <input type="text" placeholder="Module Title" class="moduleTitle" required />
     
     <label>Content Type:</label>
@@ -39,14 +47,24 @@ function addModule(button) {
     </div>
     
     <div class="file-upload-fields hidden">
-      <input type="file" class="thumbnailFile" accept="image/*" placeholder="Upload Thumbnail" />
-      <input type="file" class="videoFile" accept="video/*" placeholder="Upload Video" />
-      <input type="file" class="resourcesFile" accept=".pdf,.doc,.docx,.zip" placeholder="Upload Resources" />
+      <input type="file" class="thumbnailFile" accept="image/*" />
+      <input type="file" class="videoFile" accept="video/*" />
+      <input type="file" class="resourcesFile" accept=".pdf,.doc,.docx,.zip" />
       <textarea placeholder="Notes" class="moduleNotesFile"></textarea>
     </div>
   `;
 
-  button.previousElementSibling.appendChild(moduleDiv);
+  // Find the modules-container and add the module there
+  const chapter = button.closest('.chapter');
+  const modulesContainer = chapter.querySelector('.modules-container');
+  modulesContainer.appendChild(moduleDiv);
+}
+
+function removeModule(button) {
+  const moduleDiv = button.closest('.module');
+  if (moduleDiv) {
+    moduleDiv.remove();
+  }
 }
 
 function toggleModuleFields(select) {
@@ -235,11 +253,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // FIXED: Enhanced Course Form Handler (for id="enhanced-course-form")
+  // Enhanced Course Form Handler with Progress Bar
   if (enhancedCourseForm) {
     enhancedCourseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       console.log('Enhanced course form submitted');
+      
+      // Show progress bar
+      const progressContainer = document.querySelector('.progress-container') || 
+                                document.getElementById('course-progress-container');
+      const progBar = document.getElementById('progress-bar') || 
+                      document.getElementById('course-progress-bar');
+      const progText = document.getElementById('progress-text') || 
+                       document.getElementById('course-progress-text');
       
       const formData = new FormData();
       
@@ -271,7 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // Add basic form data
       formData.append('title', title);
       
-      // FIXED: Send shortDescription instead of description
       if (shortDescInput) {
         formData.append('shortDescription', shortDescInput.value.trim());
       }
@@ -322,13 +347,15 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('resourcesFile', resourcesInput.files[0]);
       }
       
-      // Build chapters data
+      // Build chapters data - FIXED
       let chaptersData = [];
       try {
         chaptersData = buildChaptersData();
         console.log('Chapters data:', chaptersData);
       } catch (error) {
         console.error('Error building chapters data:', error);
+        alert('Error processing chapters data. Please check your chapters and modules.');
+        return;
       }
       
       formData.append('chapters', JSON.stringify(chaptersData));
@@ -340,53 +367,88 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       try {
-        const response = await fetch('https://free-programming-notes.onrender.com/api/courses/add-course', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-          body: formData
-        });
+        // Use XMLHttpRequest for progress tracking
+        const xhr = new XMLHttpRequest();
         
-        let result;
-        try {
-          result = await response.json();
-        } catch {
-          throw new Error('Invalid server response');
-        }
+        // Show progress bar
+        if (progressContainer) progressContainer.style.display = 'block';
         
-        console.log('Server response:', result);
-        
-        if (!response.ok) {
-          throw new Error(result.message || `Upload failed with status ${response.status}`);
-        }
-        
-        alert('Course uploaded successfully!');
-        this.reset();
-        const chaptersContainer = document.getElementById('chaptersContainer');
-        if (chaptersContainer) chaptersContainer.innerHTML = '';
-        chapterCount = 0;
-        fetchCourses();
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            if (progBar) progBar.style.width = `${percentComplete}%`;
+            if (progText) progText.textContent = `${percentComplete}%`;
+          }
+        };
+
+        xhr.onload = () => {
+          if (progressContainer) progressContainer.style.display = 'none';
+          
+          try {
+            const result = JSON.parse(xhr.responseText);
+            console.log('Server response:', result);
+            
+            if (xhr.status === 201) {
+              alert('Course uploaded successfully!');
+              this.reset();
+              const chaptersContainer = document.getElementById('chaptersContainer');
+              if (chaptersContainer) chaptersContainer.innerHTML = '';
+              chapterCount = 0;
+              if (progBar) progBar.style.width = '0%';
+              if (progText) progText.textContent = '0%';
+              fetchCourses();
+            } else {
+              throw new Error(result.message || `Upload failed with status ${xhr.status}`);
+            }
+          } catch (parseError) {
+            console.error('Error parsing response:', parseError);
+            alert('Error processing server response');
+          }
+        };
+
+        xhr.onerror = () => {
+          if (progressContainer) progressContainer.style.display = 'none';
+          alert('Error uploading course');
+        };
+
+        xhr.open('POST', 'https://free-programming-notes.onrender.com/api/courses/add-course');
+        xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token')}`);
+        xhr.send(formData);
         
       } catch (error) {
         console.error('Course upload error:', error);
         alert(`Error creating course: ${error.message}`);
+        if (progressContainer) progressContainer.style.display = 'none';
       }
     });
   }
 
-  // Build chapters data function
+  // FIXED: Build chapters data function
   function buildChaptersData() {
     const chapters = [];
-    document.querySelectorAll('.chapter').forEach(chapter => {
+    const chapterElements = document.querySelectorAll('.chapter');
+    
+    console.log('Found chapters:', chapterElements.length);
+    
+    chapterElements.forEach((chapter, chapterIndex) => {
       const chapterTitleInput = chapter.querySelector('.chapterTitle');
-      const chapterTitle = chapterTitleInput ? chapterTitleInput.value : '';
+      const chapterTitle = chapterTitleInput ? chapterTitleInput.value.trim() : '';
+      
+      console.log(`Chapter ${chapterIndex + 1}: "${chapterTitle}"`);
       
       const modules = [];
-      chapter.querySelectorAll('.module').forEach(module => {
+      const moduleElements = chapter.querySelectorAll('.module');
+      
+      console.log(`- Found ${moduleElements.length} modules in chapter ${chapterIndex + 1}`);
+      
+      moduleElements.forEach((module, moduleIndex) => {
         const moduleTitleInput = module.querySelector('.moduleTitle');
         const moduleTypeSelect = module.querySelector('.moduleType');
         
-        const moduleTitle = moduleTitleInput ? moduleTitleInput.value : '';
+        const moduleTitle = moduleTitleInput ? moduleTitleInput.value.trim() : '';
         const moduleType = moduleTypeSelect ? moduleTypeSelect.value : 'link';
+        
+        console.log(`  Module ${moduleIndex + 1}: "${moduleTitle}" (${moduleType})`);
         
         const moduleData = {
           title: moduleTitle,
@@ -399,13 +461,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const resourcesInput = module.querySelector('.moduleResources');
           const notesTextarea = module.querySelector('.moduleNotes');
           
-          moduleData.thumbnail = thumbnailInput ? thumbnailInput.value : '';
-          moduleData.videoUrl = videoInput ? videoInput.value : '';
-          moduleData.resources = resourcesInput ? resourcesInput.value : '';
-          moduleData.notes = notesTextarea ? notesTextarea.value : '';
+          moduleData.thumbnail = thumbnailInput ? thumbnailInput.value.trim() : '';
+          moduleData.videoUrl = videoInput ? videoInput.value.trim() : '';
+          moduleData.resources = resourcesInput ? resourcesInput.value.trim() : '';
+          moduleData.notes = notesTextarea ? notesTextarea.value.trim() : '';
         } else {
           const notesTextarea = module.querySelector('.moduleNotesFile');
-          moduleData.notes = notesTextarea ? notesTextarea.value : '';
+          moduleData.notes = notesTextarea ? notesTextarea.value.trim() : '';
         }
         
         modules.push(moduleData);
@@ -417,6 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
     
+    console.log('Final chapters data:', chapters);
     return chapters;
   }
 
@@ -715,48 +778,78 @@ document.addEventListener('DOMContentLoaded', () => {
         fd.append('resourcesFile', resFileInput.files[0]);
       }
 
-      // Append chapters/modules as JSON
-      const chapters = [];
-      let idx = 0;
-      document.querySelectorAll('.chapter').forEach(ch => {
-        const modArr = [];
-        ch.querySelectorAll('.module').forEach(mod => {
-          const typeSelect = mod.querySelector('.moduleType');
-          const titleInput = mod.querySelector('.moduleTitle');
-          const type = typeSelect ? typeSelect.value : 'link';
-          const title = titleInput ? titleInput.value : '';
+      // Build chapters data using the same fixed function
+      let chaptersData = [];
+      try {
+        // Use the same buildChaptersData function logic
+        const chapterElements = document.querySelectorAll('.chapter');
+        chapterElements.forEach((chapter, chapterIndex) => {
+          const chapterTitleInput = chapter.querySelector('.chapterTitle');
+          const chapterTitle = chapterTitleInput ? chapterTitleInput.value.trim() : '';
           
-          const obj = { title, type };
-          if (type === 'link') {
-            const thumbInput = mod.querySelector('.moduleThumbnail');
-            const videoInput = mod.querySelector('.moduleVideo');
-            const resInput = mod.querySelector('.moduleResources');
-            const notesInput = mod.querySelector('.moduleNotes');
+          const modules = [];
+          const moduleElements = chapter.querySelectorAll('.module');
+          
+          moduleElements.forEach((module, moduleIndex) => {
+            const moduleTitleInput = module.querySelector('.moduleTitle');
+            const moduleTypeSelect = module.querySelector('.moduleType');
             
-            obj.thumbnail = thumbInput ? thumbInput.value : '';
-            obj.videoUrl = videoInput ? videoInput.value : '';
-            obj.resources = resInput ? resInput.value : '';
-            obj.notes = notesInput ? notesInput.value : '';
-          } else {
-            const tF = mod.querySelector('.thumbnailFile')?.files[0];
-            const vF = mod.querySelector('.videoFile')?.files[0];
-            const rF = mod.querySelector('.resourcesFile')?.files[0];
-            const notesInput = mod.querySelector('.moduleNotesFile');
+            const moduleTitle = moduleTitleInput ? moduleTitleInput.value.trim() : '';
+            const moduleType = moduleTypeSelect ? moduleTypeSelect.value : 'link';
             
-            if (tF) { fd.append(`chapter_${idx}_thumb`, tF); obj.thumbnailFile = `chapter_${idx}_thumb`; }
-            if (vF) { fd.append(`chapter_${idx}_video`, vF); obj.videoFile = `chapter_${idx}_video`; }
-            if (rF) { fd.append(`chapter_${idx}_resources`, rF); obj.resourcesFile = `chapter_${idx}_resources`; }
-            obj.notes = notesInput ? notesInput.value : '';
-            idx++;
-          }
-          modArr.push(obj);
+            const moduleData = {
+              title: moduleTitle,
+              type: moduleType
+            };
+            
+            if (moduleType === 'link') {
+              const thumbnailInput = module.querySelector('.moduleThumbnail');
+              const videoInput = module.querySelector('.moduleVideo');
+              const resourcesInput = module.querySelector('.moduleResources');
+              const notesTextarea = module.querySelector('.moduleNotes');
+              
+              moduleData.thumbnail = thumbnailInput ? thumbnailInput.value.trim() : '';
+              moduleData.videoUrl = videoInput ? videoInput.value.trim() : '';
+              moduleData.resources = resourcesInput ? resourcesInput.value.trim() : '';
+              moduleData.notes = notesTextarea ? notesTextarea.value.trim() : '';
+            } else {
+              // Handle file uploads for modules
+              const tF = module.querySelector('.thumbnailFile')?.files[0];
+              const vF = module.querySelector('.videoFile')?.files[0];
+              const rF = module.querySelector('.resourcesFile')?.files[0];
+              const notesInput = module.querySelector('.moduleNotesFile');
+              
+              if (tF) { 
+                fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_thumb`, tF); 
+                moduleData.thumbnailFile = `chapter_${chapterIndex}_module_${moduleIndex}_thumb`; 
+              }
+              if (vF) { 
+                fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_video`, vF); 
+                moduleData.videoFile = `chapter_${chapterIndex}_module_${moduleIndex}_video`; 
+              }
+              if (rF) { 
+                fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_resources`, rF); 
+                moduleData.resourcesFile = `chapter_${chapterIndex}_module_${moduleIndex}_resources`; 
+              }
+              moduleData.notes = notesInput ? notesInput.value.trim() : '';
+            }
+            
+            modules.push(moduleData);
+          });
+          
+          chaptersData.push({
+            title: chapterTitle,
+            modules: modules
+          });
         });
         
-        const chapterTitleInput = ch.querySelector('.chapterTitle');
-        const chapterTitle = chapterTitleInput ? chapterTitleInput.value : '';
-        chapters.push({ title: chapterTitle, modules: modArr });
-      });
-      fd.append('chapters', JSON.stringify(chapters));
+      } catch (error) {
+        console.error('Error building chapters data:', error);
+        alert('Error processing chapters data');
+        return;
+      }
+
+      fd.append('chapters', JSON.stringify(chaptersData));
 
       // Progress bar
       progContainer.style.display = 'block';
