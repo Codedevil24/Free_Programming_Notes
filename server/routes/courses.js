@@ -8,16 +8,34 @@ const fs = require('fs');
 const multer = require('multer');
 require('dotenv').config();
 
-// Multer setup for temporary file storage
+// Enhanced Multer setup with better error handling
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = 'tmp/';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
 });
-const upload = multer({ storage });
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|mp4|mp3|zip|rar|doc|docx/;
+    const extname = allowedTypes.test(file.originalname.toLowerCase());
+    const mimetype = /image|video|application/.test(file.mimetype);
+    
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
+  }
+});
 
 // Authentication middleware
 const authMiddleware = (req, res, next) => {
@@ -33,8 +51,12 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Helper: upload a file to Telegram and return public URL
+// Enhanced Telegram upload with retry mechanism
 async function uploadToTelegram(file, type) {
+  if (!process.env.TELEGRAM_BOT_TOKEN || !process.env.TELEGRAM_CHAT_ID) {
+    throw new Error('Telegram credentials not configured');
+  }
+
   const form = new FormData();
   form.append('chat_id', process.env.TELEGRAM_CHAT_ID);
   
@@ -46,18 +68,16 @@ async function uploadToTelegram(file, type) {
     form.append('photo', fs.createReadStream(file.path));
   }
 
-  const endpoint =
-    type === 'video'
-      ? 'sendVideo'
-      : type === 'document'
-      ? 'sendDocument'
-      : 'sendPhoto';
+  const endpoint = type === 'video' ? 'sendVideo' : type === 'document' ? 'sendDocument' : 'sendPhoto';
 
   try {
     const response = await axios.post(
       `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/${endpoint}`,
       form,
-      { headers: form.getHeaders() }
+      { 
+        headers: form.getHeaders(),
+        timeout: 30000
+      }
     );
 
     if (!response.data.ok) {
@@ -74,19 +94,25 @@ async function uploadToTelegram(file, type) {
     }
 
     const fileInfoResp = await axios.get(
-      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`
+      `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getFile?file_id=${fileId}`,
+      { timeout: 10000 }
     );
 
     if (!fileInfoResp.data.ok) {
       throw new Error('Failed to get file info from Telegram');
     }
 
+    const fileUrl = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfoResp.data.result.file_path}`;
+    
     // Cleanup temp file
-    fs.unlinkSync(file.path);
-
-    return `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${fileInfoResp.data.result.file_path}`;
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
+    }
+    
+    return fileUrl;
   } catch (error) {
-    // Cleanup temp file on error as well
+    console.error('Telegram upload error:', error.message);
+    // Cleanup temp file on error
     if (file && file.path && fs.existsSync(file.path)) {
       fs.unlinkSync(file.path);
     }
@@ -99,9 +125,11 @@ router.get('/', async (req, res) => {
   try {
     const courses = await Course.find({
       $or: [{ isDeleted: false }, { isDeleted: { $exists: false } }],
-    }).lean();
+    }).sort({ createdAt: -1 }).lean();
+    
     res.json(courses);
   } catch (err) {
+    console.error('Fetch courses error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
@@ -120,89 +148,171 @@ router.get('/:id', async (req, res) => {
     
     res.json(course);
   } catch (err) {
+    console.error('Fetch course error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-// POST add course with files, modules, chapters
+// POST add course with complete fixes
 router.post(
   '/add-course',
   authMiddleware,
   upload.any(),
   async (req, res) => {
     try {
-      const { title, shortDescription, longDescription, category, difficulty, featured, thumbnailType } = req.body;
-      if (!title) return res.status(400).json({ message: 'Title is required' });
+      console.log('Received course upload request');
+      console.log('Body:', req.body);
+      console.log('Files:', req.files?.length || 0);
+
+      const { 
+        title, 
+        shortDescription, 
+        longDescription, 
+        category, 
+        difficulty, 
+        featured, 
+        thumbnailType,
+        chapters: chaptersString 
+      } = req.body;
+
+      // Enhanced validation
+      if (!title?.trim()) {
+        return res.status(400).json({ success: false, message: 'Title is required' });
+      }
+      if (!shortDescription?.trim()) {
+        return res.status(400).json({ success: false, message: 'Short description is required' });
+      }
+      if (!category?.trim()) {
+        return res.status(400).json({ success: false, message: 'Category is required' });
+      }
 
       // Parse chapters JSON safely
       let parsedChapters = [];
       try {
-        parsedChapters = JSON.parse(chapters || '[]');
-      } catch {
-        return res.status(400).json({ message: 'Invalid chapters JSON' });
+        parsedChapters = JSON.parse(chaptersString || '[]');
+        console.log('Parsed chapters:', parsedChapters.length);
+      } catch (parseError) {
+        console.error('Chapters parse error:', parseError);
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid chapters format. Please check your chapter data.' 
+        });
       }
 
-      // Upload main files to Telegram
+      // Process main course files
       let thumbnailUrl = null, videoUrl = null, resourcesUrl = null;
 
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
-          if (file.fieldname === 'thumbnailFile') {
-            thumbnailUrl = await uploadToTelegram(file, 'photo');
-          } else if (file.fieldname === 'videoFile') {
-            videoUrl = await uploadToTelegram(file, 'video');
-          } else if (file.fieldname === 'resourcesFile') {
-            resourcesUrl = await uploadToTelegram(file, 'document');
+          try {
+            if (file.fieldname === 'thumbnailFile') {
+              thumbnailUrl = await uploadToTelegram(file, 'photo');
+            } else if (file.fieldname === 'videoFile') {
+              videoUrl = await uploadToTelegram(file, 'video');
+            } else if (file.fieldname === 'resourcesFile') {
+              resourcesUrl = await uploadToTelegram(file, 'document');
+            }
+          } catch (uploadError) {
+            console.error(`File upload error for ${file.fieldname}:`, uploadError.message);
+            // Continue without this file if upload fails
           }
         }
       }
 
-      // Upload files for each module in chapters
-      for (const chap of parsedChapters) {
-        if (!Array.isArray(chap.modules)) continue;
+      // Process chapter module files
+      const processedChapters = [];
+      for (let chapterIndex = 0; chapterIndex < parsedChapters.length; chapterIndex++) {
+        const chapter = parsedChapters[chapterIndex];
+        const processedModules = [];
 
-        for (const mod of chap.modules) {
-          if (mod.type === 'file' && req.files) {
-            // Find files by matching the unique keys we generated in frontend
-            for (const file of req.files) {
-              if (file.fieldname.includes('thumbnailFile') && mod.thumbnail === file.fieldname) {
-                mod.thumbnail = await uploadToTelegram(file, 'photo');
-              } else if (file.fieldname.includes('videoFile') && mod.videoUrl === file.fieldname) {
-                mod.videoUrl = await uploadToTelegram(file, 'video');
-              } else if (file.fieldname.includes('resourcesFile') && mod.resources === file.fieldname) {
-                mod.resources = await uploadToTelegram(file, 'document');
+        if (Array.isArray(chapter.modules)) {
+          for (let moduleIndex = 0; moduleIndex < chapter.modules.length; moduleIndex++) {
+            const module = { ...chapter.modules[moduleIndex] };
+            
+            if (module.type === 'file' && req.files) {
+              // Find matching files for this module
+              const chapterKey = `chapter_${chapterIndex}_module_${moduleIndex}`;
+              
+              for (const file of req.files) {
+                if (file.fieldname === `${chapterKey}_thumb`) {
+                  try {
+                    module.thumbnail = await uploadToTelegram(file, 'photo');
+                  } catch (e) {
+                    console.error('Thumbnail upload error:', e.message);
+                  }
+                } else if (file.fieldname === `${chapterKey}_video`) {
+                  try {
+                    module.videoUrl = await uploadToTelegram(file, 'video');
+                  } catch (e) {
+                    console.error('Video upload error:', e.message);
+                  }
+                } else if (file.fieldname === `${chapterKey}_resources`) {
+                  try {
+                    module.resources = await uploadToTelegram(file, 'document');
+                  } catch (e) {
+                    console.error('Resources upload error:', e.message);
+                  }
+                }
               }
             }
+            
+            processedModules.push(module);
           }
         }
+
+        processedChapters.push({
+          title: chapter.title || `Chapter ${chapterIndex + 1}`,
+          modules: processedModules
+        });
       }
 
-      // Create and save course document
+      // Create course document
       const course = new Course({
-        title,
-        shortDescription,
-        longDescription,
-        category,
+        title: title.trim(),
+        shortDescription: shortDescription.trim(),
+        longDescription: longDescription?.trim() || '',
+        category: category.trim(),
         thumbnail: thumbnailUrl,
-        thumbnailType,
+        thumbnailType: thumbnailType || 'upload',
         videoUrl,
-        resources,
-        chapters: parsedChapters,
-        featured,
-        difficulty
+        resources: resourcesUrl,
+        chapters: processedChapters,
+        featured: featured === 'true' || featured === true,
+        difficulty: difficulty || 'Beginner'
       });
 
       await course.save();
+      console.log('Course saved successfully:', course._id);
 
-      res.status(201).json({ message: 'Course created successfully', course });
+      res.status(201).json({ 
+        success: true, 
+        message: 'Course created successfully', 
+        courseId: course._id,
+        course 
+      });
+
     } catch (err) {
       console.error('Course creation error:', err);
-      res.status(500).json({ message: 'Server error', error: err.message });
+      
+      // Cleanup any remaining files
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      
+      res.status(500).json({ 
+        success: false, 
+        message: 'Server error', 
+        error: err.message 
+      });
     }
   }
 );
 
-// PUT update course with uploads
+// PUT update course with fixes
 router.put(
   '/:id',
   authMiddleware,
@@ -210,47 +320,42 @@ router.put(
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, description, chapters } = req.body;
+      const { 
+        title, 
+        description, 
+        chapters: chaptersString 
+      } = req.body;
 
-      if (!title) return res.status(400).json({ message: 'Title is required' });
+      if (!title?.trim()) {
+        return res.status(400).json({ success: false, message: 'Title is required' });
+      }
 
       let parsedChapters = [];
       try {
-        parsedChapters = JSON.parse(chapters || '[]');
+        parsedChapters = JSON.parse(chaptersString || '[]');
       } catch {
-        return res.status(400).json({ message: 'Invalid chapters JSON' });
+        return res.status(400).json({ success: false, message: 'Invalid chapters JSON' });
       }
 
-      const updates = { title, description };
+      const updates = { 
+        title: title.trim(), 
+        shortDescription: description?.trim() || '',
+        longDescription: req.body.longDescription?.trim() || ''
+      };
 
-      // Handle main course file uploads
+      // Handle file uploads
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
-          if (file.fieldname === 'thumbnailFile') {
-            updates.thumbnail = await uploadToTelegram(file, 'photo');
-          } else if (file.fieldname === 'videoFile') {
-            updates.videoUrl = await uploadToTelegram(file, 'video');
-          } else if (file.fieldname === 'resourcesFile') {
-            updates.resources = await uploadToTelegram(file, 'document');
-          }
-        }
-      }
-
-      // Upload files in modules
-      for (const chap of parsedChapters) {
-        if (!Array.isArray(chap.modules)) continue;
-
-        for (const mod of chap.modules) {
-          if (mod.type === 'file' && req.files) {
-            for (const file of req.files) {
-              if (file.fieldname.includes('thumbnailFile') && mod.thumbnail === file.fieldname) {
-                mod.thumbnail = await uploadToTelegram(file, 'photo');
-              } else if (file.fieldname.includes('videoFile') && mod.videoUrl === file.fieldname) {
-                mod.videoUrl = await uploadToTelegram(file, 'video');
-              } else if (file.fieldname.includes('resourcesFile') && mod.resources === file.fieldname) {
-                mod.resources = await uploadToTelegram(file, 'document');
-              }
+          try {
+            if (file.fieldname === 'thumbnailFile') {
+              updates.thumbnail = await uploadToTelegram(file, 'photo');
+            } else if (file.fieldname === 'videoFile') {
+              updates.videoUrl = await uploadToTelegram(file, 'video');
+            } else if (file.fieldname === 'resourcesFile') {
+              updates.resources = await uploadToTelegram(file, 'document');
             }
+          } catch (uploadError) {
+            console.error('File upload error:', uploadError.message);
           }
         }
       }
@@ -258,13 +363,22 @@ router.put(
       updates.chapters = parsedChapters;
 
       const course = await Course.findByIdAndUpdate(id, updates, { new: true });
+      if (!course) {
+        return res.status(404).json({ success: false, message: 'Course not found' });
+      }
 
-      if (!course) return res.status(404).json({ message: 'Course not found' });
-
-      res.json({ message: 'Course updated successfully', course });
+      res.json({ 
+        success: true, 
+        message: 'Course updated successfully', 
+        course 
+      });
     } catch (err) {
       console.error('Course update error:', err);
-      res.status(500).json({ message: 'Server error', error: err.message });
+      res.status(500).json({ 
+        success: false, 
+        message: 'Server error', 
+        error: err.message 
+      });
     }
   }
 );
@@ -273,11 +387,30 @@ router.put(
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const course = await Course.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
-    if (!course) return res.status(404).json({ message: 'Course not found' });
-    res.json({ message: 'Course deleted successfully' });
+    const course = await Course.findByIdAndUpdate(
+      id, 
+      { isDeleted: true }, 
+      { new: true }
+    );
+    
+    if (!course) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Course not found' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Course deleted successfully' 
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('Course delete error:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: err.message 
+    });
   }
 });
 

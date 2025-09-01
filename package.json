@@ -1,27 +1,29 @@
 {
-  "name": "server",
+  "name": "free-programming-notes-server",
   "version": "1.0.0",
-  "main": "server/index.js",
+  "description": "Backend for Free Programming Notes with MongoDB Atlas and Telegram storage",
+  "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["programming", "notes", "courses", "mongodb", "telegram"],
+  "author": "CodeDevil",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "axios": "^1.11.0",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.2",
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "express-fileupload": "^1.5.2",
-    "form-data": "^4.0.4",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "form-data": "^4.0.1",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.18.0",
-    "mongoose": "^8.18.0",
-    "multer": "^2.0.2",
-    "node-telegram-bot-api": "^0.63.0"
+    "mongoose": "^8.9.5",
+    "multer": "^1.4.5-lts.1",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }
