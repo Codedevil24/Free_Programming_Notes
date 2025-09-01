@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const courseList = document.getElementById('course-list');
   const searchBar = document.getElementById('search-bar');
@@ -80,29 +79,74 @@ document.addEventListener('DOMContentLoaded', () => {
       courseList.innerHTML = '<p>No courses found.</p>';
       return;
     }
-    courseList.innerHTML = courses.map(c => {
-      const chapCount = c.chapters?.length || 0;
-      const modCount = (c.chapters || []).reduce((sum, ch) => sum + (ch.modules?.length || 0), 0);
+    
+    courseList.innerHTML = courses.map(course => {
+      const chapCount = course.chapters?.length || 0;
+      const modCount = (course.chapters || []).reduce((sum, ch) => sum + (ch.modules?.length || 0), 0);
+      const thumbnailUrl = course.thumbnail || 'https://via.placeholder.com/400x225?text=Course+Image';
+      
       return `
-        <div class="course-item" data-id="${c._id}">
-          ${c.thumbnail ? `<img src="${c.thumbnail}" alt="${c.title}" loading="lazy">` : ''}
-          <h3>${c.title}</h3>
-          <p>${c.description}</p>
-          <p><strong>Chapters:</strong> ${chapCount}</p>
-          <p><strong>Modules:</strong> ${modCount}</p>
-          <a href="course-details.html?id=${c._id}" class="view-btn">View Details →</a>
-        </div>
+        <article class="course-card" data-id="${course._id}">
+          <div class="course-image-container">
+            <img src="${thumbnailUrl}" 
+                 alt="${course.title}" 
+                 loading="lazy"
+                 class="course-image">
+          </div>
+          <div class="course-content">
+            <h3 class="course-title">${course.title}</h3>
+            <p class="course-description">${course.shortDescription}</p>
+            <div class="course-meta">
+              <span class="meta-item">
+                <i class="icon-chapter"></i>
+                ${chapCount} Chapters
+              </span>
+              <span class="meta-item">
+                <i class="icon-module"></i>
+                ${modCount} Modules
+              </span>
+            </div>
+            <a href="course-details.html?id=${course._id}" class="view-course-btn">
+              View Course
+            </a>
+          </div>
+        </article>
       `;
     }).join('');
   }
 
+  // Enhanced search functionality
   searchBar?.addEventListener('input', e => {
-    const q = e.target.value.toLowerCase();
-    renderCourses(allCourses.filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      (c.description || '').toLowerCase().includes(q)
-    ));
+    const q = e.target.value.toLowerCase().trim();
+    if (!q) {
+      renderCourses(allCourses);
+      return;
+    }
+    
+    const filtered = allCourses.filter(course =>
+      course.title.toLowerCase().includes(q) ||
+      (course.shortDescription || '').toLowerCase().includes(q) ||
+      (course.category || '').toLowerCase().includes(q)
+    );
+    
+    renderCourses(filtered);
   });
 
+  // Add loading skeleton
+  function showLoadingSkeleton() {
+    courseList.innerHTML = Array(6).fill(0).map(() => `
+      <div class="course-card skeleton">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-title"></div>
+          <div class="skeleton-description"></div>
+          <div class="skeleton-meta"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Initialize
+  showLoadingSkeleton();
   fetchCourses();
 });
