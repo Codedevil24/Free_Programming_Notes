@@ -65,16 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ===== ENHANCED: Course Details System =====
+  // ===== FIXED: Course Details System =====
   const params = new URLSearchParams(window.location.search);
   const courseId = params.get('id');
   
   if (!courseId) {
-    container.innerHTML = '<div class="error-container"><h2>Course Not Found</h2><p>No course selected. Please choose a course from the courses page.</p><button onclick="window.location.href=\'courses.html\'">View Courses</button></div>';
+    container.innerHTML = '<div class="error-container"><h2>Course Not Found</h2><p>No course selected.</p><button onclick="window.location.href=\'courses.html\'">View Courses</button></div>';
     return;
   }
 
-  // Enhanced course rendering
   async function loadCourseDetails() {
     try {
       container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Loading course details...</p></div>';
@@ -105,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderCourseDetails(course) {
     container.innerHTML = '';
 
-    // Course Header Section
+    // Course Header
     const headerSection = document.createElement('div');
     headerSection.className = 'course-header-section';
     
@@ -135,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       <div class="course-description">
         <h2>About This Course</h2>
-        <p>${course.description || course.shortDescription || 'No description available.'}</p>
+        <p>${course.longDescription || course.description || course.shortDescription || 'No description available.'}</p>
       </div>
     `;
     
@@ -207,6 +206,10 @@ document.addEventListener('DOMContentLoaded', () => {
           const moduleDiv = document.createElement('div');
           moduleDiv.className = 'module-card';
 
+          // FIXED: Always show Watch Video button if ANY video content exists
+          let hasVideo = module.videoUrl || module.type === 'file' || module.type === 'video';
+          let videoUrl = module.videoUrl || '#';
+          
           let moduleHTML = `
             <div class="module-content">
               ${module.thumbnail ? 
@@ -227,16 +230,18 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="module-actions">
-              ${module.videoUrl ? 
+              ${hasVideo ? 
                 `<button onclick="viewModule('${courseId}', ${chapterIndex}, ${moduleIndex})" class="watch-btn">
-                  🎥 Watch Lecture
-                </button>` : ''
+                  🎥 Watch Video
+                </button>` : 
+                '<div class="no-video">📄 Content Only</div>'
               }
               
               ${module.resources ? 
                 `<a href="${module.resources}" target="_blank" rel="noopener" class="resources-btn">
                   📚 Resources
-                </a>` : ''
+                </a>` : 
+                ''
               }
             </div>
           `;
@@ -290,6 +295,56 @@ document.addEventListener('DOMContentLoaded', () => {
   window.viewModule = function(courseId, chapterIndex, moduleIndex) {
     window.location.href = `module-lecture.html?courseId=${courseId}&chapterIndex=${chapterIndex}&moduleIndex=${moduleIndex}`;
   };
+
+  // Enhanced CSS for watch buttons
+  const additionalCSS = `
+    <style>
+      .watch-btn {
+        background: var(--color-primary);
+        color: var(--color-btn-primary-text);
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .watch-btn:hover {
+        background: var(--color-primary-hover);
+        transform: translateY(-1px);
+      }
+      
+      .no-video {
+        color: var(--color-text-secondary);
+        font-size: 14px;
+        padding: 8px 16px;
+        background: var(--color-secondary);
+        border-radius: 8px;
+      }
+      
+      .resources-btn {
+        background: var(--color-secondary);
+        color: var(--color-text);
+        padding: 12px 24px;
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+      
+      .resources-btn:hover {
+        background: var(--color-secondary-hover);
+      }
+    </style>
+  `;
+  
+  if (!document.getElementById('course-details-styles')) {
+    document.head.insertAdjacentHTML('beforeend', additionalCSS);
+  }
 
   // ===== INIT: Load Course =====
   loadCourseDetails();
