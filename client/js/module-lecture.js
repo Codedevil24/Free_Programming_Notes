@@ -343,6 +343,128 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Add this mock data fallback
+const mockCourseData = {
+  _id: "68b5671",
+  title: "Complete Web Development Course",
+  chapters: [
+    {
+      title: "Chapter 1: HTML & CSS Basics",
+      modules: [
+        {
+          title: "Introduction to HTML",
+          videoUrl: "https://www.youtube.com/watch?v=qz0aGYrrlhU",
+          notes: "Learn the basics of HTML structure and semantic tags",
+          resources: "https://example.com/html-basics-resources.pdf"
+        },
+        {
+          title: "CSS Fundamentals",
+          videoUrl: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+          notes: "Understanding CSS selectors, properties, and box model",
+          resources: null
+        }
+      ]
+    },
+    {
+      title: "Chapter 2: JavaScript",
+      modules: [
+        {
+          title: "JavaScript Basics",
+          videoUrl: "https://www.youtube.com/watch?v=W6NZfCO5SIk",
+          notes: "Introduction to JavaScript variables, functions, and events",
+          resources: "https://example.com/js-basics-resources.pdf"
+        }
+      ]
+    }
+  ]
+};
+
+// Update fetchModuleDetails function
+async function fetchModuleDetails() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const courseId = urlParams.get('courseId');
+  currentChapterIndex = parseInt(urlParams.get('chapterIndex')) || 0;
+  currentModuleIndex = parseInt(urlParams.get('moduleIndex')) || 0;
+
+  try {
+    let course;
+    
+    // Try to fetch from server
+    const headers = {};
+    const token = localStorage.getItem('token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const response = await fetch(`/api/courses/${courseId}`, { headers });
+      if (response.ok) {
+        course = await response.json();
+      } else {
+        console.warn('Server returned error, using mock data:', response.status);
+        course = mockCourseData;
+      }
+    } catch (networkError) {
+      console.warn('Network error, using mock data:', networkError);
+      course = mockCourseData;
+    }
+
+    currentCourse = course;
+    
+    // Validate indices
+    if (!course.chapters[currentChapterIndex] || 
+        !course.chapters[currentChapterIndex].modules[currentModuleIndex]) {
+      showVideoError('Module not found', 'Using demo data instead');
+      currentChapterIndex = 0;
+      currentModuleIndex = 0;
+    }
+
+    const module = course.chapters[currentChapterIndex]?.modules[currentModuleIndex];
+
+    if (moduleTitle) moduleTitle.textContent = module.title || 'Untitled Module';
+    if (notes) notes.textContent = module.notes || 'No notes available for this module.';
+
+    // Handle resources
+    if (module.resources) {
+      resourcesBtn.style.display = 'inline-block';
+      resourcesBtn.onclick = () => window.open(module.resources, '_blank');
+      noResources.style.display = 'none';
+    } else {
+      resourcesBtn.style.display = 'none';
+      noResources.style.display = 'block';
+    }
+
+    // Load video
+    if (module.videoUrl) {
+      hideElement(videoLoading);
+      if (isYouTubeUrl(module.videoUrl)) {
+        const videoId = extractYouTubeId(module.videoUrl);
+        if (videoId) {
+          loadYouTubePlayer(videoId);
+        } else {
+          loadDRMPPlayer(module.videoUrl);
+        }
+      } else {
+        loadDRMPPlayer(module.videoUrl);
+      }
+    } else {
+      showVideoError('No Video Available', 'This module does not have a video lecture');
+    }
+
+    updateNavigationButtons();
+
+  } catch (err) {
+    console.error('Error:', err);
+    showVideoError('Loading Error', 'Using demo data');
+    // Use mock data as fallback
+    currentCourse = mockCourseData;
+    const module = currentCourse.chapters[0].modules[0];
+    moduleTitle.textContent = module.title;
+    notes.textContent = module.notes;
+    loadYouTubePlayer(extractYouTubeId(module.videoUrl));
+    updateNavigationButtons();
+  }
+}
+
+
   // Initialize
   fetchModuleDetails();
 });
