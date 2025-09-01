@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/module-lecture.css" />
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
-  <!-- Plyr CSS and JS (fix for Plyr not loading) -->
+  <!-- Plyr CSS and JS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
-  <!-- Official YouTube IFrame API (no ads, no decipher libs) -->
+  <!-- Official YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
@@ -60,7 +60,7 @@
           </iframe>
         </noscript>
 
-        <!-- Loading state (changed to display:block to show initially) -->
+        <!-- Loading state -->
         <div id="video-loading" class="video-loading" style="display: block;">
           <div class="loading-spinner"></div>
           <p>Loading video...</p>
@@ -75,7 +75,7 @@
         </div>
       </div>
 
-      <!-- Existing controls for direct videos -->
+      <!-- Custom controls for DRM player -->
       <div class="custom-controls" id="custom-controls">
         <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
         <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
@@ -89,9 +89,31 @@
         <button id="fullscreen-btn" aria-label="Fullscreen">⛶</button>
       </div>
 
-      <p id="notes">Notes: Loading...</p>
-      <a id="resources" href="#" target="_blank" rel="noopener noreferrer">Download Resources</a>
-      <p id="no-resources" style="display: none;">No resources available for this module.</p>
+      <!-- Module Content -->
+      <div class="module-content">
+        <div class="notes-section">
+          <h3>Notes</h3>
+          <p id="notes">Loading...</p>
+        </div>
+
+        <div class="resources-section">
+          <h3>Resources</h3>
+          <button id="resources-btn" class="download-btn" style="display: none;">
+            📥 Download Resources
+          </button>
+          <p id="no-resources" style="display: none;">No resources available for this module.</p>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="module-navigation">
+        <button id="prev-module" class="nav-btn prev-btn" disabled>
+          ← Previous Module
+        </button>
+        <button id="next-module" class="nav-btn next-btn" disabled>
+          Next Module →
+        </button>
+      </div>
     </div>
   </main>
 

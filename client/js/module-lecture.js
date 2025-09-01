@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Navigation state
+  let currentCourse = null;
+  let currentChapterIndex = 0;
+  let currentModuleIndex = 0;
+
   // Preserve all existing variables and functionality
   const navbarLinks = document.getElementById('navbar-links');
   const menuIcon = document.getElementById('menu-icon');
@@ -6,15 +11,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutLink = document.getElementById('logout-link');
   const moduleTitle = document.getElementById('module-title');
   const notes = document.getElementById('notes');
-  const resources = document.getElementById('resources');
+  const resourcesBtn = document.getElementById('resources-btn');
   const noResources = document.getElementById('no-resources');
 
-  // New elements for smart switching
+  // Video elements
   const videoElement = document.getElementById('video-player');
   const youtubeContainer = document.getElementById('youtube-container');
   const videoLoading = document.getElementById('video-loading');
   const videoError = document.getElementById('video-error');
   const customControls = document.getElementById('custom-controls');
+
+  // Navigation buttons
+  const prevBtn = document.getElementById('prev-module');
+  const nextBtn = document.getElementById('next-module');
 
   // Initialize Plyr for DRM player
   let plyrPlayer = null;
@@ -36,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (element) element.style.display = 'none';
   }
 
-  // YouTube detection functions (preserving existing functionality)
+  // YouTube detection functions
   function isYouTubeUrl(url) {
     if (!url) return false;
     const patterns = [
@@ -58,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  /* 🔧 CHANGE #1: Replaced tbvws logic with official YT IFrame API */
+  // Load YouTube player
   function loadYouTubePlayer(videoId) {
     debugLog('Loading YouTube player via IFrame API:', videoId);
     hideElement(videoLoading);
@@ -81,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Load DRM player (unchanged except minor cleanup)
+  // Load DRM player
   function loadDRMPPlayer(videoUrl) {
     debugLog('Loading DRM player', videoUrl);
     hideElement(videoLoading);
@@ -103,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCustomControls();
   }
 
-  // Setup custom controls (unchanged)
+  // Setup custom controls
   function setupCustomControls() {
     if (!plyrPlayer) return;
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -133,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Show error (unchanged)
+  // Show error
   function showVideoError(title, message) {
     hideElement(videoLoading);
     hideElement(youtubeContainer);
@@ -142,14 +151,56 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('error-message').textContent = message;
   }
 
-  // Load module details (unchanged)
+  // Update navigation buttons
+  function updateNavigationButtons() {
+    if (!currentCourse) return;
+
+    const chapters = currentCourse.chapters;
+    const hasPrev = currentModuleIndex > 0 || currentChapterIndex > 0;
+    const hasNext = 
+      currentModuleIndex < chapters[currentChapterIndex].modules.length - 1 ||
+      currentChapterIndex < chapters.length - 1;
+
+    prevBtn.disabled = !hasPrev;
+    nextBtn.disabled = !hasNext;
+  }
+
+  // Navigate to module
+  function navigateModule(direction) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const courseId = urlParams.get('courseId');
+    
+    let newChapterIndex = currentChapterIndex;
+    let newModuleIndex = currentModuleIndex;
+
+    if (direction === 'next') {
+      if (currentModuleIndex < currentCourse.chapters[currentChapterIndex].modules.length - 1) {
+        newModuleIndex++;
+      } else if (currentChapterIndex < currentCourse.chapters.length - 1) {
+        newChapterIndex++;
+        newModuleIndex = 0;
+      }
+    } else {
+      if (currentModuleIndex > 0) {
+        newModuleIndex--;
+      } else if (currentChapterIndex > 0) {
+        newChapterIndex--;
+        newModuleIndex = currentCourse.chapters[newChapterIndex].modules.length - 1;
+      }
+    }
+
+    const newUrl = `module-lecture.html?courseId=${courseId}&chapterIndex=${newChapterIndex}&moduleIndex=${newModuleIndex}`;
+    window.location.href = newUrl;
+  }
+
+  // Load module details
   async function fetchModuleDetails() {
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('courseId');
-    const chapterIndex = parseInt(urlParams.get('chapterIndex'));
-    const moduleIndex = parseInt(urlParams.get('moduleIndex'));
+    currentChapterIndex = parseInt(urlParams.get('chapterIndex'));
+    currentModuleIndex = parseInt(urlParams.get('moduleIndex'));
 
-    if (!courseId || isNaN(chapterIndex) || isNaN(moduleIndex)) {
+    if (!courseId || isNaN(currentChapterIndex) || isNaN(currentModuleIndex)) {
       showVideoError('Invalid URL', 'Please check the URL and try again');
       return;
     }
@@ -162,8 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(`/api/courses/${courseId}`, { headers });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-      const course = await response.json();
-      const module = course.chapters[chapterIndex]?.modules[moduleIndex];
+      currentCourse = await response.json();
+      const module = currentCourse.chapters[currentChapterIndex]?.modules[currentModuleIndex];
 
       if (!module) {
         showVideoError('Module not found', 'The requested module could not be found');
@@ -176,20 +227,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Handle resources
       if (module.resources) {
-        if (resources) {
-          resources.href = module.resources;
-          resources.textContent = 'Download Resources';
-          resources.style.display = 'inline-block';
-        }
-        if (noResources) noResources.style.display = 'none';
+        resourcesBtn.style.display = 'inline-block';
+        resourcesBtn.onclick = () => window.open(module.resources, '_blank');
+        noResources.style.display = 'none';
       } else {
-        if (resources) resources.style.display = 'none';
-        if (noResources) noResources.style.display = 'block';
+        resourcesBtn.style.display = 'none';
+        noResources.style.display = 'block';
       }
 
       // Smart video loading
       if (module.videoUrl) {
-        hideElement(videoLoading);
         if (isYouTubeUrl(module.videoUrl)) {
           const videoId = extractYouTubeId(module.videoUrl);
           if (videoId) {
@@ -204,15 +251,20 @@ document.addEventListener('DOMContentLoaded', () => {
         showVideoError('No Video Available', 'This module does not have a video lecture');
       }
 
+      // Update navigation
+      updateNavigationButtons();
+
     } catch (err) {
       console.error('Error fetching module details:', err);
       showVideoError('Loading Error', err.message);
     }
   }
-  
 
-  /* ---------- Preserve existing navbar & JWT code (unchanged) ---------- */
-  // Set initial menu state
+  // Navigation event listeners
+  prevBtn?.addEventListener('click', () => navigateModule('prev'));
+  nextBtn?.addEventListener('click', () => navigateModule('next'));
+
+  // Preserve existing navbar & JWT code
   if (menuIcon) menuIcon.style.display = 'block';
   if (closeIcon) closeIcon.style.display = 'none';
   if (navbarLinks) navbarLinks.classList.remove('show');
@@ -290,11 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
       closeIcon.style.display = 'none';
     });
   }
-
-  // Back button functionality
-  window.goBack = function() {
-    window.history.back();
-  };
 
   // Initialize
   fetchModuleDetails();
