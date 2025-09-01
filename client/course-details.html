@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Code Devil - Course Details</title>
+  <title>Course Details - Code Devil</title>
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/navbar.css">
-  <link rel="stylesheet" href="css/courses.css" />
+  <link rel="stylesheet" href="css/course-details.css" />
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
 </head>
 <body>
+  <!-- Preserved: Navigation -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="index.html" class="logo">Code Devil</a>
@@ -27,11 +28,21 @@
   </nav>
 
   <main>
+    <!-- Back Button -->
+    <button class="back-button" onclick="window.location.href='courses.html'">
+      ← Back to Courses
+    </button>
+
+    <!-- Course Details Container -->
     <div id="courseDetails">
-      <div class="loading">Loading course details...</div>
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading course details...</p>
+      </div>
     </div>
-    <button onclick="goBack()" class="back-button">← Back to Courses</button>
   </main>
+
+  <!-- Preserved: Scripts -->
   <script src="js/navbar.js"></script>
   <script src="js/course-details.js"></script>
   <script src="js/jwt-decode.js"></script>
