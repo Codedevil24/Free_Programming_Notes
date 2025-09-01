@@ -8,13 +8,14 @@
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/module-lecture.css" />
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
-  <!-- Plyr CSS and JS -->
+  <!-- Plyr CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8"></script>
-  <!-- Official YouTube IFrame API -->
+  <!-- YouTube IFrame API -->
   <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
+  <!-- Navbar (Preserved) -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="index.html" class="logo">Code Devil</a>
@@ -75,7 +76,7 @@
         </div>
       </div>
 
-      <!-- Custom controls for DRM player -->
+      <!-- Custom controls (Preserved) -->
       <div class="custom-controls" id="custom-controls">
         <button id="rewind-btn" aria-label="Rewind 10 seconds">⏪</button>
         <button id="play-pause-btn" aria-label="Play/Pause">▶️</button>
@@ -105,7 +106,7 @@
         </div>
       </div>
 
-      <!-- Navigation Buttons -->
+      <!-- Navigation Buttons (NEW) -->
       <div class="module-navigation">
         <button id="prev-module" class="nav-btn prev-btn" disabled>
           ← Previous Module
@@ -115,13 +116,6 @@
         </button>
       </div>
     </div>
-
-    <!-- Add below the error div -->
-<div id="demo-mode" class="video-error" style="display: none;">
-  <h3>🎮 Demo Mode</h3>
-  <p>Using sample content. Connect to server for real courses.</p>
-  <button onclick="window.location.reload()" class="retry-btn">🔄 Retry Server</button>
-</div>
   </main>
 
   <script src="js/navbar.js"></script>

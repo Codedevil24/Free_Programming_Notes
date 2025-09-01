@@ -1,51 +1,74 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Navigation state
-  let currentCourse = null;
-  let currentChapterIndex = 0;
-  let currentModuleIndex = 0;
-
-  // Preserve all existing variables and functionality
+  // === PRESERVED EXISTING VARIABLES ===
   const navbarLinks = document.getElementById('navbar-links');
   const menuIcon = document.getElementById('menu-icon');
   const closeIcon = document.getElementById('close-icon');
   const logoutLink = document.getElementById('logout-link');
   const moduleTitle = document.getElementById('module-title');
   const notes = document.getElementById('notes');
-  const resourcesBtn = document.getElementById('resources-btn');
+  const resources = document.getElementById('resources');
   const noResources = document.getElementById('no-resources');
 
-  // Video elements
+  // === NEW NAVIGATION VARIABLES ===
   const videoElement = document.getElementById('video-player');
   const youtubeContainer = document.getElementById('youtube-container');
   const videoLoading = document.getElementById('video-loading');
   const videoError = document.getElementById('video-error');
   const customControls = document.getElementById('custom-controls');
-
-  // Navigation buttons
   const prevBtn = document.getElementById('prev-module');
   const nextBtn = document.getElementById('next-module');
+  const resourcesBtn = document.getElementById('resources-btn');
 
-  // Initialize Plyr for DRM player
+  // === STATE MANAGEMENT ===
   let plyrPlayer = null;
+  let currentCourse = null;
+  let currentChapterIndex = 0;
+  let currentModuleIndex = 0;
 
-  // Debug logging
-  function debugLog(message, data = '') {
-    console.log('[Smart Player]', message, data);
-  }
+  // === MOCK DATA (Fallback) ===
+  const mockCourseData = {
+    _id: "demo-course-123",
+    title: "Demo Web Development Course",
+    chapters: [
+      {
+        title: "Frontend Basics",
+        modules: [
+          {
+            title: "HTML Crash Course",
+            videoUrl: "https://www.youtube.com/watch?v=qz0aGYrrlhU",
+            notes: "Learn HTML5 semantic tags and document structure",
+            resources: "https://example.com/html-guide.pdf"
+          },
+          {
+            title: "CSS Flexbox Tutorial",
+            videoUrl: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
+            notes: "Master CSS Flexbox for responsive layouts",
+            resources: null
+          }
+        ]
+      },
+      {
+        title: "JavaScript Fundamentals",
+        modules: [
+          {
+            title: "JavaScript Basics",
+            videoUrl: "https://www.youtube.com/watch?v=W6NZfCO5SIk",
+            notes: "Core JavaScript concepts for beginners",
+            resources: "https://example.com/js-cheatsheet.pdf"
+          }
+        ]
+      }
+    ]
+  };
 
-  // Show/hide elements with existing functionality preserved
+  // === UTILITY FUNCTIONS (Preserved) ===
   function showElement(element, hideOthers = []) {
     if (element) element.style.display = 'block';
-    hideOthers.forEach(el => {
-      if (el) el.style.display = 'none';
-    });
+    hideOthers.forEach(el => { if (el) el.style.display = 'none'; });
   }
+  function hideElement(element) { if (element) element.style.display = 'none'; }
 
-  function hideElement(element) {
-    if (element) element.style.display = 'none';
-  }
-
-  // YouTube detection functions
+  // === YOUTUBE DETECTION (Preserved) ===
   function isYouTubeUrl(url) {
     if (!url) return false;
     const patterns = [
@@ -67,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // Load YouTube player
+  // === VIDEO LOADING (Enhanced) ===
   function loadYouTubePlayer(videoId) {
-    debugLog('Loading YouTube player via IFrame API:', videoId);
+    console.log('Loading YouTube player:', videoId);
     hideElement(videoLoading);
     showElement(youtubeContainer, [videoElement.parentElement, customControls, videoError]);
 
@@ -81,18 +104,22 @@ document.addEventListener('DOMContentLoaded', () => {
         height: '400',
         width: '100%',
         videoId: id,
-        playerVars: { rel: 0, modestbranding: 1, showinfo: 0 },
+        playerVars: { 
+          rel: 0, 
+          modestbranding: 1, 
+          showinfo: 0,
+          origin: window.location.origin 
+        },
         events: {
-          onReady: e => debugLog('YT ready', e),
+          onReady: e => console.log('YT ready', e),
           onError: e => showVideoError('YouTube Error', e.data)
         }
       });
     }
   }
 
-  // Load DRM player
   function loadDRMPPlayer(videoUrl) {
-    debugLog('Loading DRM player', videoUrl);
+    console.log('Loading DRM player', videoUrl);
     hideElement(videoLoading);
     showElement(videoElement.parentElement, [youtubeContainer, videoError]);
     showElement(customControls, [youtubeContainer]);
@@ -112,7 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupCustomControls();
   }
 
-  // Setup custom controls
   function setupCustomControls() {
     if (!plyrPlayer) return;
     const playPauseBtn = document.getElementById('play-pause-btn');
@@ -121,28 +147,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const speedControl = document.getElementById('speed-control');
     const fullscreenBtn = document.getElementById('fullscreen-btn');
 
-    playPauseBtn?.addEventListener('click', () => {
-      plyrPlayer.togglePlay();
-    });
-
-    rewindBtn?.addEventListener('click', () => {
-      plyrPlayer.rewind(10);
-    });
-
-    forwardBtn?.addEventListener('click', () => {
-      plyrPlayer.forward(10);
-    });
-
-    speedControl?.addEventListener('change', (e) => {
-      plyrPlayer.speed = parseFloat(e.target.value);
-    });
-
-    fullscreenBtn?.addEventListener('click', () => {
-      plyrPlayer.fullscreen.toggle();
-    });
+    playPauseBtn?.addEventListener('click', () => plyrPlayer.togglePlay());
+    rewindBtn?.addEventListener('click', () => plyrPlayer.rewind(10));
+    forwardBtn?.addEventListener('click', () => plyrPlayer.forward(10));
+    speedControl?.addEventListener('change', (e) => { plyrPlayer.speed = parseFloat(e.target.value); });
+    fullscreenBtn?.addEventListener('click', () => plyrPlayer.fullscreen.toggle());
   }
 
-  // Show error
   function showVideoError(title, message) {
     hideElement(videoLoading);
     hideElement(youtubeContainer);
@@ -151,10 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('error-message').textContent = message;
   }
 
-  // Update navigation buttons
+  // === NAVIGATION LOGIC (NEW) ===
   function updateNavigationButtons() {
     if (!currentCourse) return;
-
     const chapters = currentCourse.chapters;
     const hasPrev = currentModuleIndex > 0 || currentChapterIndex > 0;
     const hasNext = 
@@ -165,10 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.disabled = !hasNext;
   }
 
-  // Navigate to module
   function navigateModule(direction) {
+    if (!currentCourse) return;
+    
     const urlParams = new URLSearchParams(window.location.search);
-    const courseId = urlParams.get('courseId');
+    const courseId = urlParams.get('courseId') || 'demo-course-123';
     
     let newChapterIndex = currentChapterIndex;
     let newModuleIndex = currentModuleIndex;
@@ -193,17 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = newUrl;
   }
 
-  // Load module details
+  // === DATA FETCHING (Enhanced with fallback) ===
   async function fetchModuleDetails() {
     const urlParams = new URLSearchParams(window.location.search);
-    const courseId = urlParams.get('courseId');
-    currentChapterIndex = parseInt(urlParams.get('chapterIndex'));
-    currentModuleIndex = parseInt(urlParams.get('moduleIndex'));
-
-    if (!courseId || isNaN(currentChapterIndex) || isNaN(currentModuleIndex)) {
-      showVideoError('Invalid URL', 'Please check the URL and try again');
-      return;
-    }
+    const courseId = urlParams.get('courseId') || 'demo-course-123';
+    currentChapterIndex = parseInt(urlParams.get('chapterIndex')) || 0;
+    currentModuleIndex = parseInt(urlParams.get('moduleIndex')) || 0;
 
     try {
       const headers = {};
@@ -211,65 +217,64 @@ document.addEventListener('DOMContentLoaded', () => {
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
       const response = await fetch(`/api/courses/${courseId}`, { headers });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-
-      currentCourse = await response.json();
-      const module = currentCourse.chapters[currentChapterIndex]?.modules[currentModuleIndex];
-
-      if (!module) {
-        showVideoError('Module not found', 'The requested module could not be found');
-        return;
-      }
-
-      // Update page content
-      if (moduleTitle) moduleTitle.textContent = module.title || 'Untitled Module';
-      if (notes) notes.textContent = module.notes || 'No notes available for this module.';
-
-      // Handle resources
-      if (module.resources) {
-        resourcesBtn.style.display = 'inline-block';
-        resourcesBtn.onclick = () => window.open(module.resources, '_blank');
-        noResources.style.display = 'none';
+      
+      if (response.ok) {
+        currentCourse = await response.json();
       } else {
-        resourcesBtn.style.display = 'none';
-        noResources.style.display = 'block';
+        console.warn('Server error, using mock data:', response.status);
+        currentCourse = mockCourseData;
       }
-
-      // Smart video loading
-      if (module.videoUrl) {
-        if (isYouTubeUrl(module.videoUrl)) {
-          const videoId = extractYouTubeId(module.videoUrl);
-          if (videoId) {
-            loadYouTubePlayer(videoId);
-          } else {
-            loadDRMPPlayer(module.videoUrl);
-          }
-        } else {
-          loadDRMPPlayer(module.videoUrl);
-        }
-      } else {
-        showVideoError('No Video Available', 'This module does not have a video lecture');
-      }
-
-      // Update navigation
-      updateNavigationButtons();
-
-    } catch (err) {
-      console.error('Error fetching module details:', err);
-      showVideoError('Loading Error', err.message);
+    } catch (error) {
+      console.warn('Network error, using mock data:', error);
+      currentCourse = mockCourseData;
     }
+
+    // Validate and load module
+    const chapter = currentCourse.chapters[currentChapterIndex];
+    const module = chapter?.modules[currentModuleIndex];
+    
+    if (!module) {
+      currentChapterIndex = 0;
+      currentModuleIndex = 0;
+    }
+
+    const validModule = currentCourse.chapters[currentChapterIndex].modules[currentModuleIndex];
+    
+    // Update UI
+    moduleTitle.textContent = validModule.title || 'Untitled Module';
+    notes.textContent = validModule.notes || 'No notes available for this module.';
+
+    // Handle resources
+    if (validModule.resources) {
+      resourcesBtn.style.display = 'inline-block';
+      resourcesBtn.onclick = () => window.open(validModule.resources, '_blank');
+      if (noResources) noResources.style.display = 'none';
+    } else {
+      resourcesBtn.style.display = 'none';
+      if (noResources) noResources.style.display = 'block';
+    }
+
+    // Load video
+    if (validModule.videoUrl) {
+      hideElement(videoLoading);
+      if (isYouTubeUrl(validModule.videoUrl)) {
+        const videoId = extractYouTubeId(validModule.videoUrl);
+        if (videoId) loadYouTubePlayer(videoId);
+      } else {
+        loadDRMPPlayer(validModule.videoUrl);
+      }
+    } else {
+      showVideoError('No Video Available', 'This module does not have a video lecture');
+    }
+
+    updateNavigationButtons();
   }
 
-  // Navigation event listeners
-  prevBtn?.addEventListener('click', () => navigateModule('prev'));
-  nextBtn?.addEventListener('click', () => navigateModule('next'));
-
-  // Preserve existing navbar & JWT code
+  // === PRESERVED NAVBAR & JWT CODE ===
   if (menuIcon) menuIcon.style.display = 'block';
   if (closeIcon) closeIcon.style.display = 'none';
   if (navbarLinks) navbarLinks.classList.remove('show');
 
-  // Close menu on link click
   if (navbarLinks) {
     const navLinks = navbarLinks.querySelectorAll('a');
     navLinks.forEach(link => {
@@ -281,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // JWT Authentication
+  // JWT Authentication (Preserved)
   let jwt_decode = window.jwt_decode;
   if (!jwt_decode && typeof window.jwt_decode === 'undefined') {
     console.error('jwt-decode not available');
@@ -300,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAuthDisplay(true);
       }
     } catch (err) {
-      console.error('Token validation error:', err);
       localStorage.removeItem('token');
       updateAuthDisplay(false);
     }
@@ -317,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Logout Functionality
+  // Logout functionality (Preserved)
   if (logoutLink) {
     logoutLink.addEventListener('click', (e) => {
       e.preventDefault();
@@ -328,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Menu Toggle Functionality
+  // Menu toggle (Preserved)
   if (menuIcon && closeIcon && navbarLinks) {
     menuIcon.addEventListener('click', () => {
       navbarLinks.classList.add('show');
@@ -343,128 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Add this mock data fallback
-const mockCourseData = {
-  _id: "68b5671",
-  title: "Complete Web Development Course",
-  chapters: [
-    {
-      title: "Chapter 1: HTML & CSS Basics",
-      modules: [
-        {
-          title: "Introduction to HTML",
-          videoUrl: "https://www.youtube.com/watch?v=qz0aGYrrlhU",
-          notes: "Learn the basics of HTML structure and semantic tags",
-          resources: "https://example.com/html-basics-resources.pdf"
-        },
-        {
-          title: "CSS Fundamentals",
-          videoUrl: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
-          notes: "Understanding CSS selectors, properties, and box model",
-          resources: null
-        }
-      ]
-    },
-    {
-      title: "Chapter 2: JavaScript",
-      modules: [
-        {
-          title: "JavaScript Basics",
-          videoUrl: "https://www.youtube.com/watch?v=W6NZfCO5SIk",
-          notes: "Introduction to JavaScript variables, functions, and events",
-          resources: "https://example.com/js-basics-resources.pdf"
-        }
-      ]
-    }
-  ]
-};
+  // Navigation event listeners
+  prevBtn.addEventListener('click', () => navigateModule('prev'));
+  nextBtn.addEventListener('click', () => navigateModule('next'));
 
-// Update fetchModuleDetails function
-async function fetchModuleDetails() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const courseId = urlParams.get('courseId');
-  currentChapterIndex = parseInt(urlParams.get('chapterIndex')) || 0;
-  currentModuleIndex = parseInt(urlParams.get('moduleIndex')) || 0;
-
-  try {
-    let course;
-    
-    // Try to fetch from server
-    const headers = {};
-    const token = localStorage.getItem('token');
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    try {
-      const response = await fetch(`/api/courses/${courseId}`, { headers });
-      if (response.ok) {
-        course = await response.json();
-      } else {
-        console.warn('Server returned error, using mock data:', response.status);
-        course = mockCourseData;
-      }
-    } catch (networkError) {
-      console.warn('Network error, using mock data:', networkError);
-      course = mockCourseData;
-    }
-
-    currentCourse = course;
-    
-    // Validate indices
-    if (!course.chapters[currentChapterIndex] || 
-        !course.chapters[currentChapterIndex].modules[currentModuleIndex]) {
-      showVideoError('Module not found', 'Using demo data instead');
-      currentChapterIndex = 0;
-      currentModuleIndex = 0;
-    }
-
-    const module = course.chapters[currentChapterIndex]?.modules[currentModuleIndex];
-
-    if (moduleTitle) moduleTitle.textContent = module.title || 'Untitled Module';
-    if (notes) notes.textContent = module.notes || 'No notes available for this module.';
-
-    // Handle resources
-    if (module.resources) {
-      resourcesBtn.style.display = 'inline-block';
-      resourcesBtn.onclick = () => window.open(module.resources, '_blank');
-      noResources.style.display = 'none';
-    } else {
-      resourcesBtn.style.display = 'none';
-      noResources.style.display = 'block';
-    }
-
-    // Load video
-    if (module.videoUrl) {
-      hideElement(videoLoading);
-      if (isYouTubeUrl(module.videoUrl)) {
-        const videoId = extractYouTubeId(module.videoUrl);
-        if (videoId) {
-          loadYouTubePlayer(videoId);
-        } else {
-          loadDRMPPlayer(module.videoUrl);
-        }
-      } else {
-        loadDRMPPlayer(module.videoUrl);
-      }
-    } else {
-      showVideoError('No Video Available', 'This module does not have a video lecture');
-    }
-
-    updateNavigationButtons();
-
-  } catch (err) {
-    console.error('Error:', err);
-    showVideoError('Loading Error', 'Using demo data');
-    // Use mock data as fallback
-    currentCourse = mockCourseData;
-    const module = currentCourse.chapters[0].modules[0];
-    moduleTitle.textContent = module.title;
-    notes.textContent = module.notes;
-    loadYouTubePlayer(extractYouTubeId(module.videoUrl));
-    updateNavigationButtons();
-  }
-}
-
-
-  // Initialize
+  // Initialize everything
   fetchModuleDetails();
 });
