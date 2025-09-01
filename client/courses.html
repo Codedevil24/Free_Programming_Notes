@@ -3,14 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Code Devil - Courses</title>
+  <title>Code Devil - Programming Courses</title>
+  
+  <!-- Stylesheets -->
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/navbar.css">
   <link rel="stylesheet" href="css/courses.css" />
+  
+  <!-- Favicon -->
   <link rel="icon" href="favicon1.ico" type="image/x-icon" />
+  
+  <!-- Meta Tags -->
+  <meta name="description" content="Explore comprehensive programming courses from beginner to advanced levels. Learn web development, data science, AI/ML, and more." />
+  <meta name="keywords" content="programming courses, web development, data science, AI/ML, coding tutorials" />
+  
+  <!-- Preload Critical Resources -->
+  <link rel="preload" href="css/courses.css" as="style">
+  <link rel="preload" href="js/courses.js" as="script">
 </head>
 <body>
-  <!-- Navbar -->
+  <!-- Navigation Bar -->
   <nav class="navbar">
     <div class="navbar-content">
       <a href="index.html" class="logo">Code Devil</a>
@@ -27,24 +39,60 @@
     </div>
   </nav>
 
+  <!-- Main Content -->
   <main>
+    <!-- Page Header -->
     <header>
-      <h1>Courses</h1>
-      <p>Explore our comprehensive programming courses</p>
+      <h1>Programming Courses</h1>
+      <p>Master programming with our comprehensive courses. From beginner to advanced levels, learn web development, data science, AI/ML, and more.</p>
     </header>
 
+    <!-- Search Section -->
     <section id="search-section" aria-label="Search courses">
-      <input id="search-bar" type="text" placeholder="Search courses..." aria-label="Search courses" />
+      <input 
+        id="search-bar" 
+        type="text" 
+        placeholder="Search courses by title, description, or category..." 
+        aria-label="Search courses"
+        autocomplete="off"
+      />
     </section>
 
+    <!-- Loading State -->
+    <div id="loading-state" style="text-align: center; padding: 60px;">
+      <div style="font-size: 1.2em; color: var(--color-text-secondary);">Loading courses...</div>
+    </div>
+
+    <!-- Courses Grid -->
     <section id="courses-section" aria-label="Courses list">
-      <div id="course-list"></div>
+      <div class="courses-grid" id="course-list">
+        <!-- Course cards will be dynamically inserted here -->
+      </div>
     </section>
+
+    <!-- No Results Message -->
+    <div id="no-results" style="display: none; text-align: center; padding: 60px;">
+      <h3>No courses found</h3>
+      <p>Try adjusting your search terms or browse all available courses.</p>
+      <button onclick="clearSearch()" class="btn btn--primary">Show All Courses</button>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error-message" style="display: none; text-align: center; padding: 60px;" class="error-container">
+      <h3>Error Loading Courses</h3>
+      <p id="error-text"></p>
+      <button onclick="fetchCourses()" class="btn btn--primary">Try Again</button>
+    </div>
   </main>
 
-  <!-- External JS -->
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2025 Code Devil. All rights reserved.</p>
+  </footer>
+
+  <!-- Scripts -->
   <script src="js/navbar.js"></script>
-  <script src="js/courses.js" defer></script>
   <script src="js/jwt-decode.js"></script>
+  <script src="js/courses.js" defer></script>
 </body>
 </html>
