@@ -6,10 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutLink = document.getElementById('logout-link');
   const moduleTitle = document.getElementById('module-title');
   const notes = document.getElementById('notes');
-  const resources = document.getElementById('resources');
+  const resourcesBtn = document.getElementById('resources-btn');
   const noResources = document.getElementById('no-resources');
 
-  // === NEW NAVIGATION VARIABLES ===
+  // === VIDEO ELEMENTS ===
   const videoElement = document.getElementById('video-player');
   const youtubeContainer = document.getElementById('youtube-container');
   const videoLoading = document.getElementById('video-loading');
@@ -17,58 +17,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const customControls = document.getElementById('custom-controls');
   const prevBtn = document.getElementById('prev-module');
   const nextBtn = document.getElementById('next-module');
-  const resourcesBtn = document.getElementById('resources-btn');
 
-  // === STATE MANAGEMENT ===
+  // === STATE ===
   let plyrPlayer = null;
   let currentCourse = null;
   let currentChapterIndex = 0;
   let currentModuleIndex = 0;
 
-  // === MOCK DATA (Fallback) ===
-  const mockCourseData = {
-    _id: "demo-course-123",
-    title: "Demo Web Development Course",
-    chapters: [
-      {
-        title: "Frontend Basics",
-        modules: [
-          {
-            title: "HTML Crash Course",
-            videoUrl: "https://www.youtube.com/watch?v=qz0aGYrrlhU",
-            notes: "Learn HTML5 semantic tags and document structure",
-            resources: "https://example.com/html-guide.pdf"
-          },
-          {
-            title: "CSS Flexbox Tutorial",
-            videoUrl: "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4",
-            notes: "Master CSS Flexbox for responsive layouts",
-            resources: null
-          }
-        ]
-      },
-      {
-        title: "JavaScript Fundamentals",
-        modules: [
-          {
-            title: "JavaScript Basics",
-            videoUrl: "https://www.youtube.com/watch?v=W6NZfCO5SIk",
-            notes: "Core JavaScript concepts for beginners",
-            resources: "https://example.com/js-cheatsheet.pdf"
-          }
-        ]
-      }
-    ]
-  };
+  // === API BASE URL ===
+  const API_BASE_URL = 'https://free-programming-notes-1.onrender.com/api';
 
-  // === UTILITY FUNCTIONS (Preserved) ===
+  // === UTILITY FUNCTIONS ===
   function showElement(element, hideOthers = []) {
     if (element) element.style.display = 'block';
     hideOthers.forEach(el => { if (el) el.style.display = 'none'; });
   }
   function hideElement(element) { if (element) element.style.display = 'none'; }
 
-  // === YOUTUBE DETECTION (Preserved) ===
+  // === YOUTUBE DETECTION ===
   function isYouTubeUrl(url) {
     if (!url) return false;
     const patterns = [
@@ -90,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // === VIDEO LOADING (Enhanced) ===
+  // === VIDEO LOADING ===
   function loadYouTubePlayer(videoId) {
     console.log('Loading YouTube player:', videoId);
     hideElement(videoLoading);
@@ -104,12 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         height: '400',
         width: '100%',
         videoId: id,
-        playerVars: { 
-          rel: 0, 
-          modestbranding: 1, 
-          showinfo: 0,
-          origin: window.location.origin 
-        },
+        playerVars: { rel: 0, modestbranding: 1, showinfo: 0 },
         events: {
           onReady: e => console.log('YT ready', e),
           onError: e => showVideoError('YouTube Error', e.data)
@@ -162,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('error-message').textContent = message;
   }
 
-  // === NAVIGATION LOGIC (NEW) ===
+  // === NAVIGATION ===
   function updateNavigationButtons() {
     if (!currentCourse) return;
     const chapters = currentCourse.chapters;
@@ -176,10 +137,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function navigateModule(direction) {
-    if (!currentCourse) return;
-    
     const urlParams = new URLSearchParams(window.location.search);
-    const courseId = urlParams.get('courseId') || 'demo-course-123';
+    const courseId = urlParams.get('courseId');
     
     let newChapterIndex = currentChapterIndex;
     let newModuleIndex = currentModuleIndex;
@@ -204,70 +163,82 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = newUrl;
   }
 
-  // === DATA FETCHING (Enhanced with fallback) ===
+  // === API CALLS ===
   async function fetchModuleDetails() {
     const urlParams = new URLSearchParams(window.location.search);
-    const courseId = urlParams.get('courseId') || 'demo-course-123';
+    const courseId = urlParams.get('courseId');
     currentChapterIndex = parseInt(urlParams.get('chapterIndex')) || 0;
     currentModuleIndex = parseInt(urlParams.get('moduleIndex')) || 0;
+
+    if (!courseId || isNaN(currentChapterIndex) || isNaN(currentModuleIndex)) {
+      showVideoError('Invalid URL', 'Please check the URL parameters');
+      return;
+    }
 
     try {
       const headers = {};
       const token = localStorage.getItem('token');
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const response = await fetch(`/api/courses/${courseId}`, { headers });
+      const response = await fetch(`${API_BASE_URL}/courses/${courseId}`, { 
+        headers,
+        mode: 'cors'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      currentCourse = await response.json();
+      const chapter = currentCourse.chapters[currentChapterIndex];
       
-      if (response.ok) {
-        currentCourse = await response.json();
-      } else {
-        console.warn('Server error, using mock data:', response.status);
-        currentCourse = mockCourseData;
+      if (!chapter) {
+        throw new Error('Chapter not found');
       }
-    } catch (error) {
-      console.warn('Network error, using mock data:', error);
-      currentCourse = mockCourseData;
-    }
 
-    // Validate and load module
-    const chapter = currentCourse.chapters[currentChapterIndex];
-    const module = chapter?.modules[currentModuleIndex];
-    
-    if (!module) {
-      currentChapterIndex = 0;
-      currentModuleIndex = 0;
-    }
-
-    const validModule = currentCourse.chapters[currentChapterIndex].modules[currentModuleIndex];
-    
-    // Update UI
-    moduleTitle.textContent = validModule.title || 'Untitled Module';
-    notes.textContent = validModule.notes || 'No notes available for this module.';
-
-    // Handle resources
-    if (validModule.resources) {
-      resourcesBtn.style.display = 'inline-block';
-      resourcesBtn.onclick = () => window.open(validModule.resources, '_blank');
-      if (noResources) noResources.style.display = 'none';
-    } else {
-      resourcesBtn.style.display = 'none';
-      if (noResources) noResources.style.display = 'block';
-    }
-
-    // Load video
-    if (validModule.videoUrl) {
-      hideElement(videoLoading);
-      if (isYouTubeUrl(validModule.videoUrl)) {
-        const videoId = extractYouTubeId(validModule.videoUrl);
-        if (videoId) loadYouTubePlayer(videoId);
-      } else {
-        loadDRMPPlayer(validModule.videoUrl);
+      const module = chapter.modules[currentModuleIndex];
+      
+      if (!module) {
+        throw new Error('Module not found');
       }
-    } else {
-      showVideoError('No Video Available', 'This module does not have a video lecture');
-    }
 
-    updateNavigationButtons();
+      // Update page content
+      moduleTitle.textContent = module.title || 'Untitled Module';
+      notes.textContent = module.notes || 'No notes available for this module.';
+
+      // Handle resources
+      if (module.resources) {
+        resourcesBtn.style.display = 'inline-block';
+        resourcesBtn.onclick = () => window.open(module.resources, '_blank');
+        noResources.style.display = 'none';
+      } else {
+        resourcesBtn.style.display = 'none';
+        noResources.style.display = 'block';
+      }
+
+      // Load video
+      if (module.videoUrl) {
+        hideElement(videoLoading);
+        if (isYouTubeUrl(module.videoUrl)) {
+          const videoId = extractYouTubeId(module.videoUrl);
+          if (videoId) {
+            loadYouTubePlayer(videoId);
+          } else {
+            loadDRMPPlayer(module.videoUrl);
+          }
+        } else {
+          loadDRMPPlayer(module.videoUrl);
+        }
+      } else {
+        showVideoError('No Video Available', 'This module does not have a video lecture');
+      }
+
+      updateNavigationButtons();
+
+    } catch (err) {
+      console.error('Error fetching module details:', err);
+      showVideoError('Loading Error', err.message);
+    }
   }
 
   // === PRESERVED NAVBAR & JWT CODE ===
@@ -351,6 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
   prevBtn.addEventListener('click', () => navigateModule('prev'));
   nextBtn.addEventListener('click', () => navigateModule('next'));
 
-  // Initialize everything
+  // Initialize
   fetchModuleDetails();
 });
