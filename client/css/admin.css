@@ -1148,3 +1148,62 @@ select.form-control {
     outline: var(--focus-outline);
   }
 }
+/* Course Edit Modal Styles */
+.course-edit-container {
+  font-family: var(--font-family-base);
+}
+
+.course-edit-container h2 {
+  color: var(--color-text);
+  margin-bottom: 20px;
+}
+
+.course-edit-container input,
+.course-edit-container textarea,
+.course-edit-container select {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid var(--color-border);
+  border-radius: 5px;
+  font-family: inherit;
+}
+
+.course-edit-container .edit-chapter {
+  background: var(--color-surface);
+  margin: 15px 0;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.course-edit-container .edit-module {
+  background: #f8f9fa;
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 5px;
+  border-left: 4px solid var(--color-primary);
+}
+
+.course-edit-container button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.course-edit-container button:hover {
+  background: var(--color-primary-hover);
+}
+
+.course-edit-container button[type="button"] {
+  background: var(--color-gray-400);
+}
+
+.course-edit-container button[type="button"]:hover {
+  background: var(--color-gray-500);
+}
