@@ -479,7 +479,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.addEditModule = (button) => {
-    const container = button.closest('.edit-chapter').querySelector('.edit-modules-container');
+    const chapter = button.closest('.edit-chapter');
+    const editChapters = document.querySelectorAll('.edit-chapter');
+    const chapterIndex = Array.from(editChapters).indexOf(chapter);
+    const modulesContainer = chapter.querySelector('.edit-modules-container');
+    const moduleIndex = modulesContainer.children.length;
+
     const moduleDiv = document.createElement('div');
     moduleDiv.className = 'edit-module';
     moduleDiv.style.cssText = 'border-left: 3px solid #007bff; margin: 10px 0; padding: 10px; background: #f8f9fa;';
@@ -511,7 +516,15 @@ document.addEventListener('DOMContentLoaded', () => {
       <button type="button" onclick="removeEditModule(this)">Remove Module</button>
     `;
     
-    container.appendChild(moduleDiv);
+    // Set name attributes for file inputs
+    const thumbFile = moduleDiv.querySelector('.edit-module-thumb-file');
+    thumbFile.name = `chapter_${chapterIndex}_module_${moduleIndex}_thumb`;
+    const videoFile = moduleDiv.querySelector('.edit-module-video-file');
+    videoFile.name = `chapter_${chapterIndex}_module_${moduleIndex}_video`;
+    const resourcesFile = moduleDiv.querySelector('.edit-module-resources-file');
+    resourcesFile.name = `chapter_${chapterIndex}_module_${moduleIndex}_resources`;
+
+    modulesContainer.appendChild(moduleDiv);
     
     // Add toggle functionality
     moduleDiv.querySelector('.edit-module-type').addEventListener('change', (e) => {
@@ -537,13 +550,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('edit-chapters-container');
     container.innerHTML = '';
     
-    chapters.forEach((chapter, index) => {
+    chapters.forEach((chapter, chapterIndex) => {
       const chapterDiv = document.createElement('div');
       chapterDiv.className = 'edit-chapter';
       chapterDiv.style.cssText = 'border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px;';
       
       chapterDiv.innerHTML = `
-        <h4>Chapter ${index + 1}</h4>
+        <h4>Chapter ${chapterIndex + 1}</h4>
         <input type="text" value="${chapter.title}" class="edit-chapter-title" required />
         <button type="button" onclick="removeEditChapter(this)">Remove Chapter</button>
         <button type="button" onclick="addEditModule(this)">+ Add Module</button>
@@ -554,7 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Populate modules
       const modulesContainer = chapterDiv.querySelector('.edit-modules-container');
-      chapter.modules.forEach(module => {
+      chapter.modules.forEach((module, moduleIndex) => {
         const moduleDiv = document.createElement('div');
         moduleDiv.className = 'edit-module';
         moduleDiv.style.cssText = 'border-left: 3px solid #007bff; margin: 10px 0; padding: 10px; background: #f8f9fa;';
@@ -589,6 +602,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" onclick="removeEditModule(this)">Remove Module</button>
         `;
         
+        // Set name attributes for file inputs
+        const thumbFile = moduleDiv.querySelector('.edit-module-thumb-file');
+        thumbFile.name = `chapter_${chapterIndex}_module_${moduleIndex}_thumb`;
+        const videoFile = moduleDiv.querySelector('.edit-module-video-file');
+        videoFile.name = `chapter_${chapterIndex}_module_${moduleIndex}_video`;
+        const resourcesFile = moduleDiv.querySelector('.edit-module-resources-file');
+        resourcesFile.name = `chapter_${chapterIndex}_module_${moduleIndex}_resources`;
+
         modulesContainer.appendChild(moduleDiv);
         
         // Add toggle functionality
@@ -647,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Build chapters data
-    const chapters = buildEditChaptersData(editContainer);
+    const chapters = buildEditChaptersData(editContainer, formData);
     formData.append('chapters', JSON.stringify(chapters));
     
     try {
@@ -694,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== BUILD EDIT CHAPTERS DATA =====
-  function buildEditChaptersData(editContainer) {
+  function buildEditChaptersData(editContainer, formData) {
     const chapters = [];
     const chapterElements = editContainer.querySelectorAll('.edit-chapter');
     
