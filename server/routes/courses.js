@@ -240,7 +240,7 @@ router.post(
                   } catch (e) {
                     console.error('Thumbnail upload error:', e.message);
                   }
-                } else if (file.fieldname === `${chapterKey}_video`) {
+                } else if (file.fieldname === `chapter_${chapterKey}_video`) {
                   try {
                     module.videoUrl = await uploadToTelegram(file, 'video');
                   } catch (e) {
