@@ -1,3 +1,4 @@
+// client/js/admin.js
 let chapterCount = 0;
 
 // ===== CHAPTER & MODULE MANAGEMENT =====
@@ -29,7 +30,10 @@ function addModule(button) {
   const moduleDiv = document.createElement("div");
   moduleDiv.classList.add("module");
 
-  const chapterIndex = Array.from(document.querySelectorAll('.chapter')).indexOf(button.closest('.chapter'));
+  const chapter = button.closest('.chapter');
+  const chapterIndex = Array.from(document.querySelectorAll('.chapter')).indexOf(chapter);
+  const modulesContainer = chapter.querySelector('.modules-container');
+  const moduleIndex = modulesContainer.querySelectorAll('.module').length; // Per-chapter index
 
   moduleDiv.innerHTML = `
     <button type="button" class="remove-btn" onclick="removeModule(this)">Remove</button>
@@ -49,15 +53,13 @@ function addModule(button) {
     </div>
     
     <div class="file-upload-fields hidden">
-      <input type="file" class="thumbnailFile" accept="image/*" name="chapter_${chapterIndex}_module_${document.querySelectorAll('.module').length}_thumb" />
-      <input type="file" class="videoFile" accept="video/*" name="chapter_${chapterIndex}_module_${document.querySelectorAll('.module').length}_video" />
-      <input type="file" class="resourcesFile" accept=".pdf,.doc,.docx,.zip" name="chapter_${chapterIndex}_module_${document.querySelectorAll('.module').length}_resources" />
+      <input type="file" class="thumbnailFile" accept="image/*" name="chapter_${chapterIndex}_module_${moduleIndex}_thumb" />
+      <input type="file" class="videoFile" accept="video/*" name="chapter_${chapterIndex}_module_${moduleIndex}_video" />
+      <input type="file" class="resourcesFile" accept=".pdf,.doc,.docx,.zip" name="chapter_${chapterIndex}_module_${moduleIndex}_resources" />
       <textarea placeholder="Notes" class="moduleNotesFile"></textarea>
     </div>
   `;
 
-  const chapter = button.closest('.chapter');
-  const modulesContainer = chapter.querySelector('.modules-container');
   modulesContainer.appendChild(moduleDiv);
 }
 
@@ -498,8 +500,11 @@ document.addEventListener('DOMContentLoaded', () => {
       
       <div class="edit-file-fields" style="display: none;">
         <input type="file" class="edit-module-thumb-file" accept="image/*" />
+        <input type="hidden" class="current-thumb" value="" />
         <input type="file" class="edit-module-video-file" accept="video/*" />
+        <input type="hidden" class="current-video" value="" />
         <input type="file" class="edit-module-resources-file" accept=".pdf,.zip,.doc,.docx" />
+        <input type="hidden" class="current-resources" value="" />
         <textarea placeholder="Notes" class="edit-module-notes-file"></textarea>
       </div>
       
@@ -570,8 +575,14 @@ document.addEventListener('DOMContentLoaded', () => {
           
           <div class="edit-file-fields" style="${module.type === 'file' ? 'display: block;' : 'display: none;'}">
             <input type="file" class="edit-module-thumb-file" accept="image/*" />
+            <input type="hidden" class="current-thumb" value="${module.thumbnail || ''}" />
+            ${module.thumbnail ? `<img src="${module.thumbnail}" style="width: 50px; margin: 5px;" alt="Current thumbnail" />` : ''}
             <input type="file" class="edit-module-video-file" accept="video/*" />
+            <input type="hidden" class="current-video" value="${module.videoUrl || ''}" />
+            ${module.videoUrl ? `<a href="${module.videoUrl}" target="_blank">View current video</a>` : ''}
             <input type="file" class="edit-module-resources-file" accept=".pdf,.zip,.doc,.docx" />
+            <input type="hidden" class="current-resources" value="${module.resources || ''}" />
+            ${module.resources ? `<a href="${module.resources}" target="_blank">View current resources</a>` : ''}
             <textarea placeholder="Notes" class="edit-module-notes-file">${module.notes || ''}</textarea>
           </div>
           
@@ -636,7 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Build chapters data
-    const chapters = buildEditChaptersData();
+    const chapters = buildEditChaptersData(editContainer);
     formData.append('chapters', JSON.stringify(chapters));
     
     try {
@@ -683,9 +694,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== BUILD EDIT CHAPTERS DATA =====
-  function buildEditChaptersData() {
+  function buildEditChaptersData(editContainer) {
     const chapters = [];
-    const chapterElements = document.querySelectorAll('.edit-chapter');
+    const chapterElements = editContainer.querySelectorAll('.edit-chapter');
     
     chapterElements.forEach((chapter, chapterIndex) => {
       const titleInput = chapter.querySelector('.edit-chapter-title');
@@ -717,17 +728,27 @@ document.addEventListener('DOMContentLoaded', () => {
           const videoFile = module.querySelector('.edit-module-video-file')?.files?.[0];
           const resourcesFile = module.querySelector('.edit-module-resources-file')?.files?.[0];
           
+          const fieldNamePrefix = `chapter_${chapterIndex}_module_${moduleIndex}`;
+          
           if (thumbFile) {
-            formData.append(`chapter_${chapterIndex}_module_${moduleIndex}_thumb`, thumbFile);
-            moduleData.thumbnail = `chapter_${chapterIndex}_module_${moduleIndex}_thumb`;
+            formData.append(`${fieldNamePrefix}_thumb`, thumbFile);
+            moduleData.thumbnail = ''; // Will be replaced in backend
+          } else {
+            moduleData.thumbnail = module.querySelector('.current-thumb')?.value?.trim() || '';
           }
+          
           if (videoFile) {
-            formData.append(`chapter_${chapterIndex}_module_${moduleIndex}_video`, videoFile);
-            moduleData.videoUrl = `chapter_${chapterIndex}_module_${moduleIndex}_video`;
+            formData.append(`${fieldNamePrefix}_video`, videoFile);
+            moduleData.videoUrl = ''; // Will be replaced in backend
+          } else {
+            moduleData.videoUrl = module.querySelector('.current-video')?.value?.trim() || '';
           }
+          
           if (resourcesFile) {
-            formData.append(`chapter_${chapterIndex}_module_${moduleIndex}_resources`, resourcesFile);
-            moduleData.resources = `chapter_${chapterIndex}_module_${moduleIndex}_resources`;
+            formData.append(`${fieldNamePrefix}_resources`, resourcesFile);
+            moduleData.resources = ''; // Will be replaced in backend
+          } else {
+            moduleData.resources = module.querySelector('.current-resources')?.value?.trim() || '';
           }
           
           moduleData.notes = module.querySelector('.edit-module-notes-file')?.value?.trim() || '';
@@ -830,7 +851,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Failed to fetch courses');
       const courses = await response.json();
       
-      courseList.innerHTML = courses.map(course => `
+      courseList.innerHTML = courses.map(course => {
+        const escapedTitle = course.title.replace(/'/g, "\\'");
+        const escapedShortDesc = course.shortDescription.replace(/'/g, "\\'");
+        return `
         <div class="course-item">
           <img src="${course.thumbnail || 'https://placehold.co/100x100'}" alt="${course.title}" style="width: 100px; height: auto;">
           <h3>${course.title}</h3>
@@ -838,10 +862,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <p><strong>Chapters:</strong> ${course.chapters?.length || 0}</p>
           <p><strong>Category:</strong> ${course.category}</p>
           <p><strong>Difficulty:</strong> ${course.difficulty}</p>
-          <button onclick="editCourse('${course._id}', '${course.title}', '${course.shortDescription}')">Edit Course</button>
+          <button onclick="editCourse('${course._id}', '${escapedTitle}', '${escapedShortDesc}')">Edit Course</button>
           <button onclick="deleteCourse('${course._id}')">Delete Course</button>
         </div>
-      `).join('');
+      `;
+      }).join('');
     } catch (err) {
       console.error('Error fetching courses:', err);
       if (courseList) courseList.innerHTML = `<p>Error loading courses: ${err.message}</p>`;
@@ -1029,15 +1054,15 @@ document.addEventListener('DOMContentLoaded', () => {
               
               if (tF) { 
                 fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_thumb`, tF); 
-                moduleData.thumbnailFile = `chapter_${chapterIndex}_module_${moduleIndex}_thumb`; 
+                moduleData.thumbnail = ''; // Backend will upload and set URL
               }
               if (vF) { 
                 fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_video`, vF); 
-                moduleData.videoFile = `chapter_${chapterIndex}_module_${moduleIndex}_video`; 
+                moduleData.videoUrl = ''; // Backend will upload and set URL
               }
               if (rF) { 
                 fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_resources`, rF); 
-                moduleData.resourcesFile = `chapter_${chapterIndex}_module_${moduleIndex}_resources`; 
+                moduleData.resources = ''; // Backend will upload and set URL
               }
               moduleData.notes = notesInput ? notesInput.value.trim() : '';
             }

@@ -1,3 +1,4 @@
+// server/routes/courses.js
 const express = require('express');
 const router = express.Router();
 const Course = require('../models/Course');
@@ -23,9 +24,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage,
-  limits: { fileSize: 1999 * 1024 * 1024 }, // 50MB limit
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|mp4 ||mp3|zip|rar|doc|docx/;
+    const allowedTypes = /jpeg|jpg|png|gif|pdf|mp4|mp3|zip|rar|doc|docx/;
     const extname = allowedTypes.test(file.originalname.toLowerCase());
     const mimetype = /image|video|application/.test(file.mimetype);
     
@@ -240,7 +241,7 @@ router.post(
                   } catch (e) {
                     console.error('Thumbnail upload error:', e.message);
                   }
-                } else if (file.fieldname === `chapter_${chapterKey}_video`) {
+                } else if (file.fieldname === `${chapterKey}_video`) {
                   try {
                     module.videoUrl = await uploadToTelegram(file, 'video');
                   } catch (e) {
@@ -323,6 +324,10 @@ router.put(
       const { 
         title, 
         description, 
+        longDescription,
+        category,
+        difficulty,
+        featured,
         chapters: chaptersString 
       } = req.body;
 
@@ -340,10 +345,13 @@ router.put(
       const updates = { 
         title: title.trim(), 
         shortDescription: description?.trim() || '',
-        longDescription: req.body.longDescription?.trim() || ''
+        longDescription: longDescription?.trim() || '',
+        category: category?.trim() || '',
+        difficulty: difficulty || 'Beginner',
+        featured: featured === 'true' || featured === true
       };
 
-      // Handle file uploads
+      // Handle course-level file uploads
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
           try {
@@ -360,7 +368,54 @@ router.put(
         }
       }
 
-      updates.chapters = parsedChapters;
+      // Process chapter module files (similar to POST)
+      const processedChapters = [];
+      for (let chapterIndex = 0; chapterIndex < parsedChapters.length; chapterIndex++) {
+        const chapter = parsedChapters[chapterIndex];
+        const processedModules = [];
+
+        if (Array.isArray(chapter.modules)) {
+          for (let moduleIndex = 0; moduleIndex < chapter.modules.length; moduleIndex++) {
+            const module = { ...chapter.modules[moduleIndex] };
+            
+            if (module.type === 'file' && req.files) {
+              // Find matching files for this module
+              const chapterKey = `chapter_${chapterIndex}_module_${moduleIndex}`;
+              
+              for (const file of req.files) {
+                if (file.fieldname === `${chapterKey}_thumb` && !module.thumbnail) {
+                  try {
+                    module.thumbnail = await uploadToTelegram(file, 'photo');
+                  } catch (e) {
+                    console.error('Thumbnail upload error:', e.message);
+                  }
+                } else if (file.fieldname === `${chapterKey}_video` && !module.videoUrl) {
+                  try {
+                    module.videoUrl = await uploadToTelegram(file, 'video');
+                  } catch (e) {
+                    console.error('Video upload error:', e.message);
+                  }
+                } else if (file.fieldname === `${chapterKey}_resources` && !module.resources) {
+                  try {
+                    module.resources = await uploadToTelegram(file, 'document');
+                  } catch (e) {
+                    console.error('Resources upload error:', e.message);
+                  }
+                }
+              }
+            }
+            
+            processedModules.push(module);
+          }
+        }
+
+        processedChapters.push({
+          title: chapter.title || `Chapter ${chapterIndex + 1}`,
+          modules: processedModules
+        });
+      }
+
+      updates.chapters = processedChapters;
 
       const course = await Course.findByIdAndUpdate(id, updates, { new: true });
       if (!course) {
@@ -374,6 +429,16 @@ router.put(
       });
     } catch (err) {
       console.error('Course update error:', err);
+      
+      // Cleanup any remaining files
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      }
+      
       res.status(500).json({ 
         success: false, 
         message: 'Server error', 
