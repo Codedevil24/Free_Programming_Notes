@@ -1,14 +1,7 @@
-/*  client/js/module-lecture.js
-    – Handles:
-        • Fetching the exact module
-        • YouTube vs generic video auto-switch
-        • Back button to course-details.html
-        • Next / Previous lecture navigation
-        • Download-resources button visibility
-*/
+/*  client/js/module-lecture.js  –  FULL & FIXED  */
 document.addEventListener('DOMContentLoaded', () => {
-  /* ---------- 1. Grab URL params ---------- */
-  const params     = new URLSearchParams(location.search);
+  /* ---------- URL params ---------- */
+  const params     = new URLSearchParams(window.location.search);
   const courseId   = params.get('courseId');
   const chapterIdx = Number(params.get('chapterIndex'));
   const moduleIdx  = Number(params.get('moduleIndex'));
@@ -18,67 +11,81 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  /* ---------- 2. Regex for YouTube ---------- */
+  /* ---------- Regex helpers ---------- */
   const ytRegExp = /(?:youtube\.com\/.*(?:\?|&)v=|youtu\.be\/)([^&\n?#]+)/;
+  const $id      = id => document.getElementById(id);
 
-  /* ---------- 3. Element shortcuts ---------- */
-  const $id = id => document.getElementById(id);
-
-  /* ---------- 4. Fetch course ---------- */
-  async function fetchCourse() {
-    const res = await fetch(`/api/courses/${courseId}`);
-    if (!res.ok) throw new Error('Course not found');
-    return res.json();
-  }
-
-  /* ---------- 5. YouTube IFrame API ---------- */
-  let ytPlayer;
+  /* ---------- Global YouTube player ---------- */
+  let ytPlayer, ytReady = false;
   function onYouTubeIframeAPIReady() {
     ytPlayer = new YT.Player('ytPlayer', {
       height: '450',
       width:  '100%',
-      events: { onReady: () => ytPlayer.playVideo() }
+      events: {
+        onReady: () => {
+          ytReady = true;
+          if (window.pendingYouTubeId) ytPlayer.loadVideoById(window.pendingYouTubeId);
+        }
+      }
     });
   }
   window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
-  /* ---------- 6. Render the right player ---------- */
+  /* ---------- Auth helpers (copy from course-details.js) ---------- */
+  const token = localStorage.getItem('token');
+  function updateAuth(isAuth) {
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAuth ? 'block' : 'none');
+    document.querySelectorAll('.admin-login').forEach(el => el.style.display = isAuth ? 'none' : 'block');
+    document.querySelectorAll('.logout').forEach(el => el.style.display = isAuth ? 'block' : 'none');
+  }
+  if (token && window.jwt_decode) {
+    try {
+      const decoded = jwt_decode(token);
+      if (decoded.exp * 1000 > Date.now()) updateAuth(true);
+      else { localStorage.removeItem('token'); updateAuth(false); }
+    } catch { localStorage.removeItem('token'); updateAuth(false); }
+  } else updateAuth(false);
+
+  /* ---------- Fetch course ---------- */
+  async function fetchCourse() {
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`https://free-programming-notes.onrender.com/api/courses/${courseId}`, { headers });
+    if (!res.ok) throw new Error('Course not found');
+    return res.json();
+  }
+
+  /* ---------- Render player ---------- */
   function renderPlayer(url) {
     const isYouTube = ytRegExp.test(url);
-    const ytWrapper   = $id('ytPlayerWrapper');
-    const htmlWrapper = $id('html5PlayerWrapper');
+    const ytWrap   = $id('ytPlayerWrapper');
+    const htmlWrap = $id('html5PlayerWrapper');
 
     if (isYouTube) {
-      const videoId = url.match(ytRegExp)[1];
-      ytWrapper.style.display   = 'block';
-      htmlWrapper.style.display = 'none';
-      if (ytPlayer && ytPlayer.loadVideoById) {
-        ytPlayer.loadVideoById(videoId);
-      } else {
-        // API not loaded yet – onYouTubeIframeAPIReady will handle it
-        window.pendingYouTubeId = videoId;
-      }
+      const vid = url.match(ytRegExp)[1];
+      ytWrap.style.display   = 'block';
+      htmlWrap.style.display = 'none';
+      if (ytReady) { ytPlayer.loadVideoById(vid); }
+      else { window.pendingYouTubeId = vid; }
     } else {
-      ytWrapper.style.display   = 'none';
-      htmlWrapper.style.display = 'block';
+      ytWrap.style.display   = 'none';
+      htmlWrap.style.display = 'block';
       const html5 = $id('html5Src');
       html5.src = url;
       $id('html5Player').load();
     }
   }
 
-  /* ---------- 7. Navigation helpers ---------- */
+  /* ---------- Navigation ---------- */
   function buildURL(c, m) {
     return `module-lecture.html?courseId=${courseId}&chapterIndex=${c}&moduleIndex=${m}`;
   }
 
   function updateNavigation(course, ch, mod) {
-    // Back button → course-details.html
-    $id('backBtn').onclick = () => {
-      window.location.href = `course-details.html?id=${courseId}`;
-    };
+    /* Back button */
+    $id('backBtn').onclick = () => location.href = `course-details.html?id=${courseId}`;
 
-    // Previous / Next
+    /* Prev / Next */
     const prevBtn = $id('prevBtn');
     const nextBtn = $id('nextBtn');
 
@@ -91,28 +98,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hasPrev) {
       prevBtn.onclick = () => {
-        if (mod > 0) {
-          location.href = buildURL(ch, mod - 1);
-        } else {
-          const prevCh   = ch - 1;
-          const lastMod  = course.chapters[prevCh].modules.length - 1;
-          location.href  = buildURL(prevCh, lastMod);
+        if (mod > 0) location.href = buildURL(ch, mod - 1);
+        else {
+          const prevCh  = ch - 1;
+          const lastMod = course.chapters[prevCh].modules.length - 1;
+          location.href = buildURL(prevCh, lastMod);
         }
       };
     }
 
     if (hasNext) {
       nextBtn.onclick = () => {
-        if (mod < course.chapters[ch].modules.length - 1) {
-          location.href = buildURL(ch, mod + 1);
-        } else {
-          location.href = buildURL(ch + 1, 0);
-        }
+        if (mod < course.chapters[ch].modules.length - 1) location.href = buildURL(ch, mod + 1);
+        else location.href = buildURL(ch + 1, 0);
       };
     }
   }
 
-  /* ---------- 8. Download resources ---------- */
+  /* ---------- Download resources ---------- */
   function handleResources(url) {
     const dlBtn = $id('downloadBtn');
     if (url) {
@@ -123,13 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ---------- 9. Boot ---------- */
+  /* ---------- Boot ---------- */
   (async () => {
     try {
-      const course   = await fetchCourse();
-      const chapter  = course.chapters[chapterIdx];
-      const module   = chapter.modules[moduleIdx];
-
+      const course  = await fetchCourse();
+      const chapter = course.chapters[chapterIdx];
+      const module  = chapter?.modules[moduleIdx];
       if (!module) throw new Error('Module not found');
 
       $id('moduleTitle').textContent = module.title;
