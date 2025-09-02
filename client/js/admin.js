@@ -894,6 +894,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ===== COURSE DELETE FUNCTION =====
+window.deleteCourse = async (id) => {
+  if (confirm('Are you sure you want to delete this course?')) {
+    try {
+      const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (!response.ok) throw new Error('Failed to delete course');
+      fetchCourses();
+      alert('Course deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting course:', err);
+      alert('Error deleting course: ' + err.message);
+    }
+  }
+};
+
   // ===== BOOK EDIT/DELETE FUNCTIONS =====
   window.editBook = async (id, title, description, category) => {
     const editForm = document.createElement('form');
