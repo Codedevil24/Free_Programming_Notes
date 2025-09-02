@@ -702,3 +702,56 @@
     grid-template-columns: 1fr;
   }
 }
+/* --- module-lecture.css --- */
+.module-lecture-wrapper {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.back-button {
+  margin-bottom: 1rem;
+}
+
+.module-title {
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.video-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+#ytPlayer,
+#html5Player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+}
+
+.lecture-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.control-btn {
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.control-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.download-btn {
+  background: var(--color-secondary);
+  color: var(--color-text);
+  text-decoration: none;
+}
