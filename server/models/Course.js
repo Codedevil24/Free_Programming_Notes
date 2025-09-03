@@ -1,3 +1,4 @@
+// server/models/Course.js
 const mongoose = require('mongoose');
 
 // Module/Lecture sub-document
@@ -15,30 +16,15 @@ const moduleSchema = new mongoose.Schema({
   },
   thumbnail: { 
     type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v);
-      },
-      message: 'Invalid thumbnail URL format'
-    }
+    default: null
   },
   videoUrl: { 
     type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^https?:\/\/.+$/i.test(v);
-      },
-      message: 'Invalid video URL format'
-    }
+    default: null
   },
   resources: { 
     type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^https?:\/\/.+$/i.test(v);
-      },
-      message: 'Invalid resources URL format'
-    }
+    default: null
   },
   notes: { 
     type: String,
@@ -92,12 +78,7 @@ const courseSchema = new mongoose.Schema({
   },
   thumbnail: { 
     type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp)$/i.test(v);
-      },
-      message: 'Invalid thumbnail URL format'
-    }
+    default: null
   },
   thumbnailType: { 
     type: String, 
@@ -106,21 +87,11 @@ const courseSchema = new mongoose.Schema({
   },
   videoUrl: { 
     type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^https?:\/\/.+$/i.test(v);
-      },
-      message: 'Invalid video URL format'
-    }
+    default: null
   },
   resources: { 
     type: String,
-    validate: {
-      validator: function(v) {
-        return !v || /^https?:\/\/.+$/i.test(v);
-      },
-      message: 'Invalid resources URL format'
-    }
+    default: null
   },
   chapters: { 
     type: [chapterSchema], 

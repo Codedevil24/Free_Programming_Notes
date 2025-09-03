@@ -173,6 +173,7 @@ router.post(
         difficulty, 
         featured, 
         thumbnailType,
+        thumbnailUrl, // Added for URL option
         chapters: chaptersString 
       } = req.body;
 
@@ -201,13 +202,14 @@ router.post(
       }
 
       // Process main course files
-      let thumbnailUrl = null, videoUrl = null, resourcesUrl = null;
+      let thumbnailUrlFinal = thumbnailUrl || null;
+      let videoUrl = null, resourcesUrl = null;
 
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
           try {
-            if (file.fieldname === 'thumbnailFile') {
-              thumbnailUrl = await uploadToTelegram(file, 'photo');
+            if (file.fieldname === 'thumbnailFile' && thumbnailType !== 'url') {
+              thumbnailUrlFinal = await uploadToTelegram(file, 'photo');
             } else if (file.fieldname === 'videoFile') {
               videoUrl = await uploadToTelegram(file, 'video');
             } else if (file.fieldname === 'resourcesFile') {
@@ -240,18 +242,21 @@ router.post(
                     module.thumbnail = await uploadToTelegram(file, 'photo');
                   } catch (e) {
                     console.error('Thumbnail upload error:', e.message);
+                    module.thumbnail = null;
                   }
                 } else if (file.fieldname === `${chapterKey}_video`) {
                   try {
                     module.videoUrl = await uploadToTelegram(file, 'video');
                   } catch (e) {
                     console.error('Video upload error:', e.message);
+                    module.videoUrl = null;
                   }
                 } else if (file.fieldname === `${chapterKey}_resources`) {
                   try {
                     module.resources = await uploadToTelegram(file, 'document');
                   } catch (e) {
                     console.error('Resources upload error:', e.message);
+                    module.resources = null;
                   }
                 }
               }
@@ -273,7 +278,7 @@ router.post(
         shortDescription: shortDescription.trim(),
         longDescription: longDescription?.trim() || '',
         category: category.trim(),
-        thumbnail: thumbnailUrl,
+        thumbnail: thumbnailUrlFinal,
         thumbnailType: thumbnailType || 'upload',
         videoUrl,
         resources: resourcesUrl,
@@ -323,11 +328,13 @@ router.put(
       const { id } = req.params;
       const { 
         title, 
-        description, 
-        longDescription,
-        category,
-        difficulty,
-        featured,
+        shortDescription, 
+        longDescription, 
+        category, 
+        difficulty, 
+        featured, 
+        thumbnailType,
+        thumbnailUrl, // Added for URL option
         chapters: chaptersString 
       } = req.body;
 
@@ -344,7 +351,7 @@ router.put(
 
       const updates = { 
         title: title.trim(), 
-        shortDescription: description?.trim() || '',
+        shortDescription: shortDescription?.trim() || '',
         longDescription: longDescription?.trim() || '',
         category: category?.trim() || '',
         difficulty: difficulty || 'Beginner',
@@ -352,10 +359,11 @@ router.put(
       };
 
       // Handle course-level file uploads
+      let thumbnailUrlFinal = thumbnailUrl || null;
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
           try {
-            if (file.fieldname === 'thumbnailFile') {
+            if (file.fieldname === 'thumbnailFile' && thumbnailType !== 'url') {
               updates.thumbnail = await uploadToTelegram(file, 'photo');
             } else if (file.fieldname === 'videoFile') {
               updates.videoUrl = await uploadToTelegram(file, 'video');
@@ -383,23 +391,26 @@ router.put(
               const chapterKey = `chapter_${chapterIndex}_module_${moduleIndex}`;
               
               for (const file of req.files) {
-                if (file.fieldname === `${chapterKey}_thumb` && !module.thumbnail) {
+                if (file.fieldname === `${chapterKey}_thumb`) {
                   try {
                     module.thumbnail = await uploadToTelegram(file, 'photo');
                   } catch (e) {
                     console.error('Thumbnail upload error:', e.message);
+                    module.thumbnail = module.thumbnail || null; // Keep existing if not new
                   }
-                } else if (file.fieldname === `${chapterKey}_video` && !module.videoUrl) {
+                } else if (file.fieldname === `${chapterKey}_video`) {
                   try {
                     module.videoUrl = await uploadToTelegram(file, 'video');
                   } catch (e) {
                     console.error('Video upload error:', e.message);
+                    module.videoUrl = module.videoUrl || null;
                   }
-                } else if (file.fieldname === `${chapterKey}_resources` && !module.resources) {
+                } else if (file.fieldname === `${chapterKey}_resources`) {
                   try {
                     module.resources = await uploadToTelegram(file, 'document');
                   } catch (e) {
                     console.error('Resources upload error:', e.message);
+                    module.resources = module.resources || null;
                   }
                 }
               }
@@ -417,7 +428,7 @@ router.put(
 
       updates.chapters = processedChapters;
 
-      const course = await Course.findByIdAndUpdate(id, updates, { new: true });
+      const course = await Course.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
       if (!course) {
         return res.status(404).json({ success: false, message: 'Course not found' });
       }

@@ -280,24 +280,36 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('difficulty', difficultySelect?.value || 'Beginner');
       formData.append('featured', featuredCheckbox?.checked || false);
       
-      // Handle file uploads
-      const thumbnailFile = this.querySelector('input[name="thumbnailFile"]');
-      const videoFile = this.querySelector('input[name="videoFile"]');
-      const resourcesFile = this.querySelector('input[name="resourcesFile"]');
+      // Handle thumbnail type
+      const thumbnailType = this.querySelector('input[name="thumbnailType"]:checked')?.value || 'file';
+      formData.append('thumbnailType', thumbnailType);
       
-      if (thumbnailFile?.files?.[0]) {
-        formData.append('thumbnailFile', thumbnailFile.files[0]);
+      // Handle thumbnail
+      if (thumbnailType === 'url') {
+        const thumbnailUrl = this.querySelector('input[name="thumbnailUrl"]')?.value?.trim() || '';
+        formData.append('thumbnailUrl', thumbnailUrl);
+      } else {
+        const thumbnailFile = this.querySelector('input[name="thumbnailFile"]')?.files?.[0];
+        if (thumbnailFile) formData.append('thumbnailFile', thumbnailFile);
       }
-      if (videoFile?.files?.[0]) {
-        formData.append('videoFile', videoFile.files[0]);
-      }
-      if (resourcesFile?.files?.[0]) {
-        formData.append('resourcesFile', resourcesFile.files[0]);
-      }
+      
+      // Handle other files
+      const videoFile = this.querySelector('input[name="videoFile"]')?.files?.[0];
+      if (videoFile) formData.append('videoFile', videoFile);
+      
+      const resourcesFile = this.querySelector('input[name="resourcesFile"]')?.files?.[0];
+      if (resourcesFile) formData.append('resourcesFile', resourcesFile);
       
       // Build chapters data
-      const chapters = buildChaptersData();
+      const chapters = buildChaptersData(formData); // Pass formData to append module files
       formData.append('chapters', JSON.stringify(chapters));
+      
+      // Debug: Log FormData contents
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      console.log('Chapters JSON:', JSON.stringify(chapters, null, 2));
       
       try {
         const xhr = new XMLHttpRequest();
@@ -680,7 +692,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.lengthComputable) {
           const percentComplete = Math.round((event.loaded / event.total) * 100);
           if (progressBar) progressBar.style.width = `${percentComplete}%`;
-          if (progressText) progressText.textContent = `${percentComplete}%`;
+          if (progText) progText.textContent = `${percentComplete}%`;
         }
       };
 
@@ -788,7 +800,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== DATA BUILDING FUNCTIONS =====
-  function buildChaptersData() {
+  function buildChaptersData(formData) {
     const chapters = [];
     const chapterElements = document.querySelectorAll('.chapter');
     
@@ -822,6 +834,27 @@ document.addEventListener('DOMContentLoaded', () => {
           moduleData.resources = resourcesInput?.value?.trim() || '';
           moduleData.notes = notesTextarea?.value?.trim() || '';
         } else {
+          const thumbFile = module.querySelector('.thumbnailFile')?.files?.[0];
+          const videoFile = module.querySelector('.videoFile')?.files?.[0];
+          const resourcesFile = module.querySelector('.resourcesFile')?.files?.[0];
+          
+          const fieldNamePrefix = `chapter_${chapterIndex}_module_${moduleIndex}`;
+          
+          if (thumbFile) {
+            formData.append(`${fieldNamePrefix}_thumb`, thumbFile);
+            moduleData.thumbnail = ''; // Backend will set the URL
+          }
+          
+          if (videoFile) {
+            formData.append(`${fieldNamePrefix}_video`, videoFile);
+            moduleData.videoUrl = ''; // Backend will set the URL
+          }
+          
+          if (resourcesFile) {
+            formData.append(`${fieldNamePrefix}_resources`, resourcesFile);
+            moduleData.resources = ''; // Backend will set the URL
+          }
+          
           moduleData.notes = module.querySelector('.moduleNotesFile')?.value?.trim() || '';
         }
         
@@ -895,22 +928,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== COURSE DELETE FUNCTION =====
-window.deleteCourse = async (id) => {
-  if (confirm('Are you sure you want to delete this course?')) {
-    try {
-      const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!response.ok) throw new Error('Failed to delete course');
-      fetchCourses();
-      alert('Course deleted successfully!');
-    } catch (err) {
-      console.error('Error deleting course:', err);
-      alert('Error deleting course: ' + err.message);
+  window.deleteCourse = async (id) => {
+    if (confirm('Are you sure you want to delete this course?')) {
+      try {
+        const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        if (!response.ok) throw new Error('Failed to delete course');
+        fetchCourses();
+        alert('Course deleted successfully!');
+      } catch (err) {
+        console.error('Error deleting course:', err);
+        alert('Error deleting course: ' + err.message);
+      }
     }
-  }
-};
+  };
 
   // ===== BOOK EDIT/DELETE FUNCTIONS =====
   window.editBook = async (id, title, description, category) => {
