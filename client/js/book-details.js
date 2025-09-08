@@ -1,3 +1,4 @@
+// [client/js/book-details.js
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements with proper error handling
     const bookTitle = document.getElementById('book-title');

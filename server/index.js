@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const bookRoutes = require('./routes/books');
 const courseRoutes = require('./routes/courses');
+const axios = require('axios'); // NEW: For proxy
 require('dotenv').config();
 
 const app = express();
@@ -11,10 +12,27 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cors({
-    origin: ['https://free-programming-notes-1.onrender.com'], // Updated to frontend URL
+    origin: ['https://free-programming-notes.onrender.com'], // Updated to frontend URL
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// NEW: Proxy route to serve Telegram files without exposing token (fixes image/PDF fetch issues)
+app.get('/api/proxy/file/:filePath', async (req, res) => {
+  try {
+    const url = `https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${req.params.filePath}`;
+    const response = await axios.get(url, { responseType: 'stream' });
+    
+    res.set('Content-Type', response.headers['content-type']);
+    res.set('Content-Length', response.headers['content-length']);
+    res.set('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    
+    response.data.pipe(res);
+  } catch (err) {
+    console.error('Proxy error:', err.message);
+    res.status(500).json({ message: 'Failed to fetch file' });
+  }
+});
 
 // MongoDB Atlas connection with retry
 const connectWithRetry = async () => {

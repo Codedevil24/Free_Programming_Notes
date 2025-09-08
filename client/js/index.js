@@ -1,3 +1,4 @@
+// [client/js/index.js] -
 document.addEventListener('DOMContentLoaded', () => {
     const bookList = document.getElementById('book-list');
     const searchBar = document.getElementById('search-bar');

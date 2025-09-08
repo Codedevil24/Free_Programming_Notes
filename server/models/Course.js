@@ -1,4 +1,3 @@
-// server/models/Course.js
 const mongoose = require('mongoose');
 
 // Module/Lecture sub-document
@@ -14,17 +13,14 @@ const moduleSchema = new mongoose.Schema({
     enum: ['file', 'link'], 
     default: 'link' 
   },
-  thumbnail: { 
+  thumbnail: { // Kept original names for links, but backend will store file paths here if uploaded
     type: String,
-    default: null
   },
   videoUrl: { 
     type: String,
-    default: null
   },
   resources: { 
     type: String,
-    default: null
   },
   notes: { 
     type: String,
@@ -76,22 +72,19 @@ const courseSchema = new mongoose.Schema({
       'Mobile Development', 'DevOps', 'AI/ML', 'Cybersecurity'
     ]
   },
-  thumbnail: { 
+  thumbnail: { // This will now store the file_path from Telegram, not a full URL
     type: String,
-    default: null
   },
   thumbnailType: { 
     type: String, 
     enum: ['link', 'upload'], 
     default: 'upload' 
   },
-  videoUrl: { 
+  videoUrl: { // This will also store a file_path if uploaded
     type: String,
-    default: null
   },
-  resources: { 
+  resources: { // And this one too
     type: String,
-    default: null
   },
   chapters: { 
     type: [chapterSchema], 

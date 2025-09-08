@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ===== COURSE UPLOAD FUNCTIONALITY =====
+  // ===== COURSE UPLOAD FUNCTIONALITY (FIXED: Integrated telegramUpload.js, added error handling) =====
   if (enhancedCourseForm) {
     enhancedCourseForm.addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -256,87 +256,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const progBar = document.getElementById('course-progress-bar');
       const progText = document.getElementById('course-progress-text');
       
-      const formData = new FormData();
-      
-      // Get all form fields
-      const titleInput = this.querySelector('input[name="title"]');
-      const shortDescInput = this.querySelector('textarea[name="shortDescription"]');
-      const longDescInput = this.querySelector('textarea[name="longDescription"]');
-      const categorySelect = this.querySelector('select[name="category"]');
-      const difficultySelect = this.querySelector('select[name="difficulty"]');
-      const featuredCheckbox = this.querySelector('input[name="featured"]');
-      
-      // Validation
-      if (!titleInput?.value?.trim()) {
-        alert('Course title is required!');
-        return;
-      }
-      
-      // Add basic form data
-      formData.append('title', titleInput.value.trim());
-      formData.append('shortDescription', shortDescInput?.value?.trim() || '');
-      formData.append('longDescription', longDescInput?.value?.trim() || '');
-      formData.append('category', categorySelect?.value || '');
-      formData.append('difficulty', difficultySelect?.value || 'Beginner');
-      formData.append('featured', featuredCheckbox?.checked || false);
-      
-      // Handle thumbnail type
-      const thumbnailType = this.querySelector('input[name="thumbnailType"]:checked')?.value || 'file';
-      formData.append('thumbnailType', thumbnailType);
-      
-      // Handle thumbnail
-      if (thumbnailType === 'url') {
-        const thumbnailUrl = this.querySelector('input[name="thumbnailUrl"]')?.value?.trim() || '';
-        formData.append('thumbnailUrl', thumbnailUrl);
-      } else {
-        const thumbnailFile = this.querySelector('input[name="thumbnailFile"]')?.files?.[0];
-        if (thumbnailFile) formData.append('thumbnailFile', thumbnailFile);
-      }
-      
-      // Handle other files
-      const videoFile = this.querySelector('input[name="videoFile"]')?.files?.[0];
-      if (videoFile) formData.append('videoFile', videoFile);
-      
-      const resourcesFile = this.querySelector('input[name="resourcesFile"]')?.files?.[0];
-      if (resourcesFile) formData.append('resourcesFile', resourcesFile);
-      
-      // Build chapters data
-      const chapters = buildChaptersData(formData); // Pass formData to append module files
-      formData.append('chapters', JSON.stringify(chapters));
-      
-      // Debug: Log FormData contents
-      console.log('FormData contents:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
-      console.log('Chapters JSON:', JSON.stringify(chapters, null, 2));
+      // Use new telegramUpload.js for preparing FormData
+      const formData = telegramUpload.prepareCourseFormData(this);
       
       try {
         const xhr = new XMLHttpRequest();
         
         if (progressContainer) progressContainer.style.display = 'block';
         
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 100);
-            if (progBar) progBar.style.width = `${percentComplete}%`;
-            if (progText) progText.textContent = `${percentComplete}%`;
-          }
-        };
+        // Use new handleUploadProgress from telegramUpload.js
+        telegramUpload.handleUploadProgress(xhr, progBar, progText);
 
         xhr.onload = () => {
           if (progressContainer) progressContainer.style.display = 'none';
           
-          const result = JSON.parse(xhr.responseText);
-          if (xhr.status === 201) {
-            alert('Course uploaded successfully!');
-            this.reset();
-            const chaptersContainer = document.getElementById('chaptersContainer');
-            if (chaptersContainer) chaptersContainer.innerHTML = '';
-            chapterCount = 0;
-            fetchCourses();
-          } else {
-            alert(result.message || 'Upload failed');
+          try {
+            const result = JSON.parse(xhr.responseText);
+            if (xhr.status === 201) {
+              alert('Course uploaded successfully!');
+              this.reset();
+              const chaptersContainer = document.getElementById('chaptersContainer');
+              if (chaptersContainer) chaptersContainer.innerHTML = '';
+              chapterCount = 0;
+              fetchCourses();
+            } else {
+              alert(result.message || 'Upload failed');
+            }
+          } catch (parseErr) {
+            console.error('Response parse error:', parseErr);
+            alert('Invalid server response');
           }
         };
 
@@ -692,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.lengthComputable) {
           const percentComplete = Math.round((event.loaded / event.total) * 100);
           if (progressBar) progressBar.style.width = `${percentComplete}%`;
-          if (progText) progText.textContent = `${percentComplete}%`;
+          if (progressText) progressText.textContent = `${percentComplete}%`;
         }
       };
 
@@ -800,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== DATA BUILDING FUNCTIONS =====
-  function buildChaptersData(formData) {
+  function buildChaptersData() {
     const chapters = [];
     const chapterElements = document.querySelectorAll('.chapter');
     
@@ -834,27 +782,6 @@ document.addEventListener('DOMContentLoaded', () => {
           moduleData.resources = resourcesInput?.value?.trim() || '';
           moduleData.notes = notesTextarea?.value?.trim() || '';
         } else {
-          const thumbFile = module.querySelector('.thumbnailFile')?.files?.[0];
-          const videoFile = module.querySelector('.videoFile')?.files?.[0];
-          const resourcesFile = module.querySelector('.resourcesFile')?.files?.[0];
-          
-          const fieldNamePrefix = `chapter_${chapterIndex}_module_${moduleIndex}`;
-          
-          if (thumbFile) {
-            formData.append(`${fieldNamePrefix}_thumb`, thumbFile);
-            moduleData.thumbnail = ''; // Backend will set the URL
-          }
-          
-          if (videoFile) {
-            formData.append(`${fieldNamePrefix}_video`, videoFile);
-            moduleData.videoUrl = ''; // Backend will set the URL
-          }
-          
-          if (resourcesFile) {
-            formData.append(`${fieldNamePrefix}_resources`, resourcesFile);
-            moduleData.resources = ''; // Backend will set the URL
-          }
-          
           moduleData.notes = module.querySelector('.moduleNotesFile')?.value?.trim() || '';
         }
         
@@ -928,22 +855,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== COURSE DELETE FUNCTION =====
-  window.deleteCourse = async (id) => {
-    if (confirm('Are you sure you want to delete this course?')) {
-      try {
-        const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (!response.ok) throw new Error('Failed to delete course');
-        fetchCourses();
-        alert('Course deleted successfully!');
-      } catch (err) {
-        console.error('Error deleting course:', err);
-        alert('Error deleting course: ' + err.message);
-      }
+window.deleteCourse = async (id) => {
+  if (confirm('Are you sure you want to delete this course?')) {
+    try {
+      const response = await fetch(`https://free-programming-notes.onrender.com/api/courses/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (!response.ok) throw new Error('Failed to delete course');
+      fetchCourses();
+      alert('Course deleted successfully!');
+    } catch (err) {
+      console.error('Error deleting course:', err);
+      alert('Error deleting course: ' + err.message);
     }
-  };
+  }
+};
 
   // ===== BOOK EDIT/DELETE FUNCTIONS =====
   window.editBook = async (id, title, description, category) => {
@@ -1030,172 +957,3 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchCourses();
 });
 
-
-
-// Additional XHR-based course form handler with progress bar (keeping existing functionality)
-document.addEventListener('DOMContentLoaded', () => {
-  const courseFormAlt = document.getElementById('courseForm');
-  const progContainer = document.getElementById('course-progress-container');
-  const progBar = document.getElementById('course-progress-bar');
-  const progText = document.getElementById('course-progress-text');
-
-  if (courseFormAlt && progContainer && progBar && progText) {
-    courseFormAlt.addEventListener('submit', function(e) {
-      e.preventDefault();
-      const xhr = new XMLHttpRequest();
-      const fd = new FormData(this);
-
-      // Get title and description with multiple selectors
-      const titleInput = this.querySelector('input[name="title"]') || 
-                        this.querySelector('input[placeholder*="title" i]') ||
-                        this.querySelector('input[type="text"]');
-      const shortDescInput = this.querySelector('textarea[name="shortDescription"]') || 
-                            this.querySelector('textarea[placeholder*="short" i]');
-
-      const title = titleInput ? titleInput.value.trim() : '';
-      const shortDescription = shortDescInput ? shortDescInput.value.trim() : '';
-
-      if (!title) {
-        alert('Course title is required!');
-        return;
-      }
-
-      fd.append('title', title);
-      if (shortDescription) {
-        fd.append('shortDescription', shortDescription);
-      }
-
-      // Append main course files
-      const thumbFileInput = this.querySelector('input[name="thumbnailFile"]') || 
-                            this.querySelector('input.thumbnailFile');
-      const videoFileInput = this.querySelector('input[name="videoFile"]') || 
-                            this.querySelector('input.videoFile');
-      const resFileInput = this.querySelector('input[name="resourcesFile"]') || 
-                          this.querySelector('input.resourcesFile');
-
-      if (thumbFileInput && thumbFileInput.files && thumbFileInput.files[0]) {
-        fd.append('thumbnailFile', thumbFileInput.files[0]);
-      }
-      if (videoFileInput && videoFileInput.files && videoFileInput.files[0]) {
-        fd.append('videoFile', videoFileInput.files[0]);
-      }
-      if (resFileInput && resFileInput.files && resFileInput.files[0]) {
-        fd.append('resourcesFile', resFileInput.files[0]);
-      }
-
-      // Build chapters data using the same fixed function
-      let chaptersData = [];
-      try {
-        // Use the same buildChaptersData function logic
-        const chapterElements = document.querySelectorAll('.chapter');
-        chapterElements.forEach((chapter, chapterIndex) => {
-          const chapterTitleInput = chapter.querySelector('.chapterTitle');
-          const chapterTitle = chapterTitleInput ? chapterTitleInput.value.trim() : '';
-          
-          const modules = [];
-          const moduleElements = chapter.querySelectorAll('.module');
-          
-          moduleElements.forEach((module, moduleIndex) => {
-            const moduleTitleInput = module.querySelector('.moduleTitle');
-            const moduleTypeSelect = module.querySelector('.moduleType');
-            
-            const moduleTitle = moduleTitleInput ? moduleTitleInput.value.trim() : '';
-            const moduleType = moduleTypeSelect ? moduleTypeSelect.value : 'link';
-            
-            const moduleData = {
-              title: moduleTitle,
-              type: moduleType
-            };
-            
-            if (moduleType === 'link') {
-              const thumbnailInput = module.querySelector('.moduleThumbnail');
-              const videoInput = module.querySelector('.moduleVideo');
-              const resourcesInput = module.querySelector('.moduleResources');
-              const notesTextarea = module.querySelector('.moduleNotes');
-              
-              moduleData.thumbnail = thumbnailInput ? thumbnailInput.value.trim() : '';
-              moduleData.videoUrl = videoInput ? videoInput.value.trim() : '';
-              moduleData.resources = resourcesInput ? resourcesInput.value.trim() : '';
-              moduleData.notes = notesTextarea ? notesTextarea.value.trim() : '';
-            } else {
-              // Handle file uploads for modules
-              const tF = module.querySelector('.thumbnailFile')?.files[0];
-              const vF = module.querySelector('.videoFile')?.files[0];
-              const rF = module.querySelector('.resourcesFile')?.files[0];
-              const notesInput = module.querySelector('.moduleNotesFile');
-              
-              if (tF) { 
-                fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_thumb`, tF); 
-                moduleData.thumbnail = ''; // Backend will upload and set URL
-              }
-              if (vF) { 
-                fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_video`, vF); 
-                moduleData.videoUrl = ''; // Backend will upload and set URL
-              }
-              if (rF) { 
-                fd.append(`chapter_${chapterIndex}_module_${moduleIndex}_resources`, rF); 
-                moduleData.resources = ''; // Backend will upload and set URL
-              }
-              moduleData.notes = notesInput ? notesInput.value.trim() : '';
-            }
-            
-            modules.push(moduleData);
-          });
-          
-          chaptersData.push({
-            title: chapterTitle,
-            modules: modules
-          });
-        });
-        
-      } catch (error) {
-        console.error('Error building chapters data:', error);
-        alert('Error processing chapters data');
-        return;
-      }
-
-      fd.append('chapters', JSON.stringify(chaptersData));
-
-      // Progress bar
-      progContainer.style.display = 'block';
-      xhr.upload.onprogress = e => {
-        if (e.lengthComputable) {
-          const pct = Math.round((e.loaded / e.total) * 100);
-          progBar.style.width = pct + '%';
-          progText.textContent = pct + '%';
-        }
-      };
-
-      xhr.onload = () => {
-        progContainer.style.display = 'none';
-        try {
-          const res = JSON.parse(xhr.responseText);
-          if (xhr.status === 201) {
-            alert('Course created successfully!');
-            this.reset();
-            const chaptersContainer = document.getElementById('chaptersContainer');
-            if (chaptersContainer) chaptersContainer.innerHTML = '';
-            progBar.style.width = '0%';
-            progText.textContent = '0%';
-            chapterCount = 0;
-            if (typeof fetchCourses === 'function') fetchCourses();
-          } else {
-            alert(res.message || 'Upload failed');
-          }
-        } catch (error) {
-          alert('Error processing server response');
-        }
-      };
-
-      xhr.onerror = () => {
-        progContainer.style.display = 'none';
-        alert('Error uploading course');
-      };
-
-      xhr.open('POST', 'https://free-programming-notes.onrender.com/api/courses/add-course');
-      const token = localStorage.getItem('token');
-      if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.send(fd);
-    });
-  }
-});
